@@ -1,0 +1,376 @@
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { juntasService } from '../../services/juntasService';
+import { JuntaMedica, PaginatedResult } from '../../types';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import JuntaDetailModal from './JuntaDetailModal';
+import EditJuntaModal from './EditJuntaModal';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  PencilSquareIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+} from '@heroicons/react/24/outline';
+
+type SortField = 'fecha' | 'pacienteNombre' | 'estado';
+type SortOrder = 'asc' | 'desc';
+
+const MisJuntas = () => {
+  const { user } = useAuth();
+  const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
+  const [editingJunta, setEditingJunta] = useState<JuntaMedica | null>(null);
+  const [sortField, setSortField] = useState<SortField>('fecha');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    if (user) {
+      loadJuntas();
+    }
+  }, [user, page, pageSize, sortField, sortOrder]);
+
+  const loadJuntas = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await juntasService.getJuntasByMedico(user.id, {
+        page,
+        pageSize,
+        sortBy: sortField,
+        sortOrder,
+      });
+      setJuntas(data);
+    } catch (error) {
+      console.error('Error loading juntas:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const handleEditSave = (updatedJunta: JuntaMedica) => {
+    if (juntas) {
+      setJuntas({
+        ...juntas,
+        data: juntas.data.map(j => j.id === updatedJunta.id ? updatedJunta : j),
+      });
+    }
+    setEditingJunta(null);
+  };
+
+  const getEstadoBadge = (estado: JuntaMedica['estado']) => {
+    const styles = {
+      PENDIENTE: 'bg-yellow-100 text-yellow-800',
+      APROBADA: 'bg-green-100 text-green-800',
+      RECHAZADA: 'bg-red-100 text-red-800',
+    };
+    
+    const labels = {
+      PENDIENTE: 'Pendiente',
+      APROBADA: 'Aprobada',
+      RECHAZADA: 'Rechazada',
+    };
+
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[estado]}`}>
+        {labels[estado]}
+      </span>
+    );
+  };
+
+  const getDictamenBadge = (junta: JuntaMedica) => {
+    if (!junta.dictamen) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
+          Sin dictamen
+        </span>
+      );
+    }
+    
+    if (junta.dictamen.isCompleto) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center">
+          <ClipboardDocumentListIcon className="h-3 w-3 mr-1" />
+          Completo
+        </span>
+      );
+    }
+    
+    return (
+      <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 flex items-center">
+        <ClipboardDocumentListIcon className="h-3 w-3 mr-1" />
+        Incompleto
+      </span>
+    );
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? (
+      <ChevronUpIcon className="h-4 w-4 inline ml-1" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4 inline ml-1" />
+    );
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-subtitle font-semibold text-vdc-primary">
+          Mis Juntas Médicas
+        </h2>
+        <p className="text-vdc-secondary text-sm mt-1">
+          Historial de evaluaciones médicas registradas
+        </p>
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-white rounded-card shadow-card overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : juntas && juntas.data.length > 0 ? (
+          <>
+            {/* Table */}
+            <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <table className="w-full hidden sm:table" role="grid">
+                <thead className="bg-vdc-bg">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleSort('fecha')}
+                      aria-sort={sortField === 'fecha' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    >
+                      Fecha <SortIcon field="fecha" />
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleSort('pacienteNombre')}
+                      aria-sort={sortField === 'pacienteNombre' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    >
+                      Paciente <SortIcon field="pacienteNombre" />
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleSort('estado')}
+                      aria-sort={sortField === 'estado' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    >
+                      Estado <SortIcon field="estado" />
+                    </th>
+                    <th scope="col" className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Dictamen
+                    </th>
+                    <th scope="col" className="px-4 lg:px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {juntas.data.map((junta, index) => (
+                    <motion.tr
+                      key={junta.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-vdc-row-alt'} hover:bg-blue-50 transition-colors cursor-pointer`}
+                      onClick={() => setSelectedJunta(junta)}
+                    >
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {junta.pacienteNombre}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        {getEstadoBadge(junta.estado)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        {getDictamenBadge(junta)}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedJunta(junta);
+                            }}
+                            className="text-vdc-primary hover:text-vdc-primary/80 transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
+                            aria-label={`Ver detalles de junta de ${junta.pacienteNombre}`}
+                            title="Ver detalles"
+                          >
+                            <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingJunta(junta);
+                            }}
+                            className="text-vdc-secondary hover:text-vdc-primary transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
+                            aria-label={`Editar junta de ${junta.pacienteNombre}`}
+                            title="Editar"
+                          >
+                            <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile Cards */}
+              <div className="sm:hidden divide-y divide-gray-200">
+                {juntas.data.map((junta, index) => (
+                  <motion.div
+                    key={junta.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="p-4 hover:bg-blue-50 transition-colors"
+                    onClick={() => setSelectedJunta(junta)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-gray-900">{junta.pacienteNombre}</p>
+                        <p className="text-sm text-gray-500">
+                          {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedJunta(junta);
+                          }}
+                          className="text-vdc-primary p-2"
+                          aria-label="Ver detalles"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingJunta(junta);
+                          }}
+                          className="text-vdc-secondary p-2"
+                          aria-label="Editar"
+                        >
+                          <PencilSquareIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {getEstadoBadge(junta.estado)}
+                      {getDictamenBadge(junta)}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="px-4 lg:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-2">
+                <label htmlFor="pageSize" className="text-sm text-vdc-secondary">
+                  Mostrar:
+                </label>
+                <select
+                  id="pageSize"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-vdc-secondary">
+                  Página {juntas.page} de {juntas.totalPages}
+                </span>
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                    className="p-2 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === juntas.totalPages}
+                    className="p-2 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Página siguiente"
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-vdc-secondary">No hay juntas médicas registradas</p>
+          </div>
+        )}
+      </div>
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {selectedJunta && (
+          <JuntaDetailModal
+            junta={selectedJunta}
+            onClose={() => setSelectedJunta(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingJunta && (
+          <EditJuntaModal
+            junta={editingJunta}
+            onClose={() => setEditingJunta(null)}
+            onSave={handleEditSave}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+export default MisJuntas;

@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  background-color: #F5F5F5;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px dotted #007BFF;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #E9ECEF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6C757D;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #007BFF;
+}
+
+/* React DatePicker custom styles */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #E9ECEF;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.react-datepicker__input-container input:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
+/* Toast customization */
+.Toastify__toast--success {
+  background: #28A745 !important;
+}
+
+.Toastify__toast--error {
+  background: #FF0000 !important;
+}
+
+/* Checkbox personalizado sin sombra */
+input[type="checkbox"] {
+  box-shadow: none !important;
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: none !important;
+  outline: 2px solid rgba(0, 123, 255, 0.3);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #007BFF;
+  border-color: #007BFF;
+}
+
+/* Transiciones básicas para elementos interactivos */
+button, a {
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+/* Transición suave para filas de tabla */
+tr {
+  transition: background-color 0.15s ease;
+}

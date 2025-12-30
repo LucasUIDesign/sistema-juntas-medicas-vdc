@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <!-- VDC Logo - Three arrows forming a Y shape -->
+  <g transform="translate(10, 5)">
+    <!-- Green arrow (left) -->
+    <path d="M20 50 L30 30 L25 30 L25 10 L15 10 L15 30 L10 30 Z" fill="#28A745"/>
+    <!-- Gray arrow (center/top) -->
+    <path d="M30 10 L40 30 L35 30 L35 50 L25 50 L25 30 L20 30 Z" fill="#6C757D" transform="rotate(180, 30, 30)"/>
+    <!-- Blue arrow (right) -->
+    <path d="M40 50 L50 30 L45 30 L45 10 L35 10 L35 30 L30 30 Z" fill="#007BFF" transform="translate(10, 0)"/>
+  </g>
+  
+  <!-- VDC Text -->
+  <text x="75" y="32" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" fill="#6C757D">VDC</text>
+  
+  <!-- INTERNACIONAL Text -->
+  <text x="75" y="48" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#6C757D">INTERNACIONAL</text>
+</svg>
