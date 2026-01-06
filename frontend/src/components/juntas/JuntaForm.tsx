@@ -28,10 +28,13 @@ const JuntaForm = () => {
   
   // Estado para profesionales (movido del wizard)
   const [profesionales, setProfesionales] = useState({
-    presidente: '',
-    vocal1: '',
-    vocal2: '',
-    secretario: '',
+    medicoEvaluador1: '',
+    matricula1: '',
+    especialidad1: '',
+    medicoEvaluador2: '',
+    matricula2: '',
+    especialidad2: '',
+    fechaDictamen: '',
   });
 
   const isMedicoSuperior = user?.role === 'MEDICO_SUPERIOR';
@@ -68,10 +71,13 @@ const JuntaForm = () => {
       setShowDocumentos(false);
       setShowProfesionales(false);
       setProfesionales({
-        presidente: '',
-        vocal1: '',
-        vocal2: '',
-        secretario: '',
+        medicoEvaluador1: '',
+        matricula1: '',
+        especialidad1: '',
+        medicoEvaluador2: '',
+        matricula2: '',
+        especialidad2: '',
+        fechaDictamen: '',
       });
     } catch (error) {
       toast.error('Error al guardar la junta médica. Intenta nuevamente.', {
@@ -88,10 +94,13 @@ const JuntaForm = () => {
     setShowDocumentos(false);
     setShowProfesionales(false);
     setProfesionales({
-      presidente: '',
-      vocal1: '',
-      vocal2: '',
-      secretario: '',
+      medicoEvaluador1: '',
+      matricula1: '',
+      especialidad1: '',
+      medicoEvaluador2: '',
+      matricula2: '',
+      especialidad2: '',
+      fechaDictamen: '',
     });
     toast.info('Formulario limpiado', { icon: 'ℹ️' });
   };
@@ -156,7 +165,7 @@ const JuntaForm = () => {
               <span className="flex items-center">
                 <UserGroupIcon className="h-5 w-5 mr-2" aria-hidden="true" />
                 Profesionales de la Junta
-                {(profesionales.presidente || profesionales.vocal1 || profesionales.vocal2 || profesionales.secretario) && (
+                {(profesionales.medicoEvaluador1 || profesionales.medicoEvaluador2) && (
                   <span className="ml-2 px-2 py-0.5 text-xs bg-vdc-primary text-white rounded-full">
                     Configurado
                   </span>
@@ -174,52 +183,102 @@ const JuntaForm = () => {
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Presidente
-                  </label>
-                  <input
-                    type="text"
-                    value={profesionales.presidente}
-                    onChange={(e) => setProfesionales({...profesionales, presidente: e.target.value})}
-                    placeholder="Nombre del presidente"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  />
+              <div className="pt-4 space-y-6">
+                {/* Médico Evaluador Principal */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Principal</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre Completo
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.medicoEvaluador1}
+                        onChange={(e) => setProfesionales({...profesionales, medicoEvaluador1: e.target.value})}
+                        placeholder="Dr./Dra. Nombre Apellido"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Matrícula
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.matricula1}
+                        onChange={(e) => setProfesionales({...profesionales, matricula1: e.target.value})}
+                        placeholder="MP 12345"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Especialidad
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.especialidad1}
+                        onChange={(e) => setProfesionales({...profesionales, especialidad1: e.target.value})}
+                        placeholder="Medicina Laboral"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vocal 1
-                  </label>
-                  <input
-                    type="text"
-                    value={profesionales.vocal1}
-                    onChange={(e) => setProfesionales({...profesionales, vocal1: e.target.value})}
-                    placeholder="Nombre del vocal 1"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  />
+
+                {/* Médico Evaluador Secundario */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Secundario (opcional)</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre Completo
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.medicoEvaluador2}
+                        onChange={(e) => setProfesionales({...profesionales, medicoEvaluador2: e.target.value})}
+                        placeholder="Dr./Dra. Nombre Apellido"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Matrícula
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.matricula2}
+                        onChange={(e) => setProfesionales({...profesionales, matricula2: e.target.value})}
+                        placeholder="MP 12345"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Especialidad
+                      </label>
+                      <input
+                        type="text"
+                        value={profesionales.especialidad2}
+                        onChange={(e) => setProfesionales({...profesionales, especialidad2: e.target.value})}
+                        placeholder="Especialidad"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Fecha del Dictamen */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vocal 2
+                    Fecha del Dictamen
                   </label>
                   <input
-                    type="text"
-                    value={profesionales.vocal2}
-                    onChange={(e) => setProfesionales({...profesionales, vocal2: e.target.value})}
-                    placeholder="Nombre del vocal 2"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Secretario
-                  </label>
-                  <input
-                    type="text"
-                    value={profesionales.secretario}
-                    onChange={(e) => setProfesionales({...profesionales, secretario: e.target.value})}
-                    placeholder="Nombre del secretario"
+                    type="date"
+                    value={profesionales.fechaDictamen}
+                    onChange={(e) => setProfesionales({...profesionales, fechaDictamen: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
                   />
                 </div>
