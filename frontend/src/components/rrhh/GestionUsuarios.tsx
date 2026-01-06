@@ -21,8 +21,8 @@ const GestionUsuarios = () => {
     };
     
     const labels: Record<string, string> = {
-      MEDICO_INFERIOR: 'Médico',
-      MEDICO_SUPERIOR: 'Médico Superior',
+      MEDICO_INFERIOR: 'Médico Evaluador',
+      MEDICO_SUPERIOR: 'Médico Evaluador',
       RRHH: 'RRHH',
     };
 

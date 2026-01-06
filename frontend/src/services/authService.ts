@@ -7,7 +7,7 @@ const MOCK_USERS: Record<string, { password: string; user: User }> = {
     user: {
       id: 'user-001',
       email: 'medico.junior@vdc-demo.com',
-      nombre: 'Dr. Carlos Mendoza',
+      nombre: 'Dr. Carlos Mendoza (Médico Evaluador)',
       role: 'MEDICO_INFERIOR' as UserRole
     }
   },

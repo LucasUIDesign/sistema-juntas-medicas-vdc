@@ -47,8 +47,8 @@ const PerfilMedico = () => {
 
   const getRoleName = (role: string) => {
     const roles: Record<string, string> = {
-      MEDICO_INFERIOR: 'Médico',
-      MEDICO_SUPERIOR: 'Médico Superior',
+      MEDICO_INFERIOR: 'Médico Evaluador',
+      MEDICO_SUPERIOR: 'Médico Evaluador',
       RRHH: 'Recursos Humanos',
     };
     return roles[role] || role;

@@ -412,7 +412,7 @@ const MisJuntas = () => {
   );
 };
 
-// Modal para documentos faltantes
+// Modal para documentos faltantes con funcionalidad de carga
 const DocumentosFaltantesModal = ({ 
   junta, 
   onClose, 
@@ -423,6 +423,8 @@ const DocumentosFaltantesModal = ({
   onUpload: () => void;
 }) => {
   const [uploading, setUploading] = useState(false);
+  const [archivosSeleccionados, setArchivosSeleccionados] = useState<{ [key: string]: File | null }>({});
+  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   const tiempoRestante = junta.fechaLimiteDocumentos 
     ? formatDistanceToNow(new Date(junta.fechaLimiteDocumentos), { locale: es, addSuffix: true })
@@ -432,6 +434,45 @@ const DocumentosFaltantesModal = ({
     const doc = CATEGORIAS_DOCUMENTO.find(d => d.value === categoria);
     return doc?.label || categoria;
   };
+
+  const handleFileChange = (categoria: string, file: File | null) => {
+    setArchivosSeleccionados(prev => ({
+      ...prev,
+      [categoria]: file
+    }));
+    setMensaje(null);
+  };
+
+  const handleSubirDocumentos = async () => {
+    const documentosParaSubir = Object.entries(archivosSeleccionados)
+      .filter(([_, file]) => file !== null)
+      .map(([categoria, file]) => ({
+        categoria: categoria as any,
+        file: file as File
+      }));
+
+    if (documentosParaSubir.length === 0) {
+      setMensaje({ tipo: 'error', texto: 'Selecciona al menos un documento para subir' });
+      return;
+    }
+
+    setUploading(true);
+    setMensaje(null);
+
+    try {
+      await juntasService.subirDocumentosFaltantes(junta.id, documentosParaSubir);
+      setMensaje({ tipo: 'success', texto: '¡Documentos subidos exitosamente!' });
+      setTimeout(() => {
+        onUpload();
+      }, 1500);
+    } catch (error) {
+      setMensaje({ tipo: 'error', texto: 'Error al subir los documentos. Intenta nuevamente.' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const archivosListos = Object.values(archivosSeleccionados).filter(f => f !== null).length;
 
   return (
     <motion.div
@@ -445,14 +486,14 @@ const DocumentosFaltantesModal = ({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+        className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Documentos Faltantes
+            Subir Documentos Faltantes
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
             ✕
           </button>
         </div>
@@ -462,47 +503,91 @@ const DocumentosFaltantesModal = ({
             Paciente: <span className="font-medium">{junta.pacienteNombre}</span>
           </p>
           <div className="flex items-center text-orange-600 text-sm bg-orange-50 p-2 rounded">
-            <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
-            Tiempo restante: {tiempoRestante}
+            <ExclamationTriangleIcon className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span>Tiempo restante: <strong>{tiempoRestante}</strong></span>
           </div>
         </div>
 
+        {/* Lista de documentos faltantes con input de archivo */}
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            Documentos que faltan entregar:
+          <p className="text-sm font-medium text-gray-700 mb-3">
+            Selecciona los archivos para cada documento faltante:
           </p>
-          <ul className="space-y-2">
+          <div className="space-y-3">
             {junta.documentosFaltantes?.map((doc) => (
-              <li key={doc} className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                {getDocumentoLabel(doc)}
-              </li>
+              <div key={doc} className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 flex items-center">
+                    <span className={`w-2 h-2 rounded-full mr-2 ${archivosSeleccionados[doc] ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    {getDocumentoLabel(doc)}
+                  </span>
+                  {archivosSeleccionados[doc] && (
+                    <span className="text-xs text-green-600">✓ Listo</span>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(e) => handleFileChange(doc, e.target.files?.[0] || null)}
+                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-vdc-primary file:text-white hover:file:bg-vdc-primary/90 file:cursor-pointer"
+                />
+                {archivosSeleccionados[doc] && (
+                  <p className="text-xs text-gray-500 mt-1 truncate">
+                    📎 {archivosSeleccionados[doc]?.name}
+                  </p>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
+
+        {/* Mensaje de estado */}
+        {mensaje && (
+          <div className={`mb-4 p-3 rounded text-sm ${
+            mensaje.tipo === 'success' 
+              ? 'bg-green-50 text-green-700 border border-green-200' 
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {mensaje.tipo === 'success' ? '✅' : '❌'} {mensaje.texto}
+          </div>
+        )}
 
         <div className="text-xs text-gray-500 mb-4 p-2 bg-yellow-50 rounded">
           ⚠️ Si no se entregan los documentos antes del plazo, la junta será rechazada automáticamente.
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
-          >
-            Cerrar
-          </button>
-          <button
-            onClick={() => {
-              // Aquí iría la lógica para abrir el uploader
-              // Por ahora solo cerramos
-              onUpload();
-            }}
-            disabled={uploading}
-            className="px-4 py-2 text-sm bg-vdc-primary text-white rounded hover:bg-vdc-primary/90 disabled:opacity-50"
-          >
-            {uploading ? 'Subiendo...' : 'Subir Documentos'}
-          </button>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">
+            {archivosListos} de {junta.documentosFaltantes?.length || 0} documentos listos
+          </span>
+          <div className="flex space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubirDocumentos}
+              disabled={uploading || archivosListos === 0}
+              className="px-4 py-2 text-sm bg-vdc-primary text-white rounded hover:bg-vdc-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              {uploading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Subiendo...
+                </>
+              ) : (
+                <>
+                  <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
+                  Subir Documentos
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
