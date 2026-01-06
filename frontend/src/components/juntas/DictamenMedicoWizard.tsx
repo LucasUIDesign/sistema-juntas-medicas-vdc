@@ -223,13 +223,19 @@ interface DictamenMedicoWizardProps {
   onComplete: (data: DictamenMedicoData, isCompleto: boolean) => void;
   onCancel?: () => void;
   initialData?: DictamenMedicoData;
+  hideProfesionales?: boolean;
 }
 
-const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMedicoWizardProps) => {
+const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false }: DictamenMedicoWizardProps) => {
   const [pasoActual, setPasoActual] = useState(1);
+  
+  // Filtrar pasos si hideProfesionales está activo
+  const pasosVisibles = hideProfesionales ? PASOS.filter(p => p.id !== 12) : PASOS;
+  const totalPasos = pasosVisibles.length;
 
   const avanzarPaso = () => {
-    if (pasoActual < 12) {
+    const maxPaso = hideProfesionales ? 11 : 12;
+    if (pasoActual < maxPaso) {
       setPasoActual(pasoActual + 1);
     }
   };
@@ -674,7 +680,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMed
               <div className="sm:hidden mb-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">
-                    Paso {pasoActual}/12
+                    Paso {pasoActual}/{totalPasos}
                   </span>
                   <span className="text-xs text-gray-500">
                     {PASOS[pasoActual - 1].nombre}
@@ -683,14 +689,14 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMed
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-vdc-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(pasoActual / 12) * 100}%` }}
+                    style={{ width: `${(pasoActual / totalPasos) * 100}%` }}
                   />
                 </div>
               </div>
 
               {/* Desktop: Indicador completo */}
               <div className="hidden sm:flex items-center justify-between overflow-x-auto pb-2">
-                {PASOS.map((paso, index) => {
+                {pasosVisibles.map((paso, index) => {
                   const Icon = paso.icon;
                   const isActive = paso.id === pasoActual;
                   const tieneAlgo = isPasoCompleto(paso.id, values);
@@ -726,7 +732,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMed
                           {paso.nombre}
                         </span>
                       </button>
-                      {index < PASOS.length - 1 && (
+                      {index < pasosVisibles.length - 1 && (
                         <div className={`w-3 lg:w-4 h-0.5 mx-0.5 lg:mx-1 ${
                           todoLleno ? 'bg-vdc-success' : tieneAlgo ? 'bg-yellow-400' : 'bg-gray-200'
                         }`} />
@@ -741,7 +747,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMed
                 <div className="p-4 sm:p-6">
                   <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <span className="text-sm text-gray-500">
-                      Paso {pasoActual} de 12: <span className="font-medium text-gray-700">{PASOS[pasoActual - 1].nombre}</span>
+                      Paso {pasoActual} de {totalPasos}: <span className="font-medium text-gray-700">{PASOS[pasoActual - 1].nombre}</span>
                     </span>
                     {/* Indicador de estado */}
                     {isPasoTodoLleno(pasoActual, values) ? (
@@ -814,7 +820,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData }: DictamenMed
                       <span className="hidden sm:inline">Anterior</span>
                     </button>
 
-                    {pasoActual < 12 ? (
+                    {pasoActual < (hideProfesionales ? 11 : 12) ? (
                       <button
                         type="button"
                         onClick={avanzarPaso}
