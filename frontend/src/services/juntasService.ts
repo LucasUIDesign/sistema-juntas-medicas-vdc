@@ -1,4 +1,4 @@
-import { JuntaMedica, CreateJuntaDTO, JuntaFilters, PaginatedResult, Paciente, Medico, Adjunto, DictamenMedicoResumen } from '../types';
+import { JuntaMedica, CreateJuntaDTO, JuntaFilters, PaginatedResult, Paciente, Medico, Adjunto, DictamenMedicoResumen, JuntaAsignada, CategoriaDocumento, DOCUMENTOS_REQUERIDOS } from '../types';
 import { DictamenMedicoData, isDictamenCompleto } from '../components/juntas/DictamenMedicoWizard';
 
 // Mock data for development (Requirements 11.4, 11.5)
@@ -17,7 +17,7 @@ const MOCK_MEDICOS: Medico[] = [
 
 // Generate mock juntas
 const generateMockJuntas = (): JuntaMedica[] => {
-  const estados: JuntaMedica['estado'][] = ['PENDIENTE', 'APROBADA', 'RECHAZADA'];
+  const estados: JuntaMedica['estado'][] = ['PENDIENTE', 'APROBADA', 'RECHAZADA', 'DOCUMENTOS_PENDIENTES'];
   const juntas: JuntaMedica[] = [];
   
   for (let i = 1; i <= 10; i++) {
@@ -26,16 +26,37 @@ const generateMockJuntas = (): JuntaMedica[] => {
     const fecha = new Date();
     fecha.setDate(fecha.getDate() - Math.floor(Math.random() * 30));
     
+    const estado = estados[Math.floor(Math.random() * estados.length)];
+    
+    // Si es DOCUMENTOS_PENDIENTES, generar documentos faltantes y fecha límite
+    let documentosFaltantes: CategoriaDocumento[] | undefined;
+    let fechaLimiteDocumentos: string | undefined;
+    
+    if (estado === 'DOCUMENTOS_PENDIENTES') {
+      // Seleccionar algunos documentos faltantes aleatoriamente
+      const numFaltantes = Math.floor(Math.random() * 3) + 1;
+      documentosFaltantes = DOCUMENTOS_REQUERIDOS.slice(0, numFaltantes);
+      
+      // Fecha límite: entre 0 y 72 horas desde ahora
+      const horasRestantes = Math.floor(Math.random() * 72);
+      const fechaLimite = new Date();
+      fechaLimite.setHours(fechaLimite.getHours() + horasRestantes);
+      fechaLimiteDocumentos = fechaLimite.toISOString();
+    }
+    
     juntas.push({
       id: `junta-${String(i).padStart(3, '0')}`,
       fecha: fecha.toISOString(),
+      hora: `${8 + Math.floor(Math.random() * 8)}:${Math.random() > 0.5 ? '00' : '30'}`,
       pacienteId: paciente.id,
       pacienteNombre: paciente.nombre,
       medicoId: medico.id,
       medicoNombre: medico.nombre,
       detalles: `Evaluación médica ocupacional del trabajador. Se realizaron exámenes de rutina incluyendo audiometría, espirometría y evaluación cardiovascular. Paciente presenta condiciones normales para continuar labores. Recomendaciones: mantener controles periódicos.`,
       aprobacion: Math.random() > 0.3,
-      estado: estados[Math.floor(Math.random() * estados.length)],
+      estado: estado,
+      documentosFaltantes,
+      fechaLimiteDocumentos,
       adjuntos: [],
       createdAt: fecha.toISOString(),
       updatedAt: fecha.toISOString(),
@@ -43,6 +64,36 @@ const generateMockJuntas = (): JuntaMedica[] => {
   }
   
   return juntas.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+};
+
+// Mock juntas asignadas (próximas)
+const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
+  const hoy = new Date();
+  return [
+    {
+      id: 'asig-001',
+      fecha: new Date(hoy.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Mañana
+      hora: '09:00',
+      pacienteNombre: 'Roberto Gómez Fernández',
+      pacienteDni: '32.456.789',
+      lugar: 'Consultorio 3 - VDC Internacional',
+    },
+    {
+      id: 'asig-002',
+      fecha: new Date(hoy.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
+      hora: '11:30',
+      pacienteNombre: 'Laura Martínez Sosa',
+      pacienteDni: '28.123.456',
+      lugar: 'Consultorio 1 - VDC Internacional',
+    },
+    {
+      id: 'asig-003',
+      fecha: new Date(hoy.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), // En 5 días
+      hora: '14:00',
+      pacienteNombre: 'Miguel Ángel Torres',
+      pacienteDni: '35.789.012',
+    },
+  ];
 };
 
 let mockJuntas = generateMockJuntas();
@@ -229,5 +280,82 @@ export const juntasService = {
   async getMedicos(): Promise<Medico[]> {
     await delay(150);
     return MOCK_MEDICOS;
+  },
+
+  /**
+   * Get juntas asignadas (próximas)
+   */
+  async getJuntasAsignadas(): Promise<JuntaAsignada[]> {
+    await delay(200);
+    return generateMockJuntasAsignadas();
+  },
+
+  /**
+   * Subir documentos faltantes para una junta
+   */
+  async subirDocumentosFaltantes(juntaId: string, documentos: { file: File; categoria: CategoriaDocumento }[]): Promise<JuntaMedica> {
+    await delay(400);
+    
+    const index = mockJuntas.findIndex(j => j.id === juntaId);
+    if (index === -1) {
+      throw new Error('Junta no encontrada');
+    }
+    
+    const junta = mockJuntas[index];
+    
+    // Agregar documentos
+    const nuevosAdjuntos: Adjunto[] = documentos.map((doc, idx) => ({
+      id: `adj-${Date.now()}-${idx}`,
+      nombre: doc.file.name,
+      tipo: doc.file.type,
+      url: URL.createObjectURL(doc.file),
+      size: doc.file.size,
+      categoria: doc.categoria,
+      uploadedAt: new Date().toISOString(),
+    }));
+    
+    // Actualizar documentos faltantes
+    const categoriasSubidas = documentos.map(d => d.categoria);
+    const nuevosFaltantes = junta.documentosFaltantes?.filter(
+      cat => !categoriasSubidas.includes(cat)
+    );
+    
+    // Si ya no faltan documentos, cambiar estado a PENDIENTE
+    const nuevoEstado = nuevosFaltantes && nuevosFaltantes.length === 0 
+      ? 'PENDIENTE' 
+      : junta.estado;
+    
+    mockJuntas[index] = {
+      ...junta,
+      adjuntos: [...(junta.adjuntos || []), ...nuevosAdjuntos],
+      documentosFaltantes: nuevosFaltantes,
+      estado: nuevoEstado,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    return mockJuntas[index];
+  },
+
+  /**
+   * Verificar y rechazar juntas con documentos vencidos
+   */
+  async verificarDocumentosVencidos(): Promise<void> {
+    const ahora = new Date();
+    
+    mockJuntas = mockJuntas.map(junta => {
+      if (
+        junta.estado === 'DOCUMENTOS_PENDIENTES' &&
+        junta.fechaLimiteDocumentos &&
+        new Date(junta.fechaLimiteDocumentos) < ahora
+      ) {
+        return {
+          ...junta,
+          estado: 'RECHAZADA' as const,
+          detalles: junta.detalles + '\n\n[RECHAZADA AUTOMÁTICAMENTE: No se entregaron los documentos requeridos en el plazo de 72 horas]',
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return junta;
+    });
   },
 };

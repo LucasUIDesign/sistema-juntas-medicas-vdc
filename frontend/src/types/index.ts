@@ -9,7 +9,16 @@ export interface User {
 }
 
 // Junta Médica types
-export type EstadoJunta = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+export type EstadoJunta = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'DOCUMENTOS_PENDIENTES';
+
+// Documentos requeridos para una junta
+export const DOCUMENTOS_REQUERIDOS: CategoriaDocumento[] = [
+  'EXAMEN_PSICOLOGICO',
+  'RESULTADOS_BIOQUIMICOS',
+  'DD_JJ_EX1',
+  'RESULTADO_MEDICO_EX2',
+  'CERTIFICADO_APTITUD_EX3',
+];
 
 // Categorías de documentos médicos
 export type CategoriaDocumento = 
@@ -50,6 +59,7 @@ export interface Adjunto {
 export interface JuntaMedica {
   id: string;
   fecha: string;
+  hora?: string; // Hora de la junta asignada
   pacienteId: string;
   pacienteNombre: string;
   medicoId: string;
@@ -59,8 +69,20 @@ export interface JuntaMedica {
   adjuntos?: Adjunto[];
   dictamen?: DictamenMedicoResumen;
   estado: EstadoJunta;
+  documentosFaltantes?: CategoriaDocumento[]; // Documentos que faltan entregar
+  fechaLimiteDocumentos?: string; // Fecha límite para entregar documentos (72hs)
   createdAt: string;
   updatedAt: string;
+}
+
+// Junta asignada (próxima a realizar)
+export interface JuntaAsignada {
+  id: string;
+  fecha: string;
+  hora: string;
+  pacienteNombre: string;
+  pacienteDni: string;
+  lugar?: string;
 }
 
 // Resumen del dictamen para mostrar en historial
