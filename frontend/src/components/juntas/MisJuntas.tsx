@@ -5,14 +5,12 @@ import { juntasService } from '../../services/juntasService';
 import { JuntaMedica, PaginatedResult, CATEGORIAS_DOCUMENTO } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModal from './JuntaDetailModal';
-import EditJuntaModal from './EditJuntaModal';
 import { format, formatDistanceToNow, differenceInHours, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   ChevronUpIcon,
   ChevronDownIcon,
   EyeIcon,
-  PencilSquareIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClipboardDocumentListIcon,
@@ -28,7 +26,6 @@ const MisJuntas = () => {
   const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
-  const [editingJunta, setEditingJunta] = useState<JuntaMedica | null>(null);
   const [documentosModal, setDocumentosModal] = useState<JuntaMedica | null>(null);
   const [sortField, setSortField] = useState<SortField>('fecha');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -80,16 +77,6 @@ const MisJuntas = () => {
       setSortField(field);
       setSortOrder('desc');
     }
-  };
-
-  const handleEditSave = (updatedJunta: JuntaMedica) => {
-    if (juntas) {
-      setJuntas({
-        ...juntas,
-        data: juntas.data.map(j => j.id === updatedJunta.id ? updatedJunta : j),
-      });
-    }
-    setEditingJunta(null);
   };
 
   const getEstadoBadge = (junta: JuntaMedica) => {
@@ -287,17 +274,6 @@ const MisJuntas = () => {
                           >
                             <EyeIcon className="h-5 w-5" aria-hidden="true" />
                           </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingJunta(junta);
-                            }}
-                            className="text-vdc-secondary hover:text-vdc-primary transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
-                            aria-label={`Editar junta de ${junta.pacienteNombre}`}
-                            title="Editar"
-                          >
-                            <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
-                          </button>
                         </div>
                       </td>
                     </motion.tr>
@@ -333,16 +309,6 @@ const MisJuntas = () => {
                           aria-label="Ver detalles"
                         >
                           <EyeIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingJunta(junta);
-                          }}
-                          className="text-vdc-secondary p-2"
-                          aria-label="Editar"
-                        >
-                          <PencilSquareIcon className="h-5 w-5" />
                         </button>
                       </div>
                     </div>
@@ -425,17 +391,6 @@ const MisJuntas = () => {
           <JuntaDetailModal
             junta={selectedJunta}
             onClose={() => setSelectedJunta(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Edit Modal */}
-      <AnimatePresence>
-        {editingJunta && (
-          <EditJuntaModal
-            junta={editingJunta}
-            onClose={() => setEditingJunta(null)}
-            onSave={handleEditSave}
           />
         )}
       </AnimatePresence>

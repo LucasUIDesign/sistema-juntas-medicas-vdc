@@ -19,14 +19,12 @@ import 'react-datepicker/dist/react-datepicker.css';
 const JuntaForm = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDocumentos, setShowDocumentos] = useState(false);
   const [showProfesionales, setShowProfesionales] = useState(false);
   const [dictamenData, setDictamenData] = useState<DictamenMedicoData | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoParaSubir[]>([]);
-  const [aprobacion, setAprobacion] = useState(false);
   
-  // Estado para profesionales (movido del wizard)
+  // Estado para profesionales
   const [profesionales, setProfesionales] = useState({
     medicoEvaluador1: '',
     matricula1: '',
@@ -37,14 +35,11 @@ const JuntaForm = () => {
     fechaDictamen: '',
   });
 
-  const isMedicoSuperior = user?.role === 'MEDICO_SUPERIOR';
-
   const handleSubmit = async () => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
-      // Combinar dictamen con profesionales
       const dictamenConProfesionales = dictamenData ? {
         ...dictamenData,
         profesionales: profesionales,
@@ -54,16 +49,14 @@ const JuntaForm = () => {
         fecha: new Date().toISOString(),
         pacienteId: 'default',
         detalles: 'Dictamen médico registrado',
-        aprobacion: aprobacion,
+        aprobacion: false,
         documentos: documentos,
         dictamen: dictamenConProfesionales,
       };
 
       await juntasService.createJunta(data, user.id, user.nombre);
       
-      toast.success('¡Junta médica guardada exitosamente!', {
-        icon: '✅',
-      });
+      toast.success('¡Junta médica guardada exitosamente!', { icon: '✅' });
       
       // Reset form
       setDocumentos([]);
@@ -80,9 +73,7 @@ const JuntaForm = () => {
         fechaDictamen: '',
       });
     } catch (error) {
-      toast.error('Error al guardar la junta médica. Intenta nuevamente.', {
-        icon: '❌',
-      });
+      toast.error('Error al guardar la junta médica. Intenta nuevamente.', { icon: '❌' });
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +115,7 @@ const JuntaForm = () => {
       {/* Form Card */}
       <div className="bg-white rounded-card shadow-card p-card">
         <div className="space-y-6">
-          {/* Dictamen Médico Section - Principal y abierto por defecto */}
+          {/* Dictamen Médico Section */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-vdc-primary flex items-center">
@@ -154,7 +145,7 @@ const JuntaForm = () => {
             />
           </div>
 
-          {/* Profesionales Section - Movido del wizard */}
+          {/* Profesionales Section */}
           <div className="border-t border-gray-200 pt-4">
             <button
               type="button"
@@ -189,9 +180,7 @@ const JuntaForm = () => {
                   <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Principal</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre Completo
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                       <input
                         type="text"
                         value={profesionales.medicoEvaluador1}
@@ -201,9 +190,7 @@ const JuntaForm = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Matrícula
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
                       <input
                         type="text"
                         value={profesionales.matricula1}
@@ -213,9 +200,7 @@ const JuntaForm = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Especialidad
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
                       <input
                         type="text"
                         value={profesionales.especialidad1}
@@ -232,9 +217,7 @@ const JuntaForm = () => {
                   <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Secundario (opcional)</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre Completo
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
                       <input
                         type="text"
                         value={profesionales.medicoEvaluador2}
@@ -244,9 +227,7 @@ const JuntaForm = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Matrícula
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
                       <input
                         type="text"
                         value={profesionales.matricula2}
@@ -256,9 +237,7 @@ const JuntaForm = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Especialidad
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
                       <input
                         type="text"
                         value={profesionales.especialidad2}
@@ -272,9 +251,7 @@ const JuntaForm = () => {
 
                 {/* Fecha del Dictamen */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha del Dictamen
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha del Dictamen</label>
                   <input
                     type="date"
                     value={profesionales.fechaDictamen}
@@ -285,48 +262,6 @@ const JuntaForm = () => {
               </div>
             </motion.div>
           </div>
-
-          {/* Advanced Options - Only for Médico Superior */}
-          {isMedicoSuperior && (
-            <div className="border-t border-gray-200 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors"
-                aria-expanded={showAdvanced}
-              >
-                <ChevronDownIcon
-                  className={`h-5 w-5 mr-2 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-                  aria-hidden="true"
-                />
-                Opciones Avanzadas (Médico Superior)
-              </button>
-
-              <motion.div
-                initial={false}
-                animate={{ height: showAdvanced ? 'auto' : 0, opacity: showAdvanced ? 1 : 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 space-y-4">
-                  {/* Aprobación Checkbox */}
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="aprobacion"
-                      checked={aprobacion}
-                      onChange={(e) => setAprobacion(e.target.checked)}
-                      className="h-5 w-5 text-vdc-primary border-gray-300 rounded focus:ring-vdc-primary"
-                    />
-                    <label htmlFor="aprobacion" className="ml-3 text-sm text-gray-700">
-                      <CheckCircleIcon className="inline h-4 w-4 mr-1 text-vdc-success" aria-hidden="true" />
-                      Marcar como Aprobada
-                    </label>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          )}
 
           {/* Documentos Section */}
           <div className="border-t border-gray-200 pt-4">
@@ -358,10 +293,7 @@ const JuntaForm = () => {
               className="overflow-hidden"
             >
               <div className="pt-4">
-                <DocumentosManager
-                  documentos={documentos}
-                  onChange={setDocumentos}
-                />
+                <DocumentosManager documentos={documentos} onChange={setDocumentos} />
               </div>
             </motion.div>
           </div>
@@ -384,9 +316,7 @@ const JuntaForm = () => {
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               className={`px-6 py-2 rounded-card text-white font-medium transition-colors flex items-center ${
-                isSubmitting
-                  ? 'bg-vdc-success/70 cursor-not-allowed'
-                  : 'bg-vdc-success hover:bg-vdc-success/90'
+                isSubmitting ? 'bg-vdc-success/70 cursor-not-allowed' : 'bg-vdc-success hover:bg-vdc-success/90'
               }`}
               aria-busy={isSubmitting}
             >
