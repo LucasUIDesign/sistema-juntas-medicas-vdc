@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DatePicker from 'react-datepicker';
 import { useAuth } from '../../context/AuthContext';
 import { juntasService } from '../../services/juntasService';
-import { JuntaMedica, PaginatedResult, CATEGORIAS_DOCUMENTO } from '../../types';
+import { JuntaMedica, PaginatedResult, CATEGORIAS_DOCUMENTO, Medico, JuntaFilters, EstadoJunta } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModal from './JuntaDetailModal';
 import { format, formatDistanceToNow, differenceInHours, differenceInMinutes } from 'date-fns';
@@ -16,7 +17,10 @@ import {
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
   DocumentArrowUpIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
 } from '@heroicons/react/24/outline';
+import 'react-datepicker/dist/react-datepicker.css';
 
 type SortField = 'fecha' | 'pacienteNombre' | 'estado';
 type SortOrder = 'asc' | 'desc';
@@ -24,6 +28,7 @@ type SortOrder = 'asc' | 'desc';
 const MisJuntas = () => {
   const { user } = useAuth();
   const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
+  const [medicos, setMedicos] = useState<Medico[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
   const [documentosModal, setDocumentosModal] = useState<JuntaMedica | null>(null);
@@ -31,11 +36,24 @@ const MisJuntas = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [, setTick] = useState(0); // Para forzar re-render del contador
+  const [, setTick] = useState(0);
+  
+  // Filtros para Director Médico
+  const [showFilters, setShowFilters] = useState(false);
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [selectedMedico, setSelectedMedico] = useState<string>('');
+  const [selectedEstado, setSelectedEstado] = useState<string>('');
+  const [searchPaciente, setSearchPaciente] = useState<string>('');
+
+  const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
 
   useEffect(() => {
     if (user) {
       loadJuntas();
+      if (isDirectorMedico) {
+        loadMedicos();
+      }
     }
   }, [user, page, pageSize, sortField, sortOrder]);
 
@@ -43,7 +61,6 @@ const MisJuntas = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(t => t + 1);
-      // Verificar documentos vencidos
       juntasService.verificarDocumentosVencidos().then(() => {
         if (user) loadJuntas();
       });
@@ -51,33 +68,68 @@ const MisJuntas = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
+  const loadMedicos = async () => {
+    try {
+      const data = await juntasService.getMedicos();
+      setMedicos(data);
+    } catch (error) {
+      console.error('Error loading medicos:', error);
+    }
+  };
 
   const loadJuntas = async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      // Director Médico ve todas las juntas, Evaluador solo las suyas
+      const filters: JuntaFilters = {
+        page,
+        pageSize,
+        sortBy: sortField,
+        sortOrder,
+      };
+
+      // Aplicar filtros solo para Director Médico
+      if (isDirectorMedico) {
+        if (fechaInicio) filters.fechaInicio = fechaInicio.toISOString();
+        if (fechaFin) filters.fechaFin = fechaFin.toISOString();
+        if (selectedMedico) filters.medicoId = selectedMedico;
+        if (selectedEstado) filters.estado = selectedEstado as EstadoJunta;
+      }
+
       const data = isDirectorMedico 
-        ? await juntasService.getJuntas({
-            page,
-            pageSize,
-            sortBy: sortField,
-            sortOrder,
-          })
-        : await juntasService.getJuntasByMedico(user.id, {
-            page,
-            pageSize,
-            sortBy: sortField,
-            sortOrder,
-          });
+        ? await juntasService.getJuntas(filters)
+        : await juntasService.getJuntasByMedico(user.id, filters);
+      
+      // Filtrar por nombre de paciente si hay búsqueda
+      if (searchPaciente && isDirectorMedico) {
+        data.data = data.data.filter(j => 
+          j.pacienteNombre.toLowerCase().includes(searchPaciente.toLowerCase())
+        );
+        data.total = data.data.length;
+      }
+      
       setJuntas(data);
     } catch (error) {
       console.error('Error loading juntas:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    setPage(1);
+    loadJuntas();
+  };
+
+  const handleClearFilters = () => {
+    setFechaInicio(null);
+    setFechaFin(null);
+    setSelectedMedico('');
+    setSelectedEstado('');
+    setSearchPaciente('');
+    setPage(1);
+    loadJuntas();
   };
 
   const handleSort = (field: SortField) => {
@@ -191,6 +243,126 @@ const MisJuntas = () => {
             : 'Historial de evaluaciones médicas registradas'}
         </p>
       </div>
+
+      {/* Filtros - Solo para Director Médico */}
+      {isDirectorMedico && (
+        <div className="bg-white rounded-card shadow-card mb-6">
+          <div className="p-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors lg:hidden mb-4"
+            >
+              <FunnelIcon className="h-5 w-5 mr-2" />
+              {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            </button>
+
+            <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                {/* Buscar Paciente */}
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Buscar Paciente
+                  </label>
+                  <input
+                    type="text"
+                    value={searchPaciente}
+                    onChange={(e) => setSearchPaciente(e.target.value)}
+                    placeholder="Nombre del paciente..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                  />
+                </div>
+
+                {/* Fecha Desde */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha Desde
+                  </label>
+                  <DatePicker
+                    selected={fechaInicio}
+                    onChange={(date) => setFechaInicio(date)}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Seleccionar..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                    isClearable
+                    locale={es}
+                  />
+                </div>
+
+                {/* Fecha Hasta */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha Hasta
+                  </label>
+                  <DatePicker
+                    selected={fechaFin}
+                    onChange={(date) => setFechaFin(date)}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Seleccionar..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                    isClearable
+                    minDate={fechaInicio || undefined}
+                    locale={es}
+                  />
+                </div>
+
+                {/* Estado */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Estado
+                  </label>
+                  <select
+                    value={selectedEstado}
+                    onChange={(e) => setSelectedEstado(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                  >
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="APROBADA">Aprobada</option>
+                    <option value="RECHAZADA">Rechazada</option>
+                    <option value="DOCUMENTOS_PENDIENTES">Docs. Pendientes</option>
+                  </select>
+                </div>
+
+                {/* Médico */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Médico
+                  </label>
+                  <select
+                    value={selectedMedico}
+                    onChange={(e) => setSelectedMedico(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                  >
+                    <option value="">Todos</option>
+                    {medicos.map((medico) => (
+                      <option key={medico.id} value={medico.id}>
+                        {medico.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Botones de búsqueda */}
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  onClick={handleClearFilters}
+                  className="px-4 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Limpiar
+                </button>
+                <button
+                  onClick={handleSearch}
+                  className="px-4 py-2 text-sm bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors flex items-center"
+                >
+                  <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+                  Buscar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Table Card */}
       <div className="bg-white rounded-card shadow-card overflow-hidden">
