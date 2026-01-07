@@ -12,11 +12,8 @@ import {
   MagnifyingGlassIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  EyeIcon,
-  PencilIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ArrowDownTrayIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -105,12 +102,6 @@ const TodasJuntas = () => {
     }
   };
 
-  const handleExport = (type: 'excel' | 'pdf') => {
-    toast.info(`Exportación a ${type.toUpperCase()} próximamente disponible`, {
-      icon: 'ℹ️',
-    });
-  };
-
   const getEstadoBadge = (estado: JuntaMedica['estado']) => {
     const styles = {
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
@@ -152,37 +143,13 @@ const TodasJuntas = () => {
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-subtitle font-semibold text-gray-900">
-            Vista General de Juntas Médicas
-          </h2>
-          <p className="text-vdc-secondary text-sm mt-1">
-            Supervisión y gestión de todas las evaluaciones médicas
-          </p>
-        </div>
-        
-        {/* Export Buttons */}
-        <div className="flex space-x-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleExport('excel')}
-            className="flex items-center px-4 py-2 border border-vdc-success text-vdc-success rounded-card hover:bg-vdc-success/5 transition-colors"
-          >
-            <ArrowDownTrayIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            Excel
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleExport('pdf')}
-            className="flex items-center px-4 py-2 border border-vdc-error text-vdc-error rounded-card hover:bg-vdc-error/5 transition-colors"
-          >
-            <ArrowDownTrayIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            PDF
-          </motion.button>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-subtitle font-semibold text-gray-900">
+          Vista General de Juntas Médicas
+        </h2>
+        <p className="text-vdc-secondary text-sm mt-1">
+          Supervisión y gestión de todas las evaluaciones médicas
+        </p>
       </div>
 
       {/* Filter Toolbar */}
@@ -317,9 +284,6 @@ const TodasJuntas = () => {
                     >
                       Estado <SortIcon field="estado" />
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Acciones
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -352,24 +316,6 @@ const TodasJuntas = () => {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {getEstadoBadge(junta.estado)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
-                        <div className="flex justify-end space-x-1">
-                          <button
-                            onClick={() => setSelectedJunta(junta)}
-                            className="p-2 text-vdc-primary hover:text-vdc-primary/80 hover:bg-vdc-primary/10 rounded-full transition-colors"
-                            aria-label={`Ver detalles de ${junta.pacienteNombre}`}
-                          >
-                            <EyeIcon className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                          <button
-                            onClick={() => toast.info('Edición próximamente disponible')}
-                            className="p-2 text-vdc-secondary hover:text-vdc-secondary/80 hover:bg-gray-100 rounded-full transition-colors"
-                            aria-label={`Editar junta de ${junta.pacienteNombre}`}
-                          >
-                            <PencilIcon className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        </div>
                       </td>
                     </motion.tr>
                   ))}
