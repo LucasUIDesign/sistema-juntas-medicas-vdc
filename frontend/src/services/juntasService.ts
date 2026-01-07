@@ -11,7 +11,7 @@ const MOCK_PACIENTES: Paciente[] = [
 ];
 
 const MOCK_MEDICOS: Medico[] = [
-  { id: 'user-001', nombre: 'Dr. Carlos Mendoza (Médico Evaluador)', especialidad: 'Medicina Ocupacional' },
+  { id: 'user-001', nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Ocupacional' },
   { id: 'user-002', nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
 ];
 

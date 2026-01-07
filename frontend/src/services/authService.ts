@@ -1,23 +1,23 @@
 import { User, AuthResponse, UserRole } from '../types';
 
-// Mock users for development (Requirements 11.1, 11.2, 11.3)
+// Mock users for development
 const MOCK_USERS: Record<string, { password: string; user: User }> = {
-  'medico.junior@vdc-demo.com': {
+  'evaluador@vdc-demo.com': {
     password: 'Demo2025!',
     user: {
       id: 'user-001',
-      email: 'medico.junior@vdc-demo.com',
-      nombre: 'Dr. Carlos Mendoza (Médico Evaluador)',
-      role: 'MEDICO_INFERIOR' as UserRole
+      email: 'evaluador@vdc-demo.com',
+      nombre: 'Dr. Carlos Mendoza',
+      role: 'MEDICO_EVALUADOR' as UserRole
     }
   },
-  'medico.senior@vdc-demo.com': {
+  'director@vdc-demo.com': {
     password: 'Demo2025!',
     user: {
       id: 'user-002',
-      email: 'medico.senior@vdc-demo.com',
+      email: 'director@vdc-demo.com',
       nombre: 'Dra. María González',
-      role: 'MEDICO_SUPERIOR' as UserRole
+      role: 'DIRECTOR_MEDICO' as UserRole
     }
   },
   'rrhh@vdc-demo.com': {
@@ -27,6 +27,24 @@ const MOCK_USERS: Record<string, { password: string; user: User }> = {
       email: 'rrhh@vdc-demo.com',
       nombre: 'Ana Rodríguez',
       role: 'RRHH' as UserRole
+    }
+  },
+  'gerencial@vdc-demo.com': {
+    password: 'Demo2025!',
+    user: {
+      id: 'user-004',
+      email: 'gerencial@vdc-demo.com',
+      nombre: 'Roberto Fernández',
+      role: 'GERENCIAL' as UserRole
+    }
+  },
+  'admin@vdc-demo.com': {
+    password: 'Demo2025!',
+    user: {
+      id: 'user-005',
+      email: 'admin@vdc-demo.com',
+      nombre: 'Administrador Sistema',
+      role: 'ADMIN' as UserRole
     }
   }
 };
@@ -53,12 +71,7 @@ const verifyMockToken = (token: string): boolean => {
 };
 
 export const authService = {
-  /**
-   * Login with email and password
-   * Uses mock authentication for development
-   */
   async login(email: string, password: string): Promise<AuthResponse> {
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -77,18 +90,11 @@ export const authService = {
     };
   },
 
-  /**
-   * Verify if token is valid
-   */
   async verifyToken(token: string): Promise<boolean> {
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 100));
     return verifyMockToken(token);
   },
 
-  /**
-   * Refresh token
-   */
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     await new Promise(resolve => setTimeout(resolve, 200));
     
@@ -113,30 +119,25 @@ export const authService = {
     };
   },
 
-  /**
-   * Initiate password reset flow
-   */
   async forgotPassword(email: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const normalizedEmail = email.toLowerCase().trim();
     if (!MOCK_USERS[normalizedEmail]) {
-      // Don't reveal if email exists or not
       return;
     }
     
     console.log(`Password reset email would be sent to: ${email}`);
   },
 
-  /**
-   * Get dashboard route based on user role
-   */
   getDashboardRoute(role: UserRole): string {
     switch (role) {
-      case 'MEDICO_INFERIOR':
-      case 'MEDICO_SUPERIOR':
+      case 'MEDICO_EVALUADOR':
+      case 'DIRECTOR_MEDICO':
         return '/dashboard/medico';
       case 'RRHH':
+      case 'GERENCIAL':
+      case 'ADMIN':
         return '/dashboard/rrhh';
       default:
         return '/';

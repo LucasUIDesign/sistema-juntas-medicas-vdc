@@ -50,17 +50,17 @@ function App() {
           <Route
             path="/dashboard/medico/*"
             element={
-              <ProtectedRoute allowedRoles={['MEDICO_INFERIOR', 'MEDICO_SUPERIOR']}>
+              <ProtectedRoute allowedRoles={['MEDICO_EVALUADOR', 'DIRECTOR_MEDICO']}>
                 <DashboardMedico />
               </ProtectedRoute>
             }
           />
 
-          {/* Protected routes - RRHH */}
+          {/* Protected routes - RRHH, Gerencial, Admin */}
           <Route
             path="/dashboard/rrhh/*"
             element={
-              <ProtectedRoute allowedRoles={['RRHH']}>
+              <ProtectedRoute allowedRoles={['RRHH', 'GERENCIAL', 'ADMIN']}>
                 <DashboardRRHH />
               </ProtectedRoute>
             }

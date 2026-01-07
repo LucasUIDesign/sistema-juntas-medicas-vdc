@@ -242,16 +242,24 @@ const LoginPage = () => {
             </p>
             <div className="space-y-2 text-xs text-gray-600">
               <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Médico Junior:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">medico.junior@vdc-demo.com</span>
+                <span>Médico Evaluador:</span>
+                <span className="font-mono text-[10px] sm:text-xs break-all">evaluador@vdc-demo.com</span>
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Médico Senior:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">medico.senior@vdc-demo.com</span>
+                <span>Director Médico:</span>
+                <span className="font-mono text-[10px] sm:text-xs break-all">director@vdc-demo.com</span>
               </div>
               <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
                 <span>RRHH:</span>
                 <span className="font-mono text-[10px] sm:text-xs break-all">rrhh@vdc-demo.com</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
+                <span>Gerencial:</span>
+                <span className="font-mono text-[10px] sm:text-xs break-all">gerencial@vdc-demo.com</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
+                <span>Admin:</span>
+                <span className="font-mono text-[10px] sm:text-xs break-all">admin@vdc-demo.com</span>
               </div>
               <p className="text-center text-vdc-secondary mt-2">
                 Contraseña: <span className="font-mono">Demo2025!</span>

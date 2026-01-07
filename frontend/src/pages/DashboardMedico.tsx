@@ -74,8 +74,8 @@ const DashboardMedico = () => {
               Bienvenido, {user?.nombre}
             </h1>
             <p className="text-vdc-secondary text-sm mt-1">
-              {user?.role === 'MEDICO_SUPERIOR' 
-                ? 'Médico Evaluador - Acceso completo a funcionalidades'
+              {user?.role === 'DIRECTOR_MEDICO' 
+                ? 'Director Médico - Acceso completo a funcionalidades'
                 : 'Médico Evaluador - Gestión de juntas médicas'}
             </p>
           </div>
