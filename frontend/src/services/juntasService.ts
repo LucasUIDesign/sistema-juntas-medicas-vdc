@@ -39,6 +39,71 @@ const generateMockJuntas = (): JuntaMedica[] => {
       aptitudLaboral: 'APTO',
       fechaDictamen: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       isCompleto: true,
+      datosCompletos: {
+        // Identificación
+        fechaNacimiento: '1985-03-15',
+        sexo: 'M',
+        estadoCivil: 'casado',
+        domicilio: 'Av. San Martín 1234, Corrientes',
+        telefono: '+54 379 4123456',
+        email: 'jperez@email.com',
+        obraSocial: 'OSDE',
+        // Datos Laborales
+        establecimiento: 'Escuela Técnica N° 1',
+        cargo: 'Docente de Matemáticas',
+        nivelEducativo: 'secundario',
+        modalidad: 'tecnica',
+        situacionRevista: 'titular',
+        antiguedad: '12 años',
+        cargaHoraria: '36 horas semanales',
+        legajo: 'LEG-2012-0456',
+        // Motivo Junta
+        motivoJunta: ['Reincorporación laboral', 'Evaluación periódica'],
+        fechaInicioLicencia: '2025-10-01',
+        diagnosticosPrevios: 'Lumbalgia mecánica tratada con fisioterapia',
+        // Antecedentes Médicos
+        patologiasPrevias: 'Ninguna de relevancia',
+        antecedentesQuirurgicos: 'Apendicectomía (2010)',
+        alergias: 'Sin alergias conocidas',
+        habitos: 'No fumador, actividad física regular',
+        antecedentesFamiliares: 'Padre con HTA controlada',
+        // Antecedentes Laborales
+        licenciasAnteriores: 'Licencia por lumbalgia (Oct-Nov 2025)',
+        accidentesLaborales: 'Sin antecedentes',
+        factoresRiesgo: 'Posición de pie prolongada',
+        // Enfermedad Actual
+        sintomasPrincipales: 'Dolor lumbar que ha mejorado significativamente con tratamiento',
+        evolucion: 'Favorable, con remisión casi completa de síntomas',
+        tratamientosActuales: 'Ejercicios de fortalecimiento lumbar',
+        interconsultas: 'Traumatología: alta médica',
+        // Examen Físico
+        presionArterial: '120/80 mmHg',
+        frecuenciaCardiaca: '72 lpm',
+        frecuenciaRespiratoria: '16 rpm',
+        temperatura: '36.5 °C',
+        peso: '78 kg',
+        talla: '1.75 m',
+        imc: '25.5',
+        examenGeneral: 'Paciente en buen estado general. Columna sin dolor a la palpación. Movilidad conservada.',
+        // Estudios
+        laboratorio: 'Hemograma normal, VSG 8mm/h, PCR negativa',
+        imagenes: 'RX columna lumbar: sin alteraciones significativas',
+        estudiosFuncionales: 'Electrocardiograma normal',
+        // Diagnóstico
+        codigoCIE10: 'M54.5',
+        naturalezaEnfermedad: 'comun',
+        // Capacidad Laboral
+        capacidadFuncional: 'Capacidad funcional conservada para tareas habituales',
+        factoresLimitantes: 'Evitar cargas mayores a 15kg',
+        // Dictamen
+        restricciones: 'Evitar levantar objetos pesados por 30 días más',
+        recomendaciones: 'Continuar con ejercicios de fortalecimiento. Control en 3 meses.',
+        tiempoRecuperacion: 'Recuperación completa',
+        // Profesionales
+        medicoEvaluador1: 'Dr. Carlos Mendoza',
+        matricula1: 'MP 12345',
+        especialidad1: 'Medicina Laboral',
+      },
     },
     adjuntos: [
       { id: 'adj-001', nombre: 'Examen_Psicologico.pdf', tipo: 'application/pdf', url: '#', size: 245000, categoria: 'EXAMEN_PSICOLOGICO', uploadedAt: ahora.toISOString() },
