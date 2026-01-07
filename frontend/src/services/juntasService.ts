@@ -20,51 +20,62 @@ const generateMockJuntas = (): JuntaMedica[] => {
   const juntas: JuntaMedica[] = [];
   const ahora = new Date();
   
-  // DEMO: Junta con documentos pendientes - URGENTE (menos de 12 horas)
-  const fechaLimiteUrgente = new Date(ahora);
-  fechaLimiteUrgente.setHours(fechaLimiteUrgente.getHours() + 4); // 4 horas restantes
+  // JUNTA 1: Pendiente con dictamen completo - Para que Director pueda aprobar
   juntas.push({
     id: 'junta-001',
-    fecha: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    fecha: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     hora: '10:00',
     pacienteId: 'pac-001',
     pacienteNombre: 'Juan Pérez García',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional - Faltan documentos',
+    detalles: 'Evaluación médica ocupacional completa. Paciente presenta buenas condiciones generales.',
     aprobacion: false,
-    estado: 'DOCUMENTOS_PENDIENTES',
-    documentosFaltantes: ['historia_clinica', 'estudios_complementarios'],
-    fechaLimiteDocumentos: fechaLimiteUrgente.toISOString(),
-    adjuntos: [],
-    createdAt: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    estado: 'PENDIENTE',
+    dictamen: {
+      nombrePaciente: 'Juan Pérez García',
+      dni: '32.456.789',
+      diagnosticoPrincipal: 'Paciente en buen estado de salud general. Sin patologías que limiten su capacidad laboral. Exámenes de laboratorio dentro de parámetros normales.',
+      aptitudLaboral: 'APTO',
+      fechaDictamen: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      isCompleto: true,
+    },
+    adjuntos: [
+      { id: 'adj-001', nombre: 'Examen_Psicologico.pdf', tipo: 'application/pdf', url: '#', size: 245000, categoria: 'EXAMEN_PSICOLOGICO', uploadedAt: ahora.toISOString() },
+      { id: 'adj-002', nombre: 'Resultados_Bioquimicos.pdf', tipo: 'application/pdf', url: '#', size: 180000, categoria: 'RESULTADOS_BIOQUIMICOS', uploadedAt: ahora.toISOString() },
+    ],
+    createdAt: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: ahora.toISOString(),
   });
 
-  // DEMO: Junta con documentos pendientes - NORMAL (más de 12 horas)
-  const fechaLimiteNormal = new Date(ahora);
-  fechaLimiteNormal.setHours(fechaLimiteNormal.getHours() + 48); // 48 horas restantes
+  // JUNTA 2: Pendiente con dictamen - Apto con restricciones
   juntas.push({
     id: 'junta-002',
-    fecha: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    fecha: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     hora: '14:30',
     pacienteId: 'pac-002',
     pacienteNombre: 'María López Rodríguez',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional - Documentos en proceso',
+    detalles: 'Evaluación médica ocupacional. Paciente con antecedentes de lumbalgia.',
     aprobacion: false,
-    estado: 'DOCUMENTOS_PENDIENTES',
-    documentosFaltantes: ['certificado_aptitud'],
-    fechaLimiteDocumentos: fechaLimiteNormal.toISOString(),
-    adjuntos: [],
-    createdAt: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    estado: 'PENDIENTE',
+    dictamen: {
+      nombrePaciente: 'María López Rodríguez',
+      dni: '28.123.456',
+      diagnosticoPrincipal: 'Lumbalgia crónica leve. Se recomienda evitar cargas mayores a 10kg y posiciones prolongadas de pie.',
+      aptitudLaboral: 'APTO_CON_RESTRICCIONES',
+      fechaDictamen: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      isCompleto: true,
+    },
+    adjuntos: [
+      { id: 'adj-003', nombre: 'Certificado_Aptitud.pdf', tipo: 'application/pdf', url: '#', size: 120000, categoria: 'CERTIFICADO_APTITUD_EX3', uploadedAt: ahora.toISOString() },
+    ],
+    createdAt: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: ahora.toISOString(),
   });
 
-  // DEMO: Junta con documentos pendientes - MUY URGENTE (menos de 1 hora)
-  const fechaLimiteMuyUrgente = new Date(ahora);
-  fechaLimiteMuyUrgente.setMinutes(fechaLimiteMuyUrgente.getMinutes() + 35); // 35 minutos restantes
+  // JUNTA 3: Pendiente - No apto
   juntas.push({
     id: 'junta-003',
     fecha: new Date(ahora.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -73,79 +84,122 @@ const generateMockJuntas = (): JuntaMedica[] => {
     pacienteNombre: 'Carlos Martínez Silva',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional - URGENTE entregar documentos',
+    detalles: 'Evaluación médica ocupacional. Paciente presenta condiciones que requieren tratamiento.',
     aprobacion: false,
-    estado: 'DOCUMENTOS_PENDIENTES',
-    documentosFaltantes: ['historia_clinica', 'estudios_complementarios', 'certificado_aptitud'],
-    fechaLimiteDocumentos: fechaLimiteMuyUrgente.toISOString(),
+    estado: 'PENDIENTE',
+    dictamen: {
+      nombrePaciente: 'Carlos Martínez Silva',
+      dni: '35.789.012',
+      diagnosticoPrincipal: 'Hipertensión arterial no controlada. Valores de presión arterial 160/100 mmHg. Requiere ajuste de medicación antes de retomar actividades laborales.',
+      aptitudLaboral: 'NO_APTO',
+      fechaDictamen: new Date(ahora.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      isCompleto: true,
+    },
     adjuntos: [],
     createdAt: new Date(ahora.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: ahora.toISOString(),
   });
 
-  // Juntas normales con otros estados
+  // JUNTA 4: Documentos pendientes - URGENTE
+  const fechaLimiteUrgente = new Date(ahora);
+  fechaLimiteUrgente.setHours(fechaLimiteUrgente.getHours() + 4);
   juntas.push({
     id: 'junta-004',
-    fecha: new Date(ahora.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    fecha: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     hora: '11:00',
     pacienteId: 'pac-004',
     pacienteNombre: 'Ana Fernández Torres',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional completada satisfactoriamente.',
-    aprobacion: true,
-    estado: 'APROBADA',
+    detalles: 'Evaluación médica ocupacional - Faltan documentos',
+    aprobacion: false,
+    estado: 'DOCUMENTOS_PENDIENTES',
+    documentosFaltantes: ['EXAMEN_PSICOLOGICO', 'RESULTADOS_BIOQUIMICOS'],
+    fechaLimiteDocumentos: fechaLimiteUrgente.toISOString(),
+    dictamen: {
+      nombrePaciente: 'Ana Fernández Torres',
+      dni: '30.456.123',
+      diagnosticoPrincipal: 'Pendiente de completar estudios complementarios.',
+      aptitudLaboral: '',
+      fechaDictamen: '',
+      isCompleto: false,
+    },
     adjuntos: [],
-    createdAt: new Date(ahora.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(ahora.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(ahora.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: ahora.toISOString(),
   });
 
+  // JUNTA 5: Aprobada por Director
   juntas.push({
     id: 'junta-005',
-    fecha: new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    fecha: new Date(ahora.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     hora: '15:00',
     pacienteId: 'pac-005',
     pacienteNombre: 'Roberto Sánchez Díaz',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional - Pendiente de revisión.',
-    aprobacion: false,
-    estado: 'PENDIENTE',
-    adjuntos: [],
-    createdAt: new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  });
-
-  juntas.push({
-    id: 'junta-006',
-    fecha: new Date(ahora.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    hora: '08:30',
-    pacienteId: 'pac-001',
-    pacienteNombre: 'Juan Pérez García',
-    medicoId: 'user-001',
-    medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación rechazada por documentación incompleta.',
-    aprobacion: false,
-    estado: 'RECHAZADA',
+    detalles: 'Evaluación médica ocupacional completada.',
+    detallesDirector: 'Revisado y aprobado. El paciente cumple con todos los requisitos médicos para el puesto de trabajo solicitado.',
+    aprobacion: true,
+    estado: 'APROBADA',
+    dictamen: {
+      nombrePaciente: 'Roberto Sánchez Díaz',
+      dni: '29.876.543',
+      diagnosticoPrincipal: 'Paciente sano. Sin antecedentes patológicos relevantes.',
+      aptitudLaboral: 'APTO',
+      fechaDictamen: new Date(ahora.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      isCompleto: true,
+    },
     adjuntos: [],
     createdAt: new Date(ahora.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(ahora.getTime() - 9 * 24 * 60 * 60 * 1000).toISOString(),
   });
 
+  // JUNTA 6: Rechazada
+  juntas.push({
+    id: 'junta-006',
+    fecha: new Date(ahora.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    hora: '08:30',
+    pacienteId: 'pac-001',
+    pacienteNombre: 'Juan Pérez García',
+    medicoId: 'user-001',
+    medicoNombre: 'Dr. Carlos Mendoza',
+    detalles: 'Evaluación médica ocupacional.',
+    detallesDirector: 'Rechazado. La documentación presentada está incompleta y los estudios tienen más de 6 meses de antigüedad.',
+    aprobacion: false,
+    estado: 'RECHAZADA',
+    dictamen: {
+      nombrePaciente: 'Juan Pérez García',
+      dni: '32.456.789',
+      diagnosticoPrincipal: 'Documentación desactualizada.',
+      aptitudLaboral: '',
+      fechaDictamen: new Date(ahora.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      isCompleto: false,
+    },
+    adjuntos: [],
+    createdAt: new Date(ahora.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(ahora.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  // JUNTA 7: Documentos pendientes - Normal
+  const fechaLimiteNormal = new Date(ahora);
+  fechaLimiteNormal.setHours(fechaLimiteNormal.getHours() + 48);
   juntas.push({
     id: 'junta-007',
-    fecha: new Date(ahora.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+    fecha: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     hora: '16:00',
     pacienteId: 'pac-002',
     pacienteNombre: 'María López Rodríguez',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
-    detalles: 'Evaluación médica ocupacional aprobada.',
-    aprobacion: true,
-    estado: 'APROBADA',
+    detalles: 'Segunda evaluación - Documentos en proceso',
+    aprobacion: false,
+    estado: 'DOCUMENTOS_PENDIENTES',
+    documentosFaltantes: ['CERTIFICADO_APTITUD_EX3'],
+    fechaLimiteDocumentos: fechaLimiteNormal.toISOString(),
     adjuntos: [],
-    createdAt: new Date(ahora.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(ahora.getTime() - 11 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(ahora.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: ahora.toISOString(),
   });
   
   return juntas.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
