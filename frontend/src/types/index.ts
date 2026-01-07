@@ -65,6 +65,7 @@ export interface JuntaMedica {
   medicoId: string;
   medicoNombre: string;
   detalles: string;
+  detallesDirector?: string; // Detalles de evaluación del Director Médico
   aprobacion?: boolean;
   adjuntos?: Adjunto[];
   dictamen?: DictamenMedicoResumen;
@@ -113,6 +114,7 @@ export interface UpdateJuntaDTO {
   fecha?: string;
   pacienteId?: string;
   detalles?: string;
+  detallesDirector?: string;
   aprobacion?: boolean;
   estado?: EstadoJunta;
 }

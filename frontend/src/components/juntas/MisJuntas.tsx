@@ -51,17 +51,27 @@ const MisJuntas = () => {
     return () => clearInterval(interval);
   }, [user]);
 
+  const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
+
   const loadJuntas = async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      const data = await juntasService.getJuntasByMedico(user.id, {
-        page,
-        pageSize,
-        sortBy: sortField,
-        sortOrder,
-      });
+      // Director Médico ve todas las juntas, Evaluador solo las suyas
+      const data = isDirectorMedico 
+        ? await juntasService.getJuntas({
+            page,
+            pageSize,
+            sortBy: sortField,
+            sortOrder,
+          })
+        : await juntasService.getJuntasByMedico(user.id, {
+            page,
+            pageSize,
+            sortBy: sortField,
+            sortOrder,
+          });
       setJuntas(data);
     } catch (error) {
       console.error('Error loading juntas:', error);
@@ -173,10 +183,12 @@ const MisJuntas = () => {
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-subtitle font-semibold text-vdc-primary">
-          Mis Juntas Médicas
+          {isDirectorMedico ? 'Todas las Juntas Médicas' : 'Mis Juntas Médicas'}
         </h2>
         <p className="text-vdc-secondary text-sm mt-1">
-          Historial de evaluaciones médicas registradas
+          {isDirectorMedico 
+            ? 'Revisión y aprobación de evaluaciones médicas' 
+            : 'Historial de evaluaciones médicas registradas'}
         </p>
       </div>
 
@@ -391,6 +403,15 @@ const MisJuntas = () => {
           <JuntaDetailModal
             junta={selectedJunta}
             onClose={() => setSelectedJunta(null)}
+            onUpdate={(updatedJunta) => {
+              if (juntas) {
+                setJuntas({
+                  ...juntas,
+                  data: juntas.data.map(j => j.id === updatedJunta.id ? updatedJunta : j),
+                });
+              }
+              setSelectedJunta(null);
+            }}
           />
         )}
       </AnimatePresence>
