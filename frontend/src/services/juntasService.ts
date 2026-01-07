@@ -27,6 +27,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '10:00',
     pacienteId: 'pac-001',
     pacienteNombre: 'Juan Pérez García',
+    pacienteDni: '32.456.789',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional completa. Paciente presenta buenas condiciones generales.',
@@ -120,6 +121,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '14:30',
     pacienteId: 'pac-002',
     pacienteNombre: 'María López Rodríguez',
+    pacienteDni: '28.123.456',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional. Paciente con antecedentes de lumbalgia.',
@@ -147,6 +149,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '09:00',
     pacienteId: 'pac-003',
     pacienteNombre: 'Carlos Martínez Silva',
+    pacienteDni: '35.789.012',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional. Paciente presenta condiciones que requieren tratamiento.',
@@ -174,6 +177,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '11:00',
     pacienteId: 'pac-004',
     pacienteNombre: 'Ana Fernández Torres',
+    pacienteDni: '30.456.123',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional - Faltan documentos',
@@ -201,6 +205,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '15:00',
     pacienteId: 'pac-005',
     pacienteNombre: 'Roberto Sánchez Díaz',
+    pacienteDni: '29.876.543',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional completada.',
@@ -227,6 +232,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '08:30',
     pacienteId: 'pac-001',
     pacienteNombre: 'Juan Pérez García',
+    pacienteDni: '32.456.789',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Evaluación médica ocupacional.',
@@ -255,6 +261,7 @@ const generateMockJuntas = (): JuntaMedica[] => {
     hora: '16:00',
     pacienteId: 'pac-002',
     pacienteNombre: 'María López Rodríguez',
+    pacienteDni: '28.123.456',
     medicoId: 'user-001',
     medicoNombre: 'Dr. Carlos Mendoza',
     detalles: 'Segunda evaluación - Documentos en proceso',
@@ -319,6 +326,15 @@ export const juntasService = {
     let filtered = [...mockJuntas];
     
     // Apply filters
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(j => 
+        j.pacienteNombre.toLowerCase().includes(searchLower) ||
+        j.dictamen?.dni?.includes(filters.search!) ||
+        j.pacienteDni?.includes(filters.search!)
+      );
+    }
+    
     if (filters?.medicoId) {
       filtered = filtered.filter(j => j.medicoId === filters.medicoId);
     }

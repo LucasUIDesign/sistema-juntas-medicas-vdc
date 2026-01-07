@@ -4,10 +4,9 @@ import DatePicker from 'react-datepicker';
 import { juntasService } from '../../services/juntasService';
 import { JuntaMedica, PaginatedResult, Medico, JuntaFilters } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import JuntaDetailModal from '../juntas/JuntaDetailModal';
+import JuntaDetailModalRRHH from './JuntaDetailModalRRHH';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { toast } from 'react-toastify';
 import {
   MagnifyingGlassIcon,
   ChevronUpIcon,
@@ -28,6 +27,7 @@ const TodasJuntas = () => {
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
   
   // Filters
+  const [searchTerm, setSearchTerm] = useState('');
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
   const [selectedMedicos, setSelectedMedicos] = useState<string[]>([]);
@@ -67,6 +67,7 @@ const TodasJuntas = () => {
         sortOrder,
       };
       
+      if (searchTerm) filters.search = searchTerm;
       if (fechaInicio) filters.fechaInicio = fechaInicio.toISOString();
       if (fechaFin) filters.fechaFin = fechaFin.toISOString();
       if (selectedMedicos.length === 1) filters.medicoId = selectedMedicos[0];
@@ -86,6 +87,7 @@ const TodasJuntas = () => {
   };
 
   const handleClearFilters = () => {
+    setSearchTerm('');
     setFechaInicio(null);
     setFechaFin(null);
     setSelectedMedicos([]);
@@ -103,21 +105,23 @@ const TodasJuntas = () => {
   };
 
   const getEstadoBadge = (estado: JuntaMedica['estado']) => {
-    const styles = {
+    const styles: Record<string, string> = {
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
       APROBADA: 'bg-green-100 text-green-800',
       RECHAZADA: 'bg-red-100 text-red-800',
+      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800',
     };
     
-    const labels = {
+    const labels: Record<string, string> = {
       PENDIENTE: 'Pendiente',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
+      DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[estado]}`}>
-        {labels[estado]}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[estado] || styles.PENDIENTE}`}>
+        {labels[estado] || estado}
       </span>
     );
   };
@@ -164,7 +168,21 @@ const TodasJuntas = () => {
           </button>
 
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Buscar Paciente */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Buscar Paciente
+                </label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Nombre o DNI..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                />
+              </div>
+
               {/* Fecha Inicio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -267,6 +285,9 @@ const TodasJuntas = () => {
                     >
                       Paciente <SortIcon field="pacienteNombre" />
                     </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      DNI
+                    </th>
                     <th
                       scope="col"
                       className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
@@ -293,18 +314,17 @@ const TodasJuntas = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.03 }}
-                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-vdc-row-alt'} hover:bg-blue-50 transition-colors`}
+                      onClick={() => setSelectedJunta(junta)}
+                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-vdc-row-alt'} hover:bg-blue-50 transition-colors cursor-pointer`}
                     >
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedJunta(junta)}
-                          className="text-sm text-vdc-primary hover:text-vdc-primary/80 hover:underline transition-colors"
-                        >
-                          {junta.pacienteNombre}
-                        </button>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {junta.pacienteNombre}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {junta.pacienteDni || junta.dictamen?.dni || '-'}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {junta.medicoNombre}
@@ -382,7 +402,7 @@ const TodasJuntas = () => {
       {/* Detail Modal */}
       <AnimatePresence>
         {selectedJunta && (
-          <JuntaDetailModal
+          <JuntaDetailModalRRHH
             junta={selectedJunta}
             onClose={() => setSelectedJunta(null)}
           />

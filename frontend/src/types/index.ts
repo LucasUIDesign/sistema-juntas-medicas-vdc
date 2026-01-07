@@ -62,6 +62,7 @@ export interface JuntaMedica {
   hora?: string; // Hora de la junta asignada
   pacienteId: string;
   pacienteNombre: string;
+  pacienteDni?: string; // DNI del paciente
   medicoId: string;
   medicoNombre: string;
   detalles: string;
@@ -236,6 +237,7 @@ export interface PaginatedResult<T> {
 }
 
 export interface JuntaFilters {
+  search?: string;
   fechaInicio?: string;
   fechaFin?: string;
   medicoId?: string;
