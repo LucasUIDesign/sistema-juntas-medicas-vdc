@@ -12,7 +12,7 @@ const routeNames: Record<string, string> = {
   'medico': 'Médico',
   'rrhh': 'RRHH',
   'nueva-junta': 'Nueva Junta',
-  'mis-juntas': 'Mis Juntas',
+  'mis-juntas': 'Todas las Juntas',
   'perfil': 'Perfil',
   'todas-juntas': 'Todas las Juntas',
   'reportes': 'Reportes',

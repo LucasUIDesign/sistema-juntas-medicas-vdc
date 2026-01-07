@@ -101,10 +101,12 @@ const MisJuntas = () => {
         ? await juntasService.getJuntas(filters)
         : await juntasService.getJuntasByMedico(user.id, filters);
       
-      // Filtrar por nombre de paciente si hay búsqueda
+      // Filtrar por nombre o DNI de paciente si hay búsqueda
       if (searchPaciente && isDirectorMedico) {
+        const searchLower = searchPaciente.toLowerCase();
         data.data = data.data.filter(j => 
-          j.pacienteNombre.toLowerCase().includes(searchPaciente.toLowerCase())
+          j.pacienteNombre.toLowerCase().includes(searchLower) ||
+          (j.dictamen?.dni && j.dictamen.dni.toLowerCase().includes(searchLower))
         );
         data.total = data.data.length;
       }
@@ -261,13 +263,13 @@ const MisJuntas = () => {
                 {/* Buscar Paciente */}
                 <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Buscar Paciente
+                    Buscar Paciente (Nombre o DNI)
                   </label>
                   <input
                     type="text"
                     value={searchPaciente}
                     onChange={(e) => setSearchPaciente(e.target.value)}
-                    placeholder="Nombre del paciente..."
+                    placeholder="Nombre o DNI del paciente..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
                   />
                 </div>

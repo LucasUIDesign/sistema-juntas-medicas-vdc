@@ -21,7 +21,7 @@ const sidebarLinks = [
     icon: <PlusCircleIcon className="h-5 w-5" />,
   },
   {
-    name: 'Mis Juntas',
+    name: 'Todas las Juntas',
     href: '/dashboard/medico/mis-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
   },
