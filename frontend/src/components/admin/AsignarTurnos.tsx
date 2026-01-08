@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import { format, isSameDay } from 'date-fns';
@@ -25,14 +25,6 @@ interface Turno {
   pacienteDni: string;
   medicos: string[];
 }
-
-// Lista de médicos disponibles
-const MEDICOS_DISPONIBLES = [
-  { id: 'med-001', nombre: 'Dr. Carlos Mendoza' },
-  { id: 'med-002', nombre: 'Dra. María González' },
-  { id: 'med-003', nombre: 'Dr. Roberto Fernández' },
-  { id: 'med-004', nombre: 'Dra. Laura Martínez' },
-];
 
 // Mock de turnos existentes
 const MOCK_TURNOS_EXISTENTES: Turno[] = [
@@ -70,7 +62,7 @@ const AsignarTurnos = () => {
     pacienteNombre: '',
     pacienteDni: '',
     hora: '',
-    medicos: [] as string[],
+    medicos: [''] as string[],
   });
 
   // Obtener turnos del día seleccionado
@@ -90,7 +82,10 @@ const AsignarTurnos = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora || formData.medicos.length === 0) {
+    // Filtrar médicos vacíos
+    const medicosValidos = formData.medicos.filter(m => m.trim() !== '');
+    
+    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora || medicosValidos.length === 0) {
       toast.warning('Por favor complete todos los campos');
       return;
     }
@@ -107,11 +102,11 @@ const AsignarTurnos = () => {
       hora: formData.hora,
       pacienteNombre: formData.pacienteNombre,
       pacienteDni: formData.pacienteDni,
-      medicos: formData.medicos,
+      medicos: medicosValidos,
     };
 
     setTurnos([...turnos, nuevoTurno]);
-    setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicos: [] });
+    setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicos: [''] });
     setShowForm(false);
     toast.success('Turno asignado correctamente');
   };
@@ -365,30 +360,61 @@ const AsignarTurnos = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Médico(s) Participante(s) *
                     </label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-card p-3">
-                      {MEDICOS_DISPONIBLES.map((medico) => (
-                        <label key={medico.id} className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <div className="space-y-2">
+                      {formData.medicos.map((medico, index) => (
+                        <div key={index} className="flex items-center space-x-2">
                           <input
-                            type="checkbox"
-                            checked={formData.medicos.includes(medico.nombre)}
+                            type="text"
+                            value={medico}
                             onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData({ ...formData, medicos: [...formData.medicos, medico.nombre] });
-                              } else {
-                                setFormData({ ...formData, medicos: formData.medicos.filter(m => m !== medico.nombre) });
-                              }
+                              const newMedicos = [...formData.medicos];
+                              newMedicos[index] = e.target.value;
+                              setFormData({ ...formData, medicos: newMedicos });
                             }}
-                            className="h-4 w-4 text-vdc-primary border-gray-300 rounded focus:ring-vdc-primary/20"
+                            placeholder="Ej: Dr. Juan Pérez"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{medico.nombre}</span>
-                        </label>
+                          {formData.medicos.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newMedicos = formData.medicos.filter((_, i) => i !== index);
+                                setFormData({ ...formData, medicos: newMedicos });
+                              }}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                              aria-label="Eliminar médico"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       ))}
+                      {formData.medicos.length === 0 && (
+                        <input
+                          type="text"
+                          value=""
+                          onChange={(e) => {
+                            setFormData({ ...formData, medicos: [e.target.value] });
+                          }}
+                          placeholder="Ej: Dr. Juan Pérez"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (formData.medicos.length === 0) {
+                            setFormData({ ...formData, medicos: [''] });
+                          } else {
+                            setFormData({ ...formData, medicos: [...formData.medicos, ''] });
+                          }
+                        }}
+                        className="flex items-center text-sm text-vdc-primary hover:text-vdc-primary/80 font-medium"
+                      >
+                        <PlusIcon className="h-4 w-4 mr-1" />
+                        Agregar otro médico
+                      </button>
                     </div>
-                    {formData.medicos.length > 0 && (
-                      <p className="text-xs text-vdc-primary mt-1">
-                        {formData.medicos.length} médico{formData.medicos.length !== 1 ? 's' : ''} seleccionado{formData.medicos.length !== 1 ? 's' : ''}
-                      </p>
-                    )}
                   </div>
 
                   {horariosOcupados.length > 0 && (
@@ -415,7 +441,7 @@ const AsignarTurnos = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={horariosLibres.length === 0 || formData.medicos.length === 0}
+                      disabled={horariosLibres.length === 0 || formData.medicos.filter(m => m.trim() !== '').length === 0}
                       className="flex-1 flex items-center justify-center px-4 py-2 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <CheckCircleIcon className="h-4 w-4 mr-2" />
