@@ -313,33 +313,56 @@ const AsignarTurnos = () => {
                           key={turno.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-vdc-primary/30 transition-colors"
+                          className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-vdc-primary/30 transition-colors"
                         >
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-16 h-16 bg-vdc-primary/10 rounded-lg">
-                              <div className="text-center">
-                                <ClockIcon className="h-5 w-5 text-vdc-primary mx-auto mb-1" />
-                                <span className="text-sm font-semibold text-vdc-primary">{turno.hora}</span>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4">
+                              <div className="flex items-center justify-center w-16 h-16 bg-vdc-primary/10 rounded-lg flex-shrink-0">
+                                <div className="text-center">
+                                  <ClockIcon className="h-5 w-5 text-vdc-primary mx-auto mb-1" />
+                                  <span className="text-sm font-semibold text-vdc-primary">{turno.hora}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="font-medium text-gray-900 flex items-center">
+                                    <UserIcon className="h-4 w-4 mr-2 text-gray-400" />
+                                    {turno.pacienteNombre}
+                                  </p>
+                                  <p className="text-sm text-vdc-secondary flex items-center mt-1">
+                                    <IdentificationIcon className="h-4 w-4 mr-2 text-gray-400" />
+                                    DNI: {turno.pacienteDni}
+                                  </p>
+                                </div>
+                                {/* Profesionales de la Junta */}
+                                {profesionales.length > 0 && (
+                                  <div className="pt-2 border-t border-gray-200">
+                                    <p className="text-xs text-gray-500 mb-1 flex items-center">
+                                      <UserGroupIcon className="h-3 w-3 mr-1" />
+                                      Profesionales de la Junta:
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {profesionales.map((prof) => (
+                                        <span
+                                          key={prof.id}
+                                          className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full"
+                                        >
+                                          {prof.nombre}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900 flex items-center">
-                                <UserIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                {turno.pacienteNombre}
-                              </p>
-                              <p className="text-sm text-vdc-secondary flex items-center mt-1">
-                                <IdentificationIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                DNI: {turno.pacienteDni}
-                              </p>
-                            </div>
+                            <button
+                              onClick={() => handleDeleteTurno(turno.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0"
+                              aria-label="Eliminar turno"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handleDeleteTurno(turno.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                            aria-label="Eliminar turno"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
                         </motion.div>
                       ))}
                   </div>
