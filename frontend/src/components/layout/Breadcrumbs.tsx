@@ -15,6 +15,7 @@ const routeNames: Record<string, string> = {
   'nueva-junta': 'Nueva Junta',
   'mis-juntas': 'Todas las Juntas',
   'perfil': 'Perfil',
+  'baremos': 'Baremos',
   'todas-juntas': 'Todas las Juntas',
   'reportes': 'Reportes',
   'usuarios': 'Gestionar Usuarios',

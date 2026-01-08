@@ -7,10 +7,12 @@ import JuntaForm from '../components/juntas/JuntaForm';
 import MisJuntas from '../components/juntas/MisJuntas';
 import PerfilMedico from '../components/medico/PerfilMedico';
 import ProximasJuntas from '../components/juntas/ProximasJuntas';
+import Baremos from '../components/medico/Baremos';
 import { 
   PlusCircleIcon, 
   ClipboardDocumentListIcon, 
   UserCircleIcon,
+  BookOpenIcon,
   Bars3Icon 
 } from '@heroicons/react/24/outline';
 
@@ -24,6 +26,11 @@ const sidebarLinks = [
     name: 'Todas las Juntas',
     href: '/dashboard/medico/mis-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+  },
+  {
+    name: 'Baremos',
+    href: '/dashboard/medico/baremos',
+    icon: <BookOpenIcon className="h-5 w-5" />,
   },
   {
     name: 'Perfil',
@@ -88,6 +95,7 @@ const DashboardMedico = () => {
                 <Route index element={<Navigate to="nueva-junta" replace />} />
                 <Route path="nueva-junta" element={<JuntaForm />} />
                 <Route path="mis-juntas" element={<MisJuntas />} />
+                <Route path="baremos" element={<Baremos />} />
                 <Route path="perfil" element={<PerfilMedico />} />
               </Routes>
             </div>
