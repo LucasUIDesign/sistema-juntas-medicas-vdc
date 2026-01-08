@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import {
@@ -64,9 +64,12 @@ const HORARIOS_DISPONIBLES = [
 ];
 
 const AsignarTurnos = () => {
+  // Fecha mínima: 72 horas (3 días) de anticipación para notificación
+  const fechaMinima = addDays(new Date(), 3);
+  
   const [turnos, setTurnos] = useState<Turno[]>(MOCK_TURNOS_EXISTENTES);
   const [profesionales, setProfesionales] = useState<Profesional[]>(MOCK_PROFESIONALES);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(fechaMinima);
   const [showForm, setShowForm] = useState(false);
   const [showProfesionalForm, setShowProfesionalForm] = useState(false);
   
@@ -263,14 +266,19 @@ const AsignarTurnos = () => {
                 onChange={(date) => setSelectedDate(date)}
                 inline
                 locale={es}
-                minDate={new Date()}
+                minDate={fechaMinima}
                 dayClassName={getDayClassName}
                 calendarClassName="!border-0 !font-sans"
               />
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                 <div className="flex items-center text-sm text-gray-600">
                   <div className="w-3 h-3 rounded-full bg-vdc-primary/20 mr-2"></div>
                   <span>Días con turnos asignados</span>
+                </div>
+                <div className="p-2 bg-amber-50 rounded-lg">
+                  <p className="text-xs text-amber-700">
+                    <strong>Nota:</strong> Los turnos deben asignarse con al menos 72 horas de anticipación para cumplir con el plazo de notificación.
+                  </p>
                 </div>
               </div>
             </div>
