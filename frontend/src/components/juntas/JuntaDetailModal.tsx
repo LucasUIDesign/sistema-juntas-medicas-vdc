@@ -327,27 +327,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
             {renderField('Restricciones', datos?.restricciones)}
             {renderField('Recomendaciones', datos?.recomendaciones)}
             {renderField('Tiempo de Recuperación', datos?.tiempoRecuperacion)}
-            
-            <div className="border-t pt-4 mt-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Profesionales</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {datos?.medicoEvaluador1 && (
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500">Médico Evaluador Principal</p>
-                    <p className="font-medium text-gray-900">{datos.medicoEvaluador1}</p>
-                    <p className="text-sm text-gray-600">{datos.matricula1} - {datos.especialidad1}</p>
-                  </div>
-                )}
-                {datos?.medicoEvaluador2 && (
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500">Médico Evaluador Secundario</p>
-                    <p className="font-medium text-gray-900">{datos.medicoEvaluador2}</p>
-                    <p className="text-sm text-gray-600">{datos.matricula2} - {datos.especialidad2}</p>
-                  </div>
-                )}
-              </div>
-              {renderField('Fecha del Dictamen', junta.dictamen?.fechaDictamen ? format(new Date(junta.dictamen.fechaDictamen), 'dd/MM/yyyy') : undefined)}
-            </div>
+            {renderField('Fecha del Dictamen', junta.dictamen?.fechaDictamen ? format(new Date(junta.dictamen.fechaDictamen), 'dd/MM/yyyy') : undefined)}
           </div>
         );
 
