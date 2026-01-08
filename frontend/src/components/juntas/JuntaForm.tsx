@@ -12,7 +12,6 @@ import {
   CheckCircleIcon,
   PaperClipIcon,
   ChevronDownIcon,
-  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -20,38 +19,21 @@ const JuntaForm = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDocumentos, setShowDocumentos] = useState(false);
-  const [showProfesionales, setShowProfesionales] = useState(false);
   const [dictamenData, setDictamenData] = useState<DictamenMedicoData | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoParaSubir[]>([]);
-  
-  // Estado para profesionales
-  const [profesionales, setProfesionales] = useState({
-    medicoEvaluador1: '',
-    matricula1: '',
-    especialidad1: '',
-    medicoEvaluador2: '',
-    matricula2: '',
-    especialidad2: '',
-    fechaDictamen: '',
-  });
 
   const handleSubmit = async () => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
-      const dictamenConProfesionales = dictamenData ? {
-        ...dictamenData,
-        profesionales: profesionales,
-      } : undefined;
-
       const data: CreateJuntaConDictamenDTO = {
         fecha: new Date().toISOString(),
         pacienteId: 'default',
         detalles: 'Dictamen médico registrado',
         aprobacion: false,
         documentos: documentos,
-        dictamen: dictamenConProfesionales,
+        dictamen: dictamenData || undefined,
       };
 
       await juntasService.createJunta(data, user.id, user.nombre);
@@ -62,16 +44,6 @@ const JuntaForm = () => {
       setDocumentos([]);
       setDictamenData(null);
       setShowDocumentos(false);
-      setShowProfesionales(false);
-      setProfesionales({
-        medicoEvaluador1: '',
-        matricula1: '',
-        especialidad1: '',
-        medicoEvaluador2: '',
-        matricula2: '',
-        especialidad2: '',
-        fechaDictamen: '',
-      });
     } catch (error) {
       toast.error('Error al guardar la junta médica. Intenta nuevamente.', { icon: '❌' });
     } finally {
@@ -83,16 +55,6 @@ const JuntaForm = () => {
     setDocumentos([]);
     setDictamenData(null);
     setShowDocumentos(false);
-    setShowProfesionales(false);
-    setProfesionales({
-      medicoEvaluador1: '',
-      matricula1: '',
-      especialidad1: '',
-      medicoEvaluador2: '',
-      matricula2: '',
-      especialidad2: '',
-      fechaDictamen: '',
-    });
     toast.info('Formulario limpiado', { icon: 'ℹ️' });
   };
 
@@ -143,124 +105,6 @@ const JuntaForm = () => {
               initialData={dictamenData || undefined}
               hideProfesionales={true}
             />
-          </div>
-
-          {/* Profesionales Section */}
-          <div className="border-t border-gray-200 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowProfesionales(!showProfesionales)}
-              className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors w-full justify-between"
-              aria-expanded={showProfesionales}
-            >
-              <span className="flex items-center">
-                <UserGroupIcon className="h-5 w-5 mr-2" aria-hidden="true" />
-                Profesionales de la Junta
-                {(profesionales.medicoEvaluador1 || profesionales.medicoEvaluador2) && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-vdc-primary text-white rounded-full">
-                    Configurado
-                  </span>
-                )}
-              </span>
-              <ChevronDownIcon
-                className={`h-5 w-5 transition-transform ${showProfesionales ? 'rotate-180' : ''}`}
-                aria-hidden="true"
-              />
-            </button>
-
-            <motion.div
-              initial={false}
-              animate={{ height: showProfesionales ? 'auto' : 0, opacity: showProfesionales ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="pt-4 space-y-6">
-                {/* Médico Evaluador Principal */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Principal</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                      <input
-                        type="text"
-                        value={profesionales.medicoEvaluador1}
-                        onChange={(e) => setProfesionales({...profesionales, medicoEvaluador1: e.target.value})}
-                        placeholder="Dr./Dra. Nombre Apellido"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
-                      <input
-                        type="text"
-                        value={profesionales.matricula1}
-                        onChange={(e) => setProfesionales({...profesionales, matricula1: e.target.value})}
-                        placeholder="MP 12345"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                      <input
-                        type="text"
-                        value={profesionales.especialidad1}
-                        onChange={(e) => setProfesionales({...profesionales, especialidad1: e.target.value})}
-                        placeholder="Medicina Laboral"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Médico Evaluador Secundario */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Secundario (opcional)</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                      <input
-                        type="text"
-                        value={profesionales.medicoEvaluador2}
-                        onChange={(e) => setProfesionales({...profesionales, medicoEvaluador2: e.target.value})}
-                        placeholder="Dr./Dra. Nombre Apellido"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Matrícula</label>
-                      <input
-                        type="text"
-                        value={profesionales.matricula2}
-                        onChange={(e) => setProfesionales({...profesionales, matricula2: e.target.value})}
-                        placeholder="MP 12345"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                      <input
-                        type="text"
-                        value={profesionales.especialidad2}
-                        onChange={(e) => setProfesionales({...profesionales, especialidad2: e.target.value})}
-                        placeholder="Especialidad"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fecha del Dictamen */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha del Dictamen</label>
-                  <input
-                    type="date"
-                    value={profesionales.fechaDictamen}
-                    onChange={(e) => setProfesionales({...profesionales, fechaDictamen: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  />
-                </div>
-              </div>
-            </motion.div>
           </div>
 
           {/* Documentos Section */}
