@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
 import DashboardMedico from './pages/DashboardMedico';
 import DashboardRRHH from './pages/DashboardRRHH';
+import DashboardAdmin from './pages/DashboardAdmin';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import { authService } from './services/authService';
@@ -56,12 +57,22 @@ function App() {
             }
           />
 
-          {/* Protected routes - RRHH, Gerencial, Admin */}
+          {/* Protected routes - RRHH, Gerencial */}
           <Route
             path="/dashboard/rrhh/*"
             element={
-              <ProtectedRoute allowedRoles={['RRHH', 'GERENCIAL', 'ADMIN']}>
+              <ProtectedRoute allowedRoles={['RRHH', 'GERENCIAL']}>
                 <DashboardRRHH />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - Admin */}
+          <Route
+            path="/dashboard/admin/*"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <DashboardAdmin />
               </ProtectedRoute>
             }
           />

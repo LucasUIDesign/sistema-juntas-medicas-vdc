@@ -137,8 +137,9 @@ export const authService = {
         return '/dashboard/medico';
       case 'RRHH':
       case 'GERENCIAL':
-      case 'ADMIN':
         return '/dashboard/rrhh';
+      case 'ADMIN':
+        return '/dashboard/admin';
       default:
         return '/';
     }

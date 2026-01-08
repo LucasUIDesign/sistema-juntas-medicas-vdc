@@ -11,12 +11,14 @@ const routeNames: Record<string, string> = {
   'dashboard': 'Dashboard',
   'medico': 'Médico',
   'rrhh': 'RRHH',
+  'admin': 'Admin',
   'nueva-junta': 'Nueva Junta',
   'mis-juntas': 'Todas las Juntas',
   'perfil': 'Perfil',
   'todas-juntas': 'Todas las Juntas',
   'reportes': 'Reportes',
   'usuarios': 'Gestionar Usuarios',
+  'asignar-turnos': 'Asignar Turnos',
 };
 
 const Breadcrumbs = () => {
