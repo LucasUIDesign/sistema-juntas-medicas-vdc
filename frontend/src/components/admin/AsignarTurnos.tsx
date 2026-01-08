@@ -13,6 +13,7 @@ import {
   IdentificationIcon,
   CheckCircleIcon,
   XMarkIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -22,7 +23,16 @@ interface Turno {
   hora: string;
   pacienteNombre: string;
   pacienteDni: string;
+  medicos: string[];
 }
+
+// Lista de médicos disponibles
+const MEDICOS_DISPONIBLES = [
+  { id: 'med-001', nombre: 'Dr. Carlos Mendoza' },
+  { id: 'med-002', nombre: 'Dra. María González' },
+  { id: 'med-003', nombre: 'Dr. Roberto Fernández' },
+  { id: 'med-004', nombre: 'Dra. Laura Martínez' },
+];
 
 // Mock de turnos existentes
 const MOCK_TURNOS_EXISTENTES: Turno[] = [
@@ -32,6 +42,7 @@ const MOCK_TURNOS_EXISTENTES: Turno[] = [
     hora: '09:00',
     pacienteNombre: 'Juan Pérez García',
     pacienteDni: '32.456.789',
+    medicos: ['Dr. Carlos Mendoza', 'Dra. María González'],
   },
   {
     id: 'turno-002',
@@ -39,6 +50,7 @@ const MOCK_TURNOS_EXISTENTES: Turno[] = [
     hora: '10:30',
     pacienteNombre: 'María López Rodríguez',
     pacienteDni: '28.123.456',
+    medicos: ['Dr. Carlos Mendoza'],
   },
 ];
 
@@ -58,6 +70,7 @@ const AsignarTurnos = () => {
     pacienteNombre: '',
     pacienteDni: '',
     hora: '',
+    medicos: [] as string[],
   });
 
   // Obtener turnos del día seleccionado
@@ -77,7 +90,7 @@ const AsignarTurnos = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora) {
+    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora || formData.medicos.length === 0) {
       toast.warning('Por favor complete todos los campos');
       return;
     }
@@ -94,10 +107,11 @@ const AsignarTurnos = () => {
       hora: formData.hora,
       pacienteNombre: formData.pacienteNombre,
       pacienteDni: formData.pacienteDni,
+      medicos: formData.medicos,
     };
 
     setTurnos([...turnos, nuevoTurno]);
-    setFormData({ pacienteNombre: '', pacienteDni: '', hora: '' });
+    setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicos: [] });
     setShowForm(false);
     toast.success('Turno asignado correctamente');
   };
@@ -214,6 +228,10 @@ const AsignarTurnos = () => {
                             <p className="text-sm text-vdc-secondary flex items-center mt-1">
                               <IdentificationIcon className="h-4 w-4 mr-2 text-gray-400" />
                               DNI: {turno.pacienteDni}
+                            </p>
+                            <p className="text-sm text-vdc-secondary flex items-center mt-1">
+                              <UserGroupIcon className="h-4 w-4 mr-2 text-gray-400" />
+                              {turno.medicos.join(', ')}
                             </p>
                           </div>
                         </div>
@@ -343,6 +361,36 @@ const AsignarTurnos = () => {
                     )}
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Médico(s) Participante(s) *
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-card p-3">
+                      {MEDICOS_DISPONIBLES.map((medico) => (
+                        <label key={medico.id} className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.medicos.includes(medico.nombre)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({ ...formData, medicos: [...formData.medicos, medico.nombre] });
+                              } else {
+                                setFormData({ ...formData, medicos: formData.medicos.filter(m => m !== medico.nombre) });
+                              }
+                            }}
+                            className="h-4 w-4 text-vdc-primary border-gray-300 rounded focus:ring-vdc-primary/20"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{medico.nombre}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {formData.medicos.length > 0 && (
+                      <p className="text-xs text-vdc-primary mt-1">
+                        {formData.medicos.length} médico{formData.medicos.length !== 1 ? 's' : ''} seleccionado{formData.medicos.length !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+
                   {horariosOcupados.length > 0 && (
                     <div className="text-xs text-gray-500">
                       <p className="font-medium mb-1">Horarios ocupados:</p>
@@ -367,7 +415,7 @@ const AsignarTurnos = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={horariosLibres.length === 0}
+                      disabled={horariosLibres.length === 0 || formData.medicos.length === 0}
                       className="flex-1 flex items-center justify-center px-4 py-2 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <CheckCircleIcon className="h-4 w-4 mr-2" />
