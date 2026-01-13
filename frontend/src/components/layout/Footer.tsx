@@ -33,16 +33,16 @@ const Footer = () => {
               <li className="flex items-center">
                 <PhoneIcon className="h-4 w-4 mr-2 flex-shrink-0" aria-hidden="true" />
                 <a 
-                  href="tel:+5403794428711" 
+                  href="tel:+543794790002" 
                   className="hover:text-white transition-colors"
                   aria-label="Llamar al teléfono de contacto"
                 >
-                  +54 0379 4428711
+                  +54 379 4790002
                 </a>
               </li>
               <li className="flex items-start">
                 <MapPinIcon className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                <span>San Luis 789, Corrientes Capital, Argentina</span>
+                <span>Salta 792, Corrientes, Argentina</span>
               </li>
             </ul>
           </div>
