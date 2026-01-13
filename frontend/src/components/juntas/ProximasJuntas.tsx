@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { format, isToday, isTomorrow } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { JuntaAsignada } from '../../types';
 import { juntasService } from '../../services/juntasService';
@@ -8,7 +8,7 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   UserCircleIcon,
-  MapPinIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 const ProximasJuntas = () => {
@@ -22,7 +22,9 @@ const ProximasJuntas = () => {
   const loadJuntasAsignadas = async () => {
     try {
       const data = await juntasService.getJuntasAsignadas();
-      setJuntasAsignadas(data);
+      // Filtrar solo los turnos de hoy
+      const turnosHoy = data.filter(junta => isToday(new Date(junta.fecha)));
+      setJuntasAsignadas(turnosHoy);
     } catch (error) {
       console.error('Error loading juntas asignadas:', error);
     } finally {
@@ -30,19 +32,8 @@ const ProximasJuntas = () => {
     }
   };
 
-  const getFechaLabel = (fecha: string) => {
-    const date = new Date(fecha);
-    if (isToday(date)) return 'Hoy';
-    if (isTomorrow(date)) return 'Mañana';
-    return format(date, "EEEE d", { locale: es });
-  };
-
-  const getMesLabel = (fecha: string) => {
-    const date = new Date(fecha);
-    if (isToday(date) || isTomorrow(date)) {
-      return format(date, "d 'de' MMMM", { locale: es });
-    }
-    return format(date, "MMMM", { locale: es });
+  const getFechaLabel = () => {
+    return format(new Date(), "EEEE d 'de' MMMM", { locale: es });
   };
 
   if (isLoading) {

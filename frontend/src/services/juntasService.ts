@@ -277,32 +277,41 @@ const generateMockJuntas = (): JuntaMedica[] => {
   return juntas.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 };
 
-// Mock juntas asignadas (próximas)
+// Mock juntas asignadas (turnos del día)
 const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
   const hoy = new Date();
   return [
     {
       id: 'asig-001',
-      fecha: new Date(hoy.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Mañana
+      fecha: hoy.toISOString(),
       hora: '09:00',
       pacienteNombre: 'Roberto Gómez Fernández',
       pacienteDni: '32.456.789',
-      lugar: 'Consultorio 3 - VDC Internacional',
+      profesionales: [
+        { nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Laboral' },
+        { nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
+      ],
     },
     {
       id: 'asig-002',
-      fecha: new Date(hoy.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
+      fecha: hoy.toISOString(),
       hora: '11:30',
       pacienteNombre: 'Laura Martínez Sosa',
       pacienteDni: '28.123.456',
-      lugar: 'Consultorio 1 - VDC Internacional',
+      profesionales: [
+        { nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Laboral' },
+        { nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
+      ],
     },
     {
       id: 'asig-003',
-      fecha: new Date(hoy.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), // En 5 días
+      fecha: hoy.toISOString(),
       hora: '14:00',
       pacienteNombre: 'Miguel Ángel Torres',
       pacienteDni: '35.789.012',
+      profesionales: [
+        { nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Laboral' },
+      ],
     },
   ];
 };
