@@ -84,10 +84,7 @@ export interface JuntaAsignada {
   hora: string;
   pacienteNombre: string;
   pacienteDni: string;
-  profesionales?: {
-    nombre: string;
-    especialidad: string;
-  }[];
+  lugar?: string;
 }
 
 // Resumen del dictamen para mostrar en historial
