@@ -283,7 +283,7 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
   return [
     {
       id: 'asig-001',
-      fecha: new Date(hoy.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(), // Mañana
+      fecha: hoy.toISOString(), // Hoy
       hora: '09:00',
       pacienteNombre: 'Roberto Gómez Fernández',
       pacienteDni: '32.456.789',
@@ -294,7 +294,7 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
     },
     {
       id: 'asig-002',
-      fecha: new Date(hoy.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
+      fecha: hoy.toISOString(), // Hoy
       hora: '11:30',
       pacienteNombre: 'Laura Martínez Sosa',
       pacienteDni: '28.123.456',
@@ -305,7 +305,7 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
     },
     {
       id: 'asig-003',
-      fecha: new Date(hoy.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), // En 5 días
+      fecha: hoy.toISOString(), // Hoy
       hora: '14:00',
       pacienteNombre: 'Miguel Ángel Torres',
       pacienteDni: '35.789.012',

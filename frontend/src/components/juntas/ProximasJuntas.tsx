@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { format, isToday, isTomorrow } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { JuntaAsignada } from '../../types';
 import { juntasService } from '../../services/juntasService';
@@ -22,19 +22,14 @@ const ProximasJuntas = () => {
   const loadJuntasAsignadas = async () => {
     try {
       const data = await juntasService.getJuntasAsignadas();
-      setJuntasAsignadas(data);
+      // Filtrar solo los turnos del día actual
+      const turnosHoy = data.filter(junta => isToday(new Date(junta.fecha)));
+      setJuntasAsignadas(turnosHoy);
     } catch (error) {
       console.error('Error loading juntas asignadas:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getFechaLabel = (fecha: string) => {
-    const date = new Date(fecha);
-    if (isToday(date)) return 'Hoy';
-    if (isTomorrow(date)) return 'Mañana';
-    return format(date, "EEEE d", { locale: es });
   };
 
   if (isLoading) {
@@ -54,12 +49,12 @@ const ProximasJuntas = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
         <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center">
           <CalendarDaysIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-          Próximos Turnos
+          Turnos del Día
         </h3>
         <div className="text-center py-6">
           <CalendarDaysIcon className="h-10 w-10 mx-auto text-gray-300 mb-2" />
           <p className="text-sm text-gray-500">
-            No hay turnos asignados
+            No hay turnos para hoy
           </p>
         </div>
       </div>
@@ -70,43 +65,32 @@ const ProximasJuntas = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
       <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
         <CalendarDaysIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-        Próximos Turnos
+        Turnos del Día
         <span className="ml-auto text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          {juntasAsignadas.length} pendiente{juntasAsignadas.length > 1 ? 's' : ''}
+          {juntasAsignadas.length} turno{juntasAsignadas.length > 1 ? 's' : ''}
         </span>
       </h3>
       
+      {/* Fecha de hoy */}
+      <div className="mb-4 px-3 py-2 bg-vdc-primary/10 rounded-lg">
+        <p className="text-sm text-vdc-primary font-medium capitalize">
+          {format(new Date(), "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+        </p>
+      </div>
+      
       <div className="space-y-3">
         {juntasAsignadas.map((junta, index) => {
-          const fechaDate = new Date(junta.fecha);
-          const esHoy = isToday(fechaDate);
-          const esManana = isTomorrow(fechaDate);
-          
           return (
             <motion.div
               key={junta.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`rounded-lg overflow-hidden border ${
-                esHoy 
-                  ? 'border-vdc-primary bg-blue-50/50' 
-                  : esManana 
-                    ? 'border-orange-200 bg-orange-50/30'
-                    : 'border-gray-200 bg-gray-50/50'
-              }`}
+              className="rounded-lg overflow-hidden border border-vdc-primary bg-blue-50/50"
             >
-              {/* Header con fecha */}
-              <div className={`px-3 py-2 flex items-center justify-between ${
-                esHoy 
-                  ? 'bg-vdc-primary text-white' 
-                  : esManana 
-                    ? 'bg-orange-100 text-orange-800'
-                    : 'bg-gray-100 text-gray-700'
-              }`}>
-                <span className="font-semibold text-sm capitalize">
-                  {getFechaLabel(junta.fecha)}
-                </span>
+              {/* Header con hora */}
+              <div className="px-3 py-2 flex items-center justify-between bg-vdc-primary text-white">
+                <span className="font-semibold text-sm">Turno</span>
                 <div className="flex items-center text-sm">
                   <ClockIcon className="h-4 w-4 mr-1" />
                   <span className="font-medium">{junta.hora}</span>
@@ -115,14 +99,6 @@ const ProximasJuntas = () => {
               
               {/* Contenido */}
               <div className="p-3">
-                {/* Fecha de la junta */}
-                <div className="flex items-center text-xs text-gray-500 mb-2">
-                  <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
-                  <span className="capitalize">
-                    {format(fechaDate, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
-                  </span>
-                </div>
-
                 {/* Paciente */}
                 <div className="flex items-start mb-2">
                   <UserCircleIcon className="h-5 w-5 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
