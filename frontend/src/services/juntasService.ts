@@ -287,7 +287,10 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
       hora: '09:00',
       pacienteNombre: 'Roberto Gómez Fernández',
       pacienteDni: '32.456.789',
-      lugar: 'Consultorio 3 - VDC Internacional',
+      profesionales: [
+        { id: 'prof-001', nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Laboral' },
+        { id: 'prof-002', nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
+      ],
     },
     {
       id: 'asig-002',
@@ -295,7 +298,10 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
       hora: '11:30',
       pacienteNombre: 'Laura Martínez Sosa',
       pacienteDni: '28.123.456',
-      lugar: 'Consultorio 1 - VDC Internacional',
+      profesionales: [
+        { id: 'prof-001', nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Laboral' },
+        { id: 'prof-003', nombre: 'Dr. Juan Pérez', especialidad: 'Traumatología' },
+      ],
     },
     {
       id: 'asig-003',
@@ -303,6 +309,9 @@ const generateMockJuntasAsignadas = (): JuntaAsignada[] => {
       hora: '14:00',
       pacienteNombre: 'Miguel Ángel Torres',
       pacienteDni: '35.789.012',
+      profesionales: [
+        { id: 'prof-002', nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
+      ],
     },
   ];
 };

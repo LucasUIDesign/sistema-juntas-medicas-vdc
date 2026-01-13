@@ -8,7 +8,7 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   UserCircleIcon,
-  MapPinIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 const ProximasJuntas = () => {
@@ -35,14 +35,6 @@ const ProximasJuntas = () => {
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
     return format(date, "EEEE d", { locale: es });
-  };
-
-  const getMesLabel = (fecha: string) => {
-    const date = new Date(fecha);
-    if (isToday(date) || isTomorrow(date)) {
-      return format(date, "d 'de' MMMM", { locale: es });
-    }
-    return format(date, "MMMM", { locale: es });
   };
 
   if (isLoading) {
@@ -123,6 +115,14 @@ const ProximasJuntas = () => {
               
               {/* Contenido */}
               <div className="p-3">
+                {/* Fecha de la junta */}
+                <div className="flex items-center text-xs text-gray-500 mb-2">
+                  <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                  <span className="capitalize">
+                    {format(fechaDate, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+                  </span>
+                </div>
+
                 {/* Paciente */}
                 <div className="flex items-start mb-2">
                   <UserCircleIcon className="h-5 w-5 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
@@ -136,19 +136,22 @@ const ProximasJuntas = () => {
                   </div>
                 </div>
 
-                {/* Lugar */}
-                {junta.lugar && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <MapPinIcon className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
-                    <span className="truncate">{junta.lugar}</span>
+                {/* Médicos participantes */}
+                {junta.profesionales && junta.profesionales.length > 0 && (
+                  <div className="mt-3 pt-2 border-t border-gray-200">
+                    <div className="flex items-center text-xs text-gray-500 mb-2">
+                      <UserGroupIcon className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                      <span className="font-medium">Médicos participantes:</span>
+                    </div>
+                    <div className="space-y-1 ml-5">
+                      {junta.profesionales.map((prof) => (
+                        <div key={prof.id} className="text-xs">
+                          <span className="text-gray-800 font-medium">{prof.nombre}</span>
+                          <span className="text-gray-500 ml-1">• {prof.especialidad}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )}
-
-                {/* Fecha completa para días futuros */}
-                {!esHoy && !esManana && (
-                  <p className="text-xs text-gray-400 mt-2 capitalize">
-                    {getMesLabel(junta.fecha)}
-                  </p>
                 )}
               </div>
             </motion.div>

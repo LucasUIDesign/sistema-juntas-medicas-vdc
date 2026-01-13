@@ -77,6 +77,13 @@ export interface JuntaMedica {
   updatedAt: string;
 }
 
+// Profesional médico participante
+export interface ProfesionalParticipante {
+  id: string;
+  nombre: string;
+  especialidad: string;
+}
+
 // Junta asignada (próxima a realizar)
 export interface JuntaAsignada {
   id: string;
@@ -85,6 +92,7 @@ export interface JuntaAsignada {
   pacienteNombre: string;
   pacienteDni: string;
   lugar?: string;
+  profesionales?: ProfesionalParticipante[];
 }
 
 // Resumen del dictamen para mostrar en historial
