@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuario
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  nombre        String?
+  apellido      String?
+  dni           String?
+  telefono      String?
+  fotoUrl       String?
+  role          String   @default("ADMIN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Modelo de Paciente
+model Paciente {
+  id              String   @id @default(uuid())
+  nombre          String
+  apellido        String
+  numeroDocumento String   @unique
+  correo          String?
+  telefono        String?
+  domicilio       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

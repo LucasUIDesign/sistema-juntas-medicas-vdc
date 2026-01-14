@@ -1,70 +1,16 @@
-import { User, AuthResponse, UserRole } from '../types';
+import { AuthResponse, UserRole } from '../types';
 
-// Mock users for development
-const MOCK_USERS: Record<string, { password: string; user: User }> = {
-  'evaluador@vdc-demo.com': {
-    password: 'Demo2025!',
-    user: {
-      id: 'user-001',
-      email: 'evaluador@vdc-demo.com',
-      nombre: 'Dr. Carlos Mendoza',
-      role: 'MEDICO_EVALUADOR' as UserRole
-    }
-  },
-  'director@vdc-demo.com': {
-    password: 'Demo2025!',
-    user: {
-      id: 'user-002',
-      email: 'director@vdc-demo.com',
-      nombre: 'Dra. María González',
-      role: 'DIRECTOR_MEDICO' as UserRole
-    }
-  },
-  'rrhh@vdc-demo.com': {
-    password: 'Demo2025!',
-    user: {
-      id: 'user-003',
-      email: 'rrhh@vdc-demo.com',
-      nombre: 'Ana Rodríguez',
-      role: 'RRHH' as UserRole
-    }
-  },
-  'gerencial@vdc-demo.com': {
-    password: 'Demo2025!',
-    user: {
-      id: 'user-004',
-      email: 'gerencial@vdc-demo.com',
-      nombre: 'Roberto Fernández',
-      role: 'GERENCIAL' as UserRole
-    }
-  },
-  'admin@vdc-demo.com': {
-    password: 'Demo2025!',
-    user: {
-      id: 'user-005',
-      email: 'admin@vdc-demo.com',
-      nombre: 'Administrador Sistema',
-      role: 'ADMIN' as UserRole
-    }
-  }
-};
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
 
-// Simple JWT-like token generation for mock
-const generateMockToken = (user: User): string => {
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    role: user.role,
-    exp: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-  };
-  return btoa(JSON.stringify(payload));
-};
-
-// Verify mock token
-const verifyMockToken = (token: string): boolean => {
+// Verify JWT token format and expiration
+const verifyToken = (token: string): boolean => {
   try {
-    const payload = JSON.parse(atob(token));
-    return payload.exp > Date.now();
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    const payload = JSON.parse(atob(parts[1]));
+    const exp = payload.exp * 1000; // Convert to milliseconds
+    return exp > Date.now();
   } catch {
     return false;
   }
@@ -72,62 +18,85 @@ const verifyMockToken = (token: string): boolean => {
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const mockUser = MOCK_USERS[normalizedEmail];
+      const data = await response.json();
 
-    if (!mockUser || mockUser.password !== password) {
-      throw new Error('Credenciales inválidas');
+      if (!response.ok) {
+        throw new Error(data.message || 'Credenciales inválidas');
+      }
+
+      return {
+        user: data.user,
+        token: data.token,
+        refreshToken: data.refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error de conexión con el servidor');
     }
-
-    const token = generateMockToken(mockUser.user);
-    
-    return {
-      user: mockUser.user,
-      token,
-      refreshToken: generateMockToken(mockUser.user)
-    };
   },
 
   async verifyToken(token: string): Promise<boolean> {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    return verifyMockToken(token);
+    return verifyToken(token);
   },
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    if (!verifyMockToken(refreshToken)) {
-      throw new Error('Token de refresco inválido');
+    try {
+      const response = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Token de refresco inválido');
+      }
+
+      return {
+        user: data.user,
+        token: data.token,
+        refreshToken: data.refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error al refrescar el token');
     }
-
-    const payload = JSON.parse(atob(refreshToken));
-    const email = payload.email;
-    const mockUser = Object.values(MOCK_USERS).find(u => u.user.email === email);
-
-    if (!mockUser) {
-      throw new Error('Usuario no encontrado');
-    }
-
-    const newToken = generateMockToken(mockUser.user);
-    
-    return {
-      user: mockUser.user,
-      token: newToken,
-      refreshToken: generateMockToken(mockUser.user)
-    };
   },
 
   async forgotPassword(email: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const normalizedEmail = email.toLowerCase().trim();
-    if (!MOCK_USERS[normalizedEmail]) {
-      return;
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Error al procesar la solicitud');
+      }
+    } catch (error) {
+      // Don't reveal if email exists or not
+      console.log('Password reset requested for:', email);
     }
-    
-    console.log(`Password reset email would be sent to: ${email}`);
   },
 
   getDashboardRoute(role: UserRole): string {

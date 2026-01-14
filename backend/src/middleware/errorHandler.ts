@@ -16,9 +16,14 @@ export class AppError extends Error {
 export class ValidationError extends AppError {
   errors: Record<string, string>;
 
-  constructor(message: string, errors: Record<string, string> = {}) {
-    super(message, 400);
-    this.errors = errors;
+  constructor(errorsOrMessage: string | Record<string, string>, errors: Record<string, string> = {}) {
+    if (typeof errorsOrMessage === 'string') {
+      super(errorsOrMessage, 400);
+      this.errors = errors;
+    } else {
+      super('Datos inválidos', 400);
+      this.errors = errorsOrMessage;
+    }
   }
 }
 

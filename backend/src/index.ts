@@ -9,6 +9,7 @@ import juntasRoutes from './routes/juntas';
 import pacientesRoutes from './routes/pacientes';
 import medicosRoutes from './routes/medicos';
 import uploadRoutes from './routes/upload';
+import usersRoutes from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
 
 // Load environment variables
@@ -47,6 +48,7 @@ app.use('/api/juntas', juntasRoutes);
 app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/medicos', medicosRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/users', usersRoutes);
 
 // Error handling
 app.use(errorHandler);
