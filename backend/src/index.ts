@@ -182,7 +182,7 @@ app.get('/debug-users', async (req, res) => {
       },
       body: JSON.stringify({
         requests: [
-          { type: 'execute', stmt: { sql: 'SELECT id, email, nombre, apellido, role FROM User' } },
+          { type: 'execute', stmt: { sql: 'SELECT id, email, password, nombre, apellido, role FROM User' } },
           { type: 'close' },
         ],
       }),
@@ -192,6 +192,32 @@ app.get('/debug-users', async (req, res) => {
     res.json(data);
   } catch (error: any) {
     res.json({ error: error.message });
+  }
+});
+
+// Debug: probar login directamente
+app.get('/debug-login', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const { findUserByEmail } = require('./lib/prisma');
+
+    const user = await findUserByEmail('admin@vdc.com');
+
+    if (!user) {
+      return res.json({ error: 'Usuario no encontrado', user: null });
+    }
+
+    const testPassword = 'Admin2025!';
+    const isValid = await bcrypt.compare(testPassword, user.password);
+
+    res.json({
+      userFound: true,
+      email: user.email,
+      passwordHash: user.password ? user.password.substring(0, 20) + '...' : 'NULL',
+      passwordValid: isValid,
+    });
+  } catch (error: any) {
+    res.json({ error: error.message, stack: error.stack });
   }
 });
 
