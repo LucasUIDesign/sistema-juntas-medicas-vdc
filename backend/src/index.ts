@@ -145,7 +145,7 @@ app.get('/setup-db', async (req, res) => {
           {
             type: 'execute',
             stmt: {
-              sql: `INSERT OR IGNORE INTO User (id, email, password, nombre, apellido, role)
+              sql: `INSERT OR REPLACE INTO User (id, email, password, nombre, apellido, role)
                     VALUES ('admin-001', 'admin@vdc.com', '${hashedPassword}', 'Administrador', 'Sistema', 'ADMIN')`,
             },
           },
