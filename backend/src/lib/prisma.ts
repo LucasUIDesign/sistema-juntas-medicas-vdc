@@ -1,10 +1,62 @@
-import { createClient } from '@libsql/client';
+// Turso HTTP API client
+const TURSO_URL = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || '';
 
-// Create libSQL client for Turso
-export const db = createClient({
-  url: process.env.TURSO_DATABASE_URL || '',
-  authToken: process.env.TURSO_AUTH_TOKEN || '',
-});
+interface TursoResult {
+  rows: any[];
+}
+
+async function executeSQL(sql: string, args: any[] = []): Promise<TursoResult> {
+  const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${TURSO_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      requests: [
+        {
+          type: 'execute',
+          stmt: {
+            sql,
+            args: args.map(arg => ({ type: arg === null ? 'null' : 'text', value: arg === null ? null : String(arg) })),
+          },
+        },
+        { type: 'close' },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Turso error: ${error}`);
+  }
+
+  const data: any = await response.json();
+
+  if (data.results?.[0]?.response?.result?.rows) {
+    const cols = data.results[0].response.result.cols.map((c: any) => c.name);
+    const rows = data.results[0].response.result.rows.map((row: any) => {
+      const obj: any = {};
+      row.forEach((cell: any, i: number) => {
+        obj[cols[i]] = cell?.value ?? null;
+      });
+      return obj;
+    });
+    return { rows };
+  }
+
+  return { rows: [] };
+}
+
+export const db = {
+  execute: async (query: string | { sql: string; args: any[] }) => {
+    if (typeof query === 'string') {
+      return executeSQL(query);
+    }
+    return executeSQL(query.sql, query.args);
+  },
+};
 
 // Helper functions for common database operations
 export async function findUserByEmail(email: string) {
