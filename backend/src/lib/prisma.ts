@@ -7,32 +7,37 @@ interface TursoResult {
 }
 
 async function executeSQL(sql: string, args: any[] = []): Promise<TursoResult> {
+  const requestBody = {
+    requests: [
+      {
+        type: 'execute',
+        stmt: args.length > 0
+          ? { sql, args: args.map(arg => arg === null ? { type: 'null', value: null } : { type: 'text', value: String(arg) }) }
+          : { sql },
+      },
+      { type: 'close' },
+    ],
+  };
+
+  console.log('Turso request:', JSON.stringify(requestBody, null, 2));
+
   const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${TURSO_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      requests: [
-        {
-          type: 'execute',
-          stmt: {
-            sql,
-            args: args.map(arg => ({ type: arg === null ? 'null' : 'text', value: arg === null ? null : String(arg) })),
-          },
-        },
-        { type: 'close' },
-      ],
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
     const error = await response.text();
+    console.error('Turso error response:', error);
     throw new Error(`Turso error: ${error}`);
   }
 
   const data: any = await response.json();
+  console.log('Turso response:', JSON.stringify(data, null, 2));
 
   if (data.results?.[0]?.response?.result?.rows) {
     const cols = data.results[0].response.result.cols.map((c: any) => c.name);
