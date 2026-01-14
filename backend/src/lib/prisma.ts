@@ -1,12 +1,21 @@
 // Turso HTTP API client
-const TURSO_URL = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
-const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || '';
+// Read env vars lazily to ensure dotenv has loaded them
+function getTursoUrl(): string {
+  return process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+}
+
+function getTursoToken(): string {
+  return process.env.TURSO_AUTH_TOKEN || '';
+}
 
 interface TursoResult {
   rows: any[];
 }
 
 async function executeSQL(sql: string, args: any[] = []): Promise<TursoResult> {
+  const TURSO_URL = getTursoUrl();
+  const TURSO_TOKEN = getTursoToken();
+
   const requestBody = {
     requests: [
       {
