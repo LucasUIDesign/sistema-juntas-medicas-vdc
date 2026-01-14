@@ -168,6 +168,33 @@ app.get('/setup-db', async (req, res) => {
   }
 });
 
+// Debug: verificar usuarios en la base de datos
+app.get('/debug-users', async (req, res) => {
+  try {
+    const tursoUrl = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+    const tursoToken = process.env.TURSO_AUTH_TOKEN || '';
+
+    const response = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: 'execute', stmt: { sql: 'SELECT id, email, nombre, apellido, role FROM User' } },
+          { type: 'close' },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    res.json({ error: error.message });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
