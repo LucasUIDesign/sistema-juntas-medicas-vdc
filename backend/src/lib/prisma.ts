@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
 
 // Create Prisma adapter for Turso
-const adapter = new PrismaLibSql({
+const adapter = new PrismaLibSQL({
   url: process.env.TURSO_DATABASE_URL!,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
