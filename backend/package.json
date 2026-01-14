@@ -21,7 +21,7 @@
     "@aws-sdk/lib-dynamodb": "^3.478.0",
     "@aws-sdk/s3-request-presigner": "^3.478.0",
     "@libsql/client": "^0.17.0",
-    "@prisma/adapter-libsql": "^7.2.0",
+    "@prisma/adapter-libsql": "^5.22.0",
     "@prisma/client": "^5.22.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
