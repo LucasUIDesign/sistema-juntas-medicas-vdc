@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "npx prisma generate && tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -20,9 +20,7 @@
     "@aws-sdk/client-s3": "^3.478.0",
     "@aws-sdk/lib-dynamodb": "^3.478.0",
     "@aws-sdk/s3-request-presigner": "^3.478.0",
-    "@libsql/client": "^0.8.0",
-    "@prisma/adapter-libsql": "^5.22.0",
-    "@prisma/client": "^5.22.0",
+    "@libsql/client": "^0.14.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
@@ -37,7 +35,6 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "prisma": "^5.22.0",
     "typescript": "^5.3.3",
     "uuid": "^9.0.1"
   },

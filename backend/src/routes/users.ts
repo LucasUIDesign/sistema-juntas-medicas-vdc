@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../lib/prisma';
+import { findUserById, updateUser, db } from '../lib/prisma';
 import { authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 
@@ -12,26 +12,23 @@ router.get('/profile', authMiddleware, async (req: Request, res: Response, next:
   try {
     const userId = (req as any).user.sub;
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        nombre: true,
-        apellido: true,
-        dni: true,
-        telefono: true,
-        fotoUrl: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const user = await findUserById(userId) as any;
 
     if (!user) {
       throw new NotFoundError('Usuario no encontrado');
     }
 
-    res.json(user);
+    res.json({
+      id: user.id,
+      email: user.email,
+      nombre: user.nombre,
+      apellido: user.apellido,
+      dni: user.dni,
+      telefono: user.telefono,
+      fotoUrl: user.fotoUrl,
+      role: user.role,
+      createdAt: user.createdAt,
+    });
   } catch (error) {
     next(error);
   }
@@ -62,28 +59,29 @@ router.put(
       const userId = (req as any).user.sub;
       const { nombre, apellido, dni, telefono, fotoUrl } = req.body;
 
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          nombre,
-          apellido,
-          dni,
-          telefono,
-          fotoUrl,
-        },
-        select: {
-          id: true,
-          email: true,
-          nombre: true,
-          apellido: true,
-          dni: true,
-          telefono: true,
-          fotoUrl: true,
-          role: true,
+      // Build update data
+      const updateData: Record<string, any> = {};
+      if (nombre !== undefined) updateData.nombre = nombre;
+      if (apellido !== undefined) updateData.apellido = apellido;
+      if (dni !== undefined) updateData.dni = dni;
+      if (telefono !== undefined) updateData.telefono = telefono;
+      if (fotoUrl !== undefined) updateData.fotoUrl = fotoUrl;
+
+      const user = await updateUser(userId, updateData) as any;
+
+      res.json({
+        message: 'Perfil actualizado correctamente',
+        user: {
+          id: user.id,
+          email: user.email,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          dni: user.dni,
+          telefono: user.telefono,
+          fotoUrl: user.fotoUrl,
+          role: user.role,
         },
       });
-
-      res.json({ message: 'Perfil actualizado correctamente', user });
     } catch (error) {
       next(error);
     }
@@ -121,9 +119,7 @@ router.put(
         throw new ValidationError({ confirmPassword: 'Las contraseñas no coinciden' });
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await findUserById(userId) as any;
 
       if (!user) {
         throw new NotFoundError('Usuario no encontrado');
@@ -136,9 +132,9 @@ router.put(
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      await prisma.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword },
+      await db.execute({
+        sql: 'UPDATE User SET password = ?, updatedAt = datetime(\'now\') WHERE id = ?',
+        args: [hashedPassword, userId],
       });
 
       res.json({ message: 'Contraseña actualizada correctamente' });

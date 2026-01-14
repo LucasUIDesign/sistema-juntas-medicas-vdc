@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { body, query, validationResult } from 'express-validator';
-import { prisma } from '../lib/prisma';
+import { findAllPacientes, findPacienteById, findPacienteByDocumento, createPaciente, updatePaciente, deletePaciente } from '../lib/prisma';
 import { authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 
@@ -14,39 +14,12 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { search } = req.query;
+      const searchTerm = search && typeof search === 'string' ? search.trim() : undefined;
 
-      let pacientes;
-
-      if (search && typeof search === 'string' && search.trim()) {
-        const searchTerm = search.trim().toLowerCase();
-
-        // Búsqueda inteligente: busca en nombre, apellido y documento
-        pacientes = await prisma.paciente.findMany({
-          where: {
-            OR: [
-              { nombre: { contains: searchTerm } },
-              { apellido: { contains: searchTerm } },
-              { numeroDocumento: { contains: searchTerm } },
-              { correo: { contains: searchTerm } },
-            ],
-          },
-          orderBy: [
-            { apellido: 'asc' },
-            { nombre: 'asc' },
-          ],
-          take: 20, // Limitar resultados para autocompletado
-        });
-      } else {
-        pacientes = await prisma.paciente.findMany({
-          orderBy: [
-            { apellido: 'asc' },
-            { nombre: 'asc' },
-          ],
-        });
-      }
+      const pacientes = await findAllPacientes(searchTerm);
 
       // Formatear respuesta para compatibilidad
-      const formattedPacientes = pacientes.map(p => ({
+      const formattedPacientes = pacientes.map((p: any) => ({
         id: p.id,
         nombre: p.nombre,
         apellido: p.apellido,
@@ -72,9 +45,7 @@ router.get(
     try {
       const { id } = req.params;
 
-      const paciente = await prisma.paciente.findUnique({
-        where: { id },
-      });
+      const paciente = await findPacienteById(id) as any;
 
       if (!paciente) {
         throw new NotFoundError('Paciente no encontrado');
@@ -122,24 +93,20 @@ router.post(
       const { nombre, apellido, numeroDocumento, correo, telefono, domicilio } = req.body;
 
       // Verificar si ya existe un paciente con el mismo documento
-      const existingPaciente = await prisma.paciente.findUnique({
-        where: { numeroDocumento },
-      });
+      const existingPaciente = await findPacienteByDocumento(numeroDocumento);
 
       if (existingPaciente) {
         throw new ValidationError({ numeroDocumento: 'Ya existe un paciente con este número de documento' });
       }
 
-      const paciente = await prisma.paciente.create({
-        data: {
-          nombre,
-          apellido,
-          numeroDocumento,
-          correo: correo || null,
-          telefono: telefono || null,
-          domicilio: domicilio || null,
-        },
-      });
+      const paciente = await createPaciente({
+        nombre,
+        apellido,
+        numeroDocumento,
+        correo: correo || undefined,
+        telefono: telefono || undefined,
+        domicilio: domicilio || undefined,
+      }) as any;
 
       res.status(201).json({
         message: 'Paciente creado correctamente',
@@ -187,9 +154,7 @@ router.put(
       const { nombre, apellido, numeroDocumento, correo, telefono, domicilio } = req.body;
 
       // Verificar que el paciente existe
-      const existingPaciente = await prisma.paciente.findUnique({
-        where: { id },
-      });
+      const existingPaciente = await findPacienteById(id) as any;
 
       if (!existingPaciente) {
         throw new NotFoundError('Paciente no encontrado');
@@ -197,26 +162,23 @@ router.put(
 
       // Si se cambia el documento, verificar que no exista otro paciente con el mismo
       if (numeroDocumento && numeroDocumento !== existingPaciente.numeroDocumento) {
-        const duplicatePaciente = await prisma.paciente.findUnique({
-          where: { numeroDocumento },
-        });
+        const duplicatePaciente = await findPacienteByDocumento(numeroDocumento);
 
         if (duplicatePaciente) {
           throw new ValidationError({ numeroDocumento: 'Ya existe un paciente con este número de documento' });
         }
       }
 
-      const paciente = await prisma.paciente.update({
-        where: { id },
-        data: {
-          nombre,
-          apellido,
-          numeroDocumento,
-          correo,
-          telefono,
-          domicilio,
-        },
-      });
+      // Build update data
+      const updateData: Record<string, any> = {};
+      if (nombre !== undefined) updateData.nombre = nombre;
+      if (apellido !== undefined) updateData.apellido = apellido;
+      if (numeroDocumento !== undefined) updateData.numeroDocumento = numeroDocumento;
+      if (correo !== undefined) updateData.correo = correo;
+      if (telefono !== undefined) updateData.telefono = telefono;
+      if (domicilio !== undefined) updateData.domicilio = domicilio;
+
+      const paciente = await updatePaciente(id, updateData) as any;
 
       res.json({
         message: 'Paciente actualizado correctamente',
@@ -245,17 +207,13 @@ router.delete(
     try {
       const { id } = req.params;
 
-      const paciente = await prisma.paciente.findUnique({
-        where: { id },
-      });
+      const paciente = await findPacienteById(id);
 
       if (!paciente) {
         throw new NotFoundError('Paciente no encontrado');
       }
 
-      await prisma.paciente.delete({
-        where: { id },
-      });
+      await deletePaciente(id);
 
       res.json({ message: 'Paciente eliminado correctamente' });
     } catch (error) {

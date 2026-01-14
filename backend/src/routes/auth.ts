@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
-import { prisma } from '../lib/prisma';
+import { findUserByEmail, findUserById } from '../lib/prisma';
 import { ValidationError, AuthenticationError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -44,9 +44,7 @@ router.post(
       const normalizedEmail = email.toLowerCase().trim();
 
       // Buscar usuario en la base de datos
-      const user = await prisma.user.findUnique({
-        where: { email: normalizedEmail },
-      });
+      const user = await findUserByEmail(normalizedEmail) as any;
 
       if (!user) {
         throw new AuthenticationError('Credenciales inválidas');
@@ -92,9 +90,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
       const decoded = jwt.verify(refreshToken, secret) as any;
       const userId = decoded.sub;
 
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await findUserById(userId) as any;
 
       if (!user) {
         throw new AuthenticationError('Usuario no encontrado');
