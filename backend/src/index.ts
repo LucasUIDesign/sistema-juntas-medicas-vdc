@@ -221,6 +221,60 @@ app.get('/debug-login', async (req, res) => {
   }
 });
 
+// Debug: probar login completo con JWT
+app.post('/debug-login-full', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const jwt = require('jsonwebtoken');
+    const { findUserByEmail } = require('./lib/prisma');
+
+    const { email, password } = req.body;
+    console.log('Debug login full - email:', email);
+
+    const user = await findUserByEmail(email?.toLowerCase?.().trim?.() || '');
+    console.log('Debug login full - user found:', !!user);
+
+    if (!user) {
+      return res.json({ step: 'findUser', error: 'Usuario no encontrado' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    console.log('Debug login full - password valid:', isValid);
+
+    if (!isValid) {
+      return res.json({ step: 'passwordCheck', error: 'Contraseña inválida' });
+    }
+
+    const secret = process.env.JWT_SECRET || 'default-secret';
+    console.log('Debug login full - JWT_SECRET length:', secret.length);
+
+    const token = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        nombre: user.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : user.email,
+      },
+      secret,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        role: user.role,
+      },
+      token: token.substring(0, 50) + '...',
+    });
+  } catch (error: any) {
+    console.error('Debug login full error:', error);
+    res.json({ error: error.message, stack: error.stack });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
