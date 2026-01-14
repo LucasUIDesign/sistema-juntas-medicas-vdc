@@ -56,6 +56,41 @@ app.get('/debug-env', (req, res) => {
   });
 });
 
+// Debug endpoint para probar conexión a Turso
+app.get('/debug-db', async (req, res) => {
+  try {
+    const tursoUrl = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+    const tursoToken = process.env.TURSO_AUTH_TOKEN || '';
+
+    const response = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: 'execute', stmt: { sql: 'SELECT 1 as test' } },
+          { type: 'close' },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    res.json({
+      status: response.ok ? 'connected' : 'error',
+      httpStatus: response.status,
+      tursoUrl,
+      response: data,
+    });
+  } catch (error: any) {
+    res.json({
+      status: 'error',
+      error: error.message,
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
