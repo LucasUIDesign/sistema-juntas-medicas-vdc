@@ -42,6 +42,20 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint (temporal) - para verificar variables de entorno
+app.get('/debug-env', (req, res) => {
+  const tursoUrl = process.env.TURSO_DATABASE_URL || 'NOT SET';
+  const tursoToken = process.env.TURSO_AUTH_TOKEN || 'NOT SET';
+  res.json({
+    TURSO_DATABASE_URL: tursoUrl,
+    TURSO_AUTH_TOKEN_length: tursoToken.length,
+    TURSO_AUTH_TOKEN_start: tursoToken.substring(0, 20),
+    TURSO_AUTH_TOKEN_end: tursoToken.substring(tursoToken.length - 10),
+    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+    CORS_ORIGIN: process.env.CORS_ORIGIN || 'NOT SET',
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
