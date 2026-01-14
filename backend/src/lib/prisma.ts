@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
 import { createClient } from '@libsql/client';
 
 // Create libSQL client for Turso
@@ -9,7 +9,7 @@ const libsqlClient = createClient({
 });
 
 // Create Prisma adapter
-const adapter = new PrismaLibSql(libsqlClient as any);
+const adapter = new PrismaLibSQL(libsqlClient as any);
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
