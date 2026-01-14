@@ -91,6 +91,83 @@ app.get('/debug-db', async (req, res) => {
   }
 });
 
+// Endpoint para inicializar la base de datos
+app.get('/setup-db', async (req, res) => {
+  try {
+    const tursoUrl = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+    const tursoToken = process.env.TURSO_AUTH_TOKEN || '';
+    const bcrypt = require('bcryptjs');
+
+    const hashedPassword = await bcrypt.hash('Admin2025!', 10);
+
+    const response = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            type: 'execute',
+            stmt: {
+              sql: `CREATE TABLE IF NOT EXISTS User (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                nombre TEXT,
+                apellido TEXT,
+                dni TEXT,
+                telefono TEXT,
+                fotoUrl TEXT,
+                role TEXT DEFAULT 'ADMIN',
+                createdAt TEXT DEFAULT (datetime('now')),
+                updatedAt TEXT DEFAULT (datetime('now'))
+              )`,
+            },
+          },
+          {
+            type: 'execute',
+            stmt: {
+              sql: `CREATE TABLE IF NOT EXISTS Paciente (
+                id TEXT PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                apellido TEXT NOT NULL,
+                numeroDocumento TEXT UNIQUE NOT NULL,
+                correo TEXT,
+                telefono TEXT,
+                domicilio TEXT,
+                createdAt TEXT DEFAULT (datetime('now')),
+                updatedAt TEXT DEFAULT (datetime('now'))
+              )`,
+            },
+          },
+          {
+            type: 'execute',
+            stmt: {
+              sql: `INSERT OR IGNORE INTO User (id, email, password, nombre, apellido, role)
+                    VALUES ('admin-001', 'admin@vdc.com', '${hashedPassword}', 'Administrador', 'Sistema', 'ADMIN')`,
+            },
+          },
+          { type: 'close' },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+    res.json({
+      status: response.ok ? 'success' : 'error',
+      message: 'Base de datos inicializada',
+      response: data,
+    });
+  } catch (error: any) {
+    res.json({
+      status: 'error',
+      error: error.message,
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
