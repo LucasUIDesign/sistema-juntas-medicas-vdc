@@ -115,6 +115,7 @@ app.get('/setup-db', async (req, res) => {
                 id TEXT PRIMARY KEY,
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
+                username TEXT UNIQUE,
                 nombre TEXT,
                 apellido TEXT,
                 dni TEXT,
@@ -145,8 +146,8 @@ app.get('/setup-db', async (req, res) => {
           {
             type: 'execute',
             stmt: {
-              sql: `INSERT OR REPLACE INTO User (id, email, password, nombre, apellido, role)
-                    VALUES ('admin-001', 'admin@vdc.com', '${hashedPassword}', 'Administrador', 'Sistema', 'ADMIN')`,
+              sql: `INSERT OR REPLACE INTO User (id, email, password, username, nombre, apellido, role)
+                    VALUES ('admin-001', 'admin@vdc.com', '${hashedPassword}', 'admin', 'Administrador', 'Sistema', 'ADMIN')`,
             },
           },
           { type: 'close' },
