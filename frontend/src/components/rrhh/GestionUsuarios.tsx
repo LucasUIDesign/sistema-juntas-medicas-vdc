@@ -6,8 +6,9 @@ import { toast } from 'react-toastify';
 import {
   UsersIcon,
   UserPlusIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
+
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
 
 // Validation schema
 const createUserSchema = Yup.object({
@@ -61,7 +62,7 @@ const GestionUsuarios = () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('vdc_token');
-      const response = await fetch('https://sistema-juntas-medicas-vdc.onrender.com/api/users', {
+      const response = await fetch(`${API_URL}/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -81,7 +82,7 @@ const GestionUsuarios = () => {
   const handleCreateUser = async (values: any, { resetForm }: any) => {
     try {
       const token = localStorage.getItem('vdc_token');
-      const response = await fetch('https://sistema-juntas-medicas-vdc.onrender.com/api/users', {
+      const response = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
