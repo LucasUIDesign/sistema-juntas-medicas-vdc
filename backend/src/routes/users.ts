@@ -7,6 +7,82 @@ import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 
 const router = Router();
 
+// GET /api/users - Obtener lista de usuarios (admin only)
+router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userRole = (req as any).user.role;
+
+    // Only admins can view all users
+    if (userRole !== 'ADMIN') {
+      return res.status(403).json({ error: 'No tienes permiso para ver usuarios' });
+    }
+
+    const result = await db.execute('SELECT id, nombre, apellido, email, role, activo, createdAt FROM User ORDER BY createdAt DESC');
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/users - Crear nuevo usuario (admin only)
+router.post(
+  '/',
+  authMiddleware,
+  [
+    body('nombre').trim().notEmpty().withMessage('Nombre requerido'),
+    body('apellido').trim().notEmpty().withMessage('Apellido requerido'),
+    body('email').isEmail().withMessage('Email inválido'),
+    body('role').notEmpty().withMessage('Rol requerido'),
+    body('password').optional().isLength({ min: 8 }).withMessage('Contraseña debe tener mínimo 8 caracteres'),
+  ],
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMap: Record<string, string> = {};
+        errors.array().forEach((err: any) => {
+          errorMap[err.path] = err.msg;
+        });
+        throw new ValidationError(errorMap);
+      }
+
+      const userRole = (req as any).user.role;
+
+      // Only admins can create users
+      if (userRole !== 'ADMIN') {
+        return res.status(403).json({ error: 'No tienes permiso para crear usuarios' });
+      }
+
+      const { nombre, apellido, email, role, password } = req.body;
+      const id = crypto.randomUUID();
+
+      // Use provided password or generate a temporary one
+      const finalPassword = password || Math.random().toString(36).slice(-12);
+      const hashedPassword = await bcrypt.hash(finalPassword, 10);
+
+      await db.execute({
+        sql: `INSERT INTO User (id, nombre, apellido, email, password, role, activo, createdAt, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+        args: [id, nombre, apellido, email, hashedPassword, role],
+      });
+
+      res.status(201).json({
+        message: 'Usuario creado exitosamente',
+        user: {
+          id,
+          nombre,
+          apellido,
+          email,
+          role,
+          activo: true,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // GET /api/users/profile - Obtener perfil del usuario actual
 router.get('/profile', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -235,37 +235,6 @@ const LoginPage = () => {
             )}
           </Formik>
 
-          {/* Demo Credentials Info */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-vdc-secondary text-center mb-3">
-              Credenciales de demostración:
-            </p>
-            <div className="space-y-2 text-xs text-gray-600">
-              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Médico Evaluador:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">evaluador@vdc-demo.com</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Director Médico:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">director@vdc-demo.com</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>RRHH:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">rrhh@vdc-demo.com</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Gerencial:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">gerencial@vdc-demo.com</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between bg-vdc-bg rounded p-2 gap-1">
-                <span>Admin:</span>
-                <span className="font-mono text-[10px] sm:text-xs break-all">admin@vdc-demo.com</span>
-              </div>
-              <p className="text-center text-vdc-secondary mt-2">
-                Contraseña: <span className="font-mono">Demo2025!</span>
-              </p>
-            </div>
-          </div>
         </div>
       </motion.div>
     </div>
