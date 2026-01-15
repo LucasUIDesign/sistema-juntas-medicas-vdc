@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import { findUserById, updateUser, db } from '../lib/prisma';
 import { authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -54,7 +55,7 @@ router.post(
       }
 
       const { nombre, apellido, email, role, password } = req.body;
-      const id = crypto.randomUUID();
+      const id = randomUUID();
 
       // Use provided password or generate a temporary one
       const finalPassword = password || Math.random().toString(36).slice(-12);
