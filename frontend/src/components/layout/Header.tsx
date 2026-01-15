@@ -10,8 +10,6 @@ import {
 import { useState } from 'react';
 
 const navLinks = [
-  { name: 'Inicio', href: '/', external: false, noActiveState: true },
-  { name: 'Gestión de Juntas Médicas', href: '/', external: false, noActiveState: false },
   { name: 'Contacto', href: 'https://www.vdc-internacional.com/contacto', external: true, noActiveState: false },
 ];
 
@@ -73,9 +71,9 @@ const Header = () => {
             ))}
           </div>
 
-          {/* Auth Button - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated && user ? (
+          {/* Auth Button - Desktop (solo cuando está autenticado) */}
+          {isAuthenticated && user && (
+            <div className="hidden md:flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center text-gray-600 text-sm">
                   <UserCircleIcon className="h-5 w-5 mr-1" aria-hidden="true" />
@@ -92,18 +90,8 @@ const Header = () => {
                   Cerrar Sesión
                 </motion.button>
               </div>
-            ) : (
-              <Link to="/login">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-vdc-primary hover:bg-vdc-primary/90 text-white px-4 py-2 rounded-card text-sm font-medium transition-colors"
-                >
-                  Iniciar Sesión
-                </motion.button>
-              </Link>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Mobile menu button */}
           <div className="md:hidden">
@@ -163,9 +151,9 @@ const Header = () => {
               ))}
             </div>
 
-            {/* Auth Button - Mobile */}
-            <div className="mt-4 pt-4 border-t border-gray-300">
-              {isAuthenticated && user ? (
+            {/* Auth Button - Mobile (solo cuando está autenticado) */}
+            {isAuthenticated && user && (
+              <div className="mt-4 pt-4 border-t border-gray-300">
                 <div className="space-y-2">
                   <div className="flex items-center text-gray-600 px-3 py-2">
                     <UserCircleIcon className="h-5 w-5 mr-2" aria-hidden="true" />
@@ -179,16 +167,8 @@ const Header = () => {
                     Cerrar Sesión
                   </button>
                 </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="block w-full text-center bg-vdc-primary hover:bg-vdc-primary/90 text-white px-4 py-2 rounded-card text-base font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Iniciar Sesión
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </motion.div>
         )}
       </nav>
