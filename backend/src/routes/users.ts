@@ -34,7 +34,7 @@ router.post(
     body('apellido').trim().notEmpty().withMessage('Apellido requerido'),
     body('email').isEmail().withMessage('Email inválido'),
     body('role').notEmpty().withMessage('Rol requerido'),
-    body('password').optional().isLength({ min: 8 }).withMessage('Contraseña debe tener mínimo 8 caracteres'),
+    body('password').notEmpty().withMessage('Contraseña requerida').isLength({ min: 8 }).withMessage('Contraseña debe tener mínimo 8 caracteres'),
   ],
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -57,9 +57,7 @@ router.post(
       const { nombre, apellido, email, role, password } = req.body;
       const id = randomUUID();
 
-      // Use provided password or generate a temporary one
-      const finalPassword = password || Math.random().toString(36).slice(-12);
-      const hashedPassword = await bcrypt.hash(finalPassword, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       await db.execute({
         sql: `INSERT INTO User (id, nombre, apellido, email, password, role, activo, createdAt, updatedAt)

@@ -20,6 +20,9 @@ const createUserSchema = Yup.object({
   email: Yup.string()
     .email('Email inválido')
     .required('El email es requerido'),
+  password: Yup.string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .required('La contraseña es requerida'),
   role: Yup.string()
     .required('El rol es requerido'),
 });
@@ -86,12 +89,12 @@ const GestionUsuarios = () => {
           apellido: values.apellido,
           email: values.email,
           role: values.role,
-          password: Math.random().toString(36).slice(-12), // Generate temporary password
+          password: values.password,
         }),
       });
 
       if (response.ok) {
-        toast.success('Usuario creado exitosamente. Se enviará un email con las credenciales.', {
+        toast.success('Usuario creado exitosamente. Puede iniciar sesión con sus credenciales.', {
           icon: '✅',
         });
         resetForm();
@@ -99,7 +102,7 @@ const GestionUsuarios = () => {
         loadUsers();
       } else {
         const error = await response.json();
-        toast.error(error.message || 'Error al crear el usuario', { icon: '❌' });
+        toast.error(error.details?.email || error.details?.password || error.message || 'Error al crear el usuario', { icon: '❌' });
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al crear el usuario', { icon: '❌' });
@@ -174,6 +177,7 @@ const GestionUsuarios = () => {
               nombre: '',
               apellido: '',
               email: '',
+              password: '',
               role: '',
             }}
             validationSchema={createUserSchema}
@@ -242,6 +246,27 @@ const GestionUsuarios = () => {
                     }`}
                   />
                   <ErrorMessage name="email">
+                    {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
+                  </ErrorMessage>
+                </div>
+
+                {/* Contraseña */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Contraseña
+                  </label>
+                  <Field
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                    className={`w-full px-3 py-2 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
+                      errors.password && touched.password
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                  />
+                  <ErrorMessage name="password">
                     {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
                   </ErrorMessage>
                 </div>
