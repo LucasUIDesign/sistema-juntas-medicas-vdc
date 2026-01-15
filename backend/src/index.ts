@@ -182,7 +182,7 @@ app.get('/debug-users', async (req, res) => {
       },
       body: JSON.stringify({
         requests: [
-          { type: 'execute', stmt: { sql: 'SELECT id, email, password, nombre, apellido, role FROM User' } },
+          { type: 'execute', stmt: { sql: 'SELECT id, email, password, nombre, apellido, username, role, createdAt FROM User ORDER BY createdAt DESC' } },
           { type: 'close' },
         ],
       }),

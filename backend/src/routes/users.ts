@@ -18,7 +18,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
       return res.status(403).json({ error: 'No tienes permiso para ver usuarios' });
     }
 
-    const result = await db.execute('SELECT id, nombre, apellido, email, role, activo, createdAt FROM User ORDER BY createdAt DESC');
+    const result = await db.execute('SELECT id, nombre, apellido, email, username, role, createdAt FROM User ORDER BY createdAt DESC');
     res.json(result.rows);
   } catch (error) {
     next(error);
@@ -71,8 +71,8 @@ router.post(
       const hashedPassword = await bcrypt.hash(password, 10);
 
       await db.execute({
-        sql: `INSERT INTO User (id, nombre, apellido, username, email, password, role, activo, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+        sql: `INSERT INTO User (id, nombre, apellido, username, email, password, role, createdAt, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         args: [id, nombre, apellido, username, email, hashedPassword, role],
       });
 
@@ -85,7 +85,6 @@ router.post(
           username,
           email,
           role,
-          activo: true,
         },
       });
     } catch (error) {
