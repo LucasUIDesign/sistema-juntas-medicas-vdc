@@ -86,7 +86,7 @@ const LoginPage = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-title font-bold text-gray-900 mb-2">
-              Acceso al Sistema de Gestión de Juntas Médicas
+              Sistema de Gestión de Juntas Médicas
             </h1>
             <p className="text-vdc-secondary text-sm">
               Ingresa tus credenciales para continuar
