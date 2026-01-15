@@ -6,8 +6,9 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: 'MEDICO_INFERIOR' | 'MEDICO_SUPERIOR' | 'RRHH';
+    role: 'ADMIN' | 'MEDICO_EVALUADOR' | 'DIRECTOR_MEDICO' | 'GERENCIAL' | 'RRHH' | 'ADMINISTRATIVO';
     nombre: string;
+    sub?: string;
   };
 }
 
@@ -30,7 +31,7 @@ export const authMiddleware = (
       const decoded = jwt.verify(token, secret) as {
         sub: string;
         email: string;
-        role: 'MEDICO_INFERIOR' | 'MEDICO_SUPERIOR' | 'RRHH';
+        role: 'ADMIN' | 'MEDICO_EVALUADOR' | 'DIRECTOR_MEDICO' | 'GERENCIAL' | 'RRHH' | 'ADMINISTRATIVO';
         nombre: string;
       };
 
@@ -39,6 +40,7 @@ export const authMiddleware = (
         email: decoded.email,
         role: decoded.role,
         nombre: decoded.nombre,
+        sub: decoded.sub,
       };
 
       next();

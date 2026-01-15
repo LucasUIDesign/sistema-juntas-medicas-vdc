@@ -1,5 +1,5 @@
 // User types
-export type UserRole = 'MEDICO_EVALUADOR' | 'DIRECTOR_MEDICO' | 'RRHH' | 'GERENCIAL' | 'ADMIN';
+export type UserRole = 'MEDICO_EVALUADOR' | 'DIRECTOR_MEDICO' | 'RRHH' | 'GERENCIAL' | 'ADMINISTRATIVO' | 'ADMIN';
 
 export interface User {
   id: string;

@@ -6,6 +6,8 @@ import { toast } from 'react-toastify';
 import {
   UsersIcon,
   UserPlusIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from '@heroicons/react/24/outline';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
@@ -52,6 +54,7 @@ const GestionUsuarios = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Load users on component mount
   useEffect(() => {
@@ -282,17 +285,31 @@ const GestionUsuarios = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                     Contraseña
                   </label>
-                  <Field
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Mínimo 8 caracteres"
-                    className={`w-full px-3 py-2 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
-                      errors.password && touched.password
-                        ? 'border-red-500'
-                        : 'border-gray-300'
-                    }`}
-                  />
+                  <div className="relative">
+                    <Field
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mínimo 8 caracteres"
+                      className={`w-full px-3 py-2 pr-10 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
+                        errors.password && touched.password
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                   <ErrorMessage name="password">
                     {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
                   </ErrorMessage>

@@ -4,8 +4,12 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import LoginPage from './pages/LoginPage';
 import DashboardMedico from './pages/DashboardMedico';
+import DashboardMedicoEvaluador from './pages/DashboardMedicoEvaluador';
+import DashboardDirectorMedico from './pages/DashboardDirectorMedico';
 import DashboardRRHH from './pages/DashboardRRHH';
+import DashboardGerencial from './pages/DashboardGerencial';
 import DashboardAdmin from './pages/DashboardAdmin';
+import DashboardAdministrativo from './pages/DashboardAdministrativo';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import { authService } from './services/authService';
@@ -47,7 +51,27 @@ function App() {
             } 
           />
 
-          {/* Protected routes - Médicos */}
+          {/* Protected routes - Médico Evaluador */}
+          <Route
+            path="/dashboard/medico-evaluador/*"
+            element={
+              <ProtectedRoute allowedRoles={['MEDICO_EVALUADOR']}>
+                <DashboardMedicoEvaluador />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - Director Médico */}
+          <Route
+            path="/dashboard/director-medico/*"
+            element={
+              <ProtectedRoute allowedRoles={['DIRECTOR_MEDICO']}>
+                <DashboardDirectorMedico />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - Médico (legacy) */}
           <Route
             path="/dashboard/medico/*"
             element={
@@ -57,12 +81,32 @@ function App() {
             }
           />
 
-          {/* Protected routes - RRHH, Gerencial */}
+          {/* Protected routes - RRHH */}
           <Route
             path="/dashboard/rrhh/*"
             element={
-              <ProtectedRoute allowedRoles={['RRHH', 'GERENCIAL']}>
+              <ProtectedRoute allowedRoles={['RRHH']}>
                 <DashboardRRHH />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - Gerencial */}
+          <Route
+            path="/dashboard/gerencial/*"
+            element={
+              <ProtectedRoute allowedRoles={['GERENCIAL']}>
+                <DashboardGerencial />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected routes - Administrativo */}
+          <Route
+            path="/dashboard/administrativo/*"
+            element={
+              <ProtectedRoute allowedRoles={['ADMINISTRATIVO']}>
+                <DashboardAdministrativo />
               </ProtectedRoute>
             }
           />

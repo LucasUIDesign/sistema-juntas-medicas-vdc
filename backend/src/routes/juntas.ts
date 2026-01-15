@@ -111,7 +111,7 @@ router.get(
     let filtered = [...mockJuntas];
 
     // Filter by medicoId (for médicos, only show their own juntas)
-    if (req.user?.role === 'MEDICO_INFERIOR' || req.user?.role === 'MEDICO_SUPERIOR') {
+    if (req.user?.role === 'MEDICO_EVALUADOR' || req.user?.role === 'DIRECTOR_MEDICO') {
       if (!medicoId) {
         filtered = filtered.filter(j => j.medicoId === req.user?.id);
       }
@@ -181,7 +181,7 @@ router.get(
     }
 
     // Check access for médicos
-    if (req.user?.role === 'MEDICO_INFERIOR' || req.user?.role === 'MEDICO_SUPERIOR') {
+    if (req.user?.role === 'MEDICO_EVALUADOR' || req.user?.role === 'DIRECTOR_MEDICO') {
       if (junta.medicoId !== req.user.id) {
         throw new NotFoundError('Junta no encontrada');
       }
@@ -195,7 +195,7 @@ router.get(
 router.post(
   '/',
   authMiddleware,
-  roleMiddleware(['MEDICO_INFERIOR', 'MEDICO_SUPERIOR']),
+  roleMiddleware(['MEDICO_EVALUADOR', 'DIRECTOR_MEDICO']),
   [
     body('fecha').isISO8601().withMessage('Fecha inválida'),
     body('pacienteId').isString().notEmpty().withMessage('Paciente requerido'),
@@ -211,8 +211,8 @@ router.post(
       throw new ValidationError('Paciente no encontrado', { pacienteId: 'Paciente no válido' });
     }
 
-    // Only MEDICO_SUPERIOR can set aprobacion
-    const canApprove = req.user?.role === 'MEDICO_SUPERIOR';
+    // Only DIRECTOR_MEDICO can set aprobacion
+    const canApprove = req.user?.role === 'DIRECTOR_MEDICO';
 
     const newJunta: JuntaMedica = {
       id: `junta-${String(mockJuntas.length + 1).padStart(3, '0')}-${Date.now()}`,
@@ -258,7 +258,7 @@ router.put(
     const junta = mockJuntas[index];
 
     // Check permissions
-    if (req.user?.role === 'MEDICO_INFERIOR') {
+    if (req.user?.role === 'MEDICO_EVALUADOR') {
       if (junta.medicoId !== req.user.id) {
         throw new NotFoundError('Junta no encontrada');
       }
@@ -270,8 +270,8 @@ router.put(
     if (fecha) junta.fecha = fecha;
     if (detalles) junta.detalles = detalles;
     
-    // Only MEDICO_SUPERIOR or RRHH can update aprobacion/estado
-    if (req.user?.role === 'MEDICO_SUPERIOR' || req.user?.role === 'RRHH') {
+    // Only DIRECTOR_MEDICO or RRHH can update aprobacion/estado
+    if (req.user?.role === 'DIRECTOR_MEDICO' || req.user?.role === 'RRHH') {
       if (aprobacion !== undefined) junta.aprobacion = aprobacion;
       if (estado) junta.estado = estado;
     }

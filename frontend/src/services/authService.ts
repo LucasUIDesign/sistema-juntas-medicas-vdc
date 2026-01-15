@@ -102,13 +102,17 @@ export const authService = {
   getDashboardRoute(role: UserRole): string {
     switch (role) {
       case 'MEDICO_EVALUADOR':
+        return '/dashboard/medico-evaluador';
       case 'DIRECTOR_MEDICO':
-        return '/dashboard/medico';
+        return '/dashboard/director-medico';
       case 'RRHH':
-      case 'GERENCIAL':
         return '/dashboard/rrhh';
+      case 'GERENCIAL':
+        return '/dashboard/gerencial';
       case 'ADMIN':
         return '/dashboard/admin';
+      case 'ADMINISTRATIVO':
+        return '/dashboard/administrativo';
       default:
         return '/';
     }
