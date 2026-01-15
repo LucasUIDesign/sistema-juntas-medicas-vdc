@@ -32,6 +32,7 @@ router.post(
   [
     body('nombre').trim().notEmpty().withMessage('Nombre requerido'),
     body('apellido').trim().notEmpty().withMessage('Apellido requerido'),
+    body('username').trim().notEmpty().withMessage('Nombre de usuario requerido').isLength({ min: 4 }).withMessage('Nombre de usuario debe tener mínimo 4 caracteres'),
     body('email').isEmail().withMessage('Email inválido'),
     body('role').notEmpty().withMessage('Rol requerido'),
     body('password').notEmpty().withMessage('Contraseña requerida').isLength({ min: 8 }).withMessage('Contraseña debe tener mínimo 8 caracteres'),
@@ -54,15 +55,25 @@ router.post(
         return res.status(403).json({ error: 'No tienes permiso para crear usuarios' });
       }
 
-      const { nombre, apellido, email, role, password } = req.body;
+      const { nombre, apellido, username, email, role, password } = req.body;
       const id = randomUUID();
+
+      // Check if username already exists
+      const existingUser = await db.execute({
+        sql: 'SELECT id FROM User WHERE username = ?',
+        args: [username],
+      });
+
+      if (existingUser.rows.length > 0) {
+        throw new ValidationError({ username: 'Este nombre de usuario ya existe' });
+      }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
       await db.execute({
-        sql: `INSERT INTO User (id, nombre, apellido, email, password, role, activo, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
-        args: [id, nombre, apellido, email, hashedPassword, role],
+        sql: `INSERT INTO User (id, nombre, apellido, username, email, password, role, activo, createdAt, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+        args: [id, nombre, apellido, username, email, hashedPassword, role],
       });
 
       res.status(201).json({
@@ -71,6 +82,7 @@ router.post(
           id,
           nombre,
           apellido,
+          username,
           email,
           role,
           activo: true,

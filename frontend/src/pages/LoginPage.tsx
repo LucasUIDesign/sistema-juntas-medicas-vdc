@@ -16,16 +16,15 @@ import {
 
 // Validation schema
 const loginSchema = Yup.object({
-  email: Yup.string()
-    .email('Email inválido')
-    .required('El email es requerido'),
+  username: Yup.string()
+    .required('El nombre de usuario es requerido'),
   password: Yup.string()
     .required('La contraseña es requerida')
     .min(8, 'Mínimo 8 caracteres'),
 });
 
 interface LoginFormValues {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -40,18 +39,18 @@ const LoginPage = () => {
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
   const initialValues: LoginFormValues = {
-    email: '',
+    username: '',
     password: '',
   };
 
   const handleSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      await login(values.email, values.password);
+      await login(values.username, values.password);
       toast.success('¡Bienvenido al sistema!', {
         icon: '✅',
       });
-      
+
       // Get the user after login to determine redirect
       const storedUser = localStorage.getItem('vdc_user');
       if (storedUser) {
@@ -102,42 +101,42 @@ const LoginPage = () => {
           >
             {({ errors, touched }) => (
               <Form className="space-y-6" noValidate>
-                {/* Email Field */}
+                {/* Username Field */}
                 <div>
-                  <label 
-                    htmlFor="email" 
+                  <label
+                    htmlFor="username"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Correo Electrónico
+                    Nombre de Usuario
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <UserIcon 
+                      <UserIcon
                         className={`h-5 w-5 ${
-                          errors.email && touched.email 
-                            ? 'text-vdc-error' 
+                          errors.username && touched.username
+                            ? 'text-vdc-error'
                             : 'text-vdc-secondary'
-                        }`} 
-                        aria-hidden="true" 
+                        }`}
+                        aria-hidden="true"
                       />
                     </div>
                     <Field
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="correo@ejemplo.com"
-                      aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
+                      id="username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      placeholder="nombre_usuario"
+                      aria-describedby={errors.username && touched.username ? 'username-error' : undefined}
                       className={`block w-full pl-10 pr-4 py-3 border rounded-card text-body transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
-                        errors.email && touched.email
+                        errors.username && touched.username
                           ? 'border-vdc-error focus:border-vdc-error'
                           : 'border-gray-300 focus:border-vdc-primary'
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="email">
+                  <ErrorMessage name="username">
                     {(msg) => (
-                      <p id="email-error" className="mt-1 text-sm text-vdc-error" role="alert">
+                      <p id="username-error" className="mt-1 text-sm text-vdc-error" role="alert">
                         {msg}
                       </p>
                     )}

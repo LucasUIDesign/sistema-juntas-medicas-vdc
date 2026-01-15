@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
-import { findUserByEmail, findUserById } from '../lib/prisma';
+import { findUserByUsername, findUserById } from '../lib/prisma';
 import { ValidationError, AuthenticationError } from '../middleware/errorHandler';
 
 const router = Router();
@@ -26,7 +26,7 @@ const generateToken = (user: any): string => {
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Email inválido'),
+    body('username').notEmpty().withMessage('Nombre de usuario requerido'),
     body('password').notEmpty().withMessage('Contraseña requerida'),
   ],
   async (req: Request, res: Response, next: NextFunction) => {
@@ -40,11 +40,11 @@ router.post(
         throw new ValidationError(errorMap);
       }
 
-      const { email, password } = req.body;
-      const normalizedEmail = email.toLowerCase().trim();
+      const { username, password } = req.body;
+      const normalizedUsername = username.toLowerCase().trim();
 
-      // Buscar usuario en la base de datos
-      const user = await findUserByEmail(normalizedEmail) as any;
+      // Buscar usuario en la base de datos por username
+      const user = await findUserByUsername(normalizedUsername) as any;
 
       if (!user) {
         throw new AuthenticationError('Credenciales inválidas');
@@ -63,6 +63,7 @@ router.post(
         user: {
           id: user.id,
           email: user.email,
+          username: user.username,
           nombre: user.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : user.email,
           role: user.role,
         },

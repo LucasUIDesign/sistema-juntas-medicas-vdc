@@ -81,6 +81,14 @@ export async function findUserByEmail(email: string) {
   return result.rows[0] || null;
 }
 
+export async function findUserByUsername(username: string) {
+  const result = await db.execute({
+    sql: 'SELECT * FROM User WHERE username = ?',
+    args: [username],
+  });
+  return result.rows[0] || null;
+}
+
 export async function findUserById(id: string) {
   const result = await db.execute({
     sql: 'SELECT * FROM User WHERE id = ?',

@@ -17,6 +17,9 @@ const createUserSchema = Yup.object({
   apellido: Yup.string()
     .min(2, 'El apellido debe tener al menos 2 caracteres')
     .required('El apellido es requerido'),
+  username: Yup.string()
+    .min(4, 'El nombre de usuario debe tener mínimo 4 caracteres')
+    .required('Nombre de usuario requerido'),
   email: Yup.string()
     .email('Email inválido')
     .required('El email es requerido'),
@@ -87,6 +90,7 @@ const GestionUsuarios = () => {
         body: JSON.stringify({
           nombre: values.nombre,
           apellido: values.apellido,
+          username: values.username,
           email: values.email,
           role: values.role,
           password: values.password,
@@ -176,6 +180,7 @@ const GestionUsuarios = () => {
             initialValues={{
               nombre: '',
               apellido: '',
+              username: '',
               email: '',
               password: '',
               role: '',
@@ -227,6 +232,27 @@ const GestionUsuarios = () => {
                       {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
                     </ErrorMessage>
                   </div>
+                </div>
+
+                {/* Nombre de Usuario */}
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre de Usuario
+                  </label>
+                  <Field
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="juan_perez"
+                    className={`w-full px-3 py-2 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
+                      errors.username && touched.username
+                        ? 'border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                  />
+                  <ErrorMessage name="username">
+                    {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
+                  </ErrorMessage>
                 </div>
 
                 {/* Email */}
