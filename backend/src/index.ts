@@ -275,6 +275,28 @@ app.post('/debug-login-full', async (req, res) => {
   }
 });
 
+// Fix: actualizar admin con username
+app.get('/fix-admin-username', async (req, res) => {
+  try {
+    const { db } = require('./lib/prisma');
+
+    await db.execute({
+      sql: 'UPDATE User SET username = ? WHERE id = ?',
+      args: ['admin', 'admin-001'],
+    });
+
+    res.json({
+      status: 'success',
+      message: 'Admin user updated with username: admin',
+    });
+  } catch (error: any) {
+    res.json({
+      status: 'error',
+      error: error.message,
+    });
+  }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/juntas', juntasRoutes);
