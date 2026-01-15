@@ -221,17 +221,66 @@ app.get('/debug-login', async (req, res) => {
   }
 });
 
+// Debug: check schema and admin user data
+app.get('/debug-schema', async (req, res) => {
+  try {
+    const tursoUrl = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+    const tursoToken = process.env.TURSO_AUTH_TOKEN || '';
+
+    // Check User table schema
+    const schemaResponse = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: 'execute', stmt: { sql: 'PRAGMA table_info(User)' } },
+          { type: 'close' },
+        ],
+      }),
+    });
+
+    const schemaData = await schemaResponse.json();
+
+    // Check admin user data
+    const userResponse = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          { type: 'execute', stmt: { sql: 'SELECT * FROM User WHERE id = ?', args: ['admin-001'] } },
+          { type: 'close' },
+        ],
+      }),
+    });
+
+    const userData = await userResponse.json();
+
+    res.json({
+      schema: schemaData,
+      adminUser: userData,
+    });
+  } catch (error: any) {
+    res.json({ error: error.message });
+  }
+});
+
 // Debug: probar login completo con JWT
 app.post('/debug-login-full', async (req, res) => {
   try {
     const bcrypt = require('bcryptjs');
     const jwt = require('jsonwebtoken');
-    const { findUserByEmail } = require('./lib/prisma');
+    const { findUserByUsername } = require('./lib/prisma');
 
-    const { email, password } = req.body;
-    console.log('Debug login full - email:', email);
+    const { username, password } = req.body;
+    console.log('Debug login full - username:', username);
 
-    const user = await findUserByEmail(email?.toLowerCase?.().trim?.() || '');
+    const user = await findUserByUsername(username?.toLowerCase?.().trim?.() || '');
     console.log('Debug login full - user found:', !!user);
 
     if (!user) {
@@ -264,6 +313,7 @@ app.post('/debug-login-full', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         nombre: user.nombre,
         role: user.role,
       },
@@ -278,27 +328,51 @@ app.post('/debug-login-full', async (req, res) => {
 // Fix: agregar columna username y actualizar admin
 app.get('/fix-admin-username', async (req, res) => {
   try {
-    const { db } = require('./lib/prisma');
+    const tursoUrl = process.env.TURSO_DATABASE_URL?.replace('libsql://', 'https://') || '';
+    const tursoToken = process.env.TURSO_AUTH_TOKEN || '';
 
-    // Agregar columna username si no existe
-    try {
-      await db.execute({
-        sql: 'ALTER TABLE User ADD COLUMN username TEXT UNIQUE',
-      });
-    } catch (e) {
-      // Column might already exist
-      console.log('Column might already exist:', e.message);
-    }
-
-    // Actualizar admin con username
-    await db.execute({
-      sql: 'UPDATE User SET username = ? WHERE id = ?',
-      args: ['admin', 'admin-001'],
+    // Use HTTP API directly to ensure persistence
+    const response = await fetch(`${tursoUrl}/v2/pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tursoToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          // Try to add username column if it doesn't exist
+          {
+            type: 'execute',
+            stmt: {
+              sql: 'ALTER TABLE User ADD COLUMN username TEXT UNIQUE',
+            },
+          },
+          // Update admin user with username
+          {
+            type: 'execute',
+            stmt: {
+              sql: 'UPDATE User SET username = ? WHERE id = ?',
+              args: ['admin', 'admin-001'],
+            },
+          },
+          // Verify the update by querying the admin user
+          {
+            type: 'execute',
+            stmt: {
+              sql: 'SELECT id, email, username, password, nombre, apellido, role FROM User WHERE id = ?',
+              args: ['admin-001'],
+            },
+          },
+          { type: 'close' },
+        ],
+      }),
     });
 
+    const data = await response.json();
     res.json({
-      status: 'success',
-      message: 'Admin user updated with username: admin',
+      status: response.ok ? 'success' : 'error',
+      message: 'Attempted to add username column and update admin user',
+      response: data,
     });
   } catch (error: any) {
     res.json({

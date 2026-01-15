@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 // Turso HTTP API client
 // Read env vars lazily to ensure dotenv has loaded them
 function getTursoUrl(): string {
@@ -28,8 +30,6 @@ async function executeSQL(sql: string, args: any[] = []): Promise<TursoResult> {
     ],
   };
 
-  console.log('Turso request:', JSON.stringify(requestBody, null, 2));
-
   const response = await fetch(`${TURSO_URL}/v2/pipeline`, {
     method: 'POST',
     headers: {
@@ -41,12 +41,10 @@ async function executeSQL(sql: string, args: any[] = []): Promise<TursoResult> {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Turso error response:', error);
     throw new Error(`Turso error: ${error}`);
   }
 
   const data: any = await response.json();
-  console.log('Turso response:', JSON.stringify(data, null, 2));
 
   if (data.results?.[0]?.response?.result?.rows) {
     const cols = data.results[0].response.result.cols.map((c: any) => c.name);
