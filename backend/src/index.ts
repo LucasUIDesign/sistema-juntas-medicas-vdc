@@ -275,11 +275,22 @@ app.post('/debug-login-full', async (req, res) => {
   }
 });
 
-// Fix: actualizar admin con username
+// Fix: agregar columna username y actualizar admin
 app.get('/fix-admin-username', async (req, res) => {
   try {
     const { db } = require('./lib/prisma');
 
+    // Agregar columna username si no existe
+    try {
+      await db.execute({
+        sql: 'ALTER TABLE User ADD COLUMN username TEXT UNIQUE',
+      });
+    } catch (e) {
+      // Column might already exist
+      console.log('Column might already exist:', e.message);
+    }
+
+    // Actualizar admin con username
     await db.execute({
       sql: 'UPDATE User SET username = ? WHERE id = ?',
       args: ['admin', 'admin-001'],
