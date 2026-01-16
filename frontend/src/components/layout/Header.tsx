@@ -9,9 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
-const navLinks = [
-  { name: 'Contacto', href: 'https://www.vdc-internacional.com/contacto', external: true, noActiveState: false },
-];
+const navLinks: { name: string; href: string; external: boolean; noActiveState: boolean }[] = [];
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
