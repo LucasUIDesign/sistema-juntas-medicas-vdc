@@ -5,7 +5,7 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('vdc_token');
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

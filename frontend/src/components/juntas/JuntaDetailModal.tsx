@@ -308,13 +308,13 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
         return (
           <div className="space-y-4">
             <div className={`p-4 rounded-lg border-2 ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'bg-green-50 border-green-300' :
-                junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'bg-red-50 border-red-300' :
-                  'bg-yellow-50 border-yellow-300'
+              junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'bg-red-50 border-red-300' :
+                'bg-yellow-50 border-yellow-300'
               }`}>
               <p className="text-xs text-gray-600 mb-1">Aptitud Laboral</p>
               <p className={`text-lg font-bold ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'text-green-700' :
-                  junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'text-red-700' :
-                    'text-yellow-700'
+                junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'text-red-700' :
+                  'text-yellow-700'
                 }`}>
                 {junta.dictamen?.aptitudLaboral === 'APTO' ? 'APTO' :
                   junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'NO APTO' :
@@ -420,7 +420,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                 >
                   <span className="font-medium text-gray-900 flex items-center">
                     <DocumentTextIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-                    Dictamen Medico
+                    Dictamen Médico
                   </span>
                   <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showDictamen ? 'rotate-180' : ''}`} />
                 </button>
@@ -435,8 +435,8 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
-                                ? 'border-vdc-primary text-vdc-primary bg-blue-50'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                              ? 'border-vdc-primary text-vdc-primary bg-blue-50'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                               }`}
                           >
                             {tab.label}

@@ -791,15 +791,11 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                         Cancelar
                       </button>
                     )}
-                    {/* Estado general */}
+                    {/* Estado general - solo mostrar contador de campos */}
                     <div className="text-xs text-gray-500 hidden sm:block">
-                      {isDictamenCompleto(values) ? (
-                        <span className="text-vdc-success font-medium">✓ Dictamen completo</span>
-                      ) : (
-                        <span className="text-yellow-600">
-                          {contarCamposLlenos(values).llenos}/{contarCamposLlenos(values).total} campos
-                        </span>
-                      )}
+                      <span className="text-gray-600">
+                        {contarCamposLlenos(values).llenos}/{contarCamposLlenos(values).total} campos
+                      </span>
                     </div>
                   </div>
 
