@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { juntasService } from '../../services/juntasService';
+import { DocumentoParaSubir } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import DictamenMedicoWizard, { DictamenMedicoData, isDictamenCompleto } from './DictamenMedicoWizard';
+import DocumentosManager from './DocumentosManager';
 import {
   CheckCircleIcon,
   DocumentArrowDownIcon,
   XMarkIcon,
+  PaperClipIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -158,6 +162,8 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dictamenData, setDictamenData] = useState<DictamenMedicoData | null>(null);
   const [currentJuntaId, setCurrentJuntaId] = useState<string | null>(null);
+  const [documentos, setDocumentos] = useState<DocumentoParaSubir[]>([]);
+  const [showDocumentos, setShowDocumentos] = useState(false);
 
   // Save dictamen data from wizard
   const handleDictamenChange = (data: DictamenMedicoData) => {
@@ -177,7 +183,7 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
     }
 
     if (!isDictamenCompleto(dictamenData)) {
-      toast.warning('El dictamen tiene campos requeridos vacíos');
+      toast.warning('El dictamen tiene campos requeridos vacíos, se guardará igualmente');
     }
 
     setIsSubmitting(true);
@@ -187,14 +193,29 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       const apellido = nombreParts[0] || '';
       const nombre = nombreParts.slice(1).join(' ') || nombreParts[0] || '';
 
-      const paciente = await juntasService.createPaciente({
-        nombre,
-        apellido,
-        numeroDocumento: dictamenData.dni,
-        correo: dictamenData.email || '',
-        telefono: dictamenData.telefono || '',
-        domicilio: dictamenData.domicilio || '',
-      });
+      let paciente;
+      try {
+        paciente = await juntasService.createPaciente({
+          nombre,
+          apellido,
+          numeroDocumento: dictamenData.dni,
+          correo: dictamenData.email || '',
+          telefono: dictamenData.telefono || '',
+          domicilio: dictamenData.domicilio || '',
+        });
+      } catch (error: any) {
+        // If patient already exists, search for it
+        if (error.message?.includes('ya existe') || error.message?.includes('already exists') || error.message?.includes('UNIQUE')) {
+          const pacientes = await juntasService.searchPacientes(dictamenData.dni);
+          if (pacientes && pacientes.length > 0) {
+            paciente = pacientes[0];
+          } else {
+            throw new Error('No se pudo encontrar el paciente existente');
+          }
+        } else {
+          throw error;
+        }
+      }
 
       // Create junta
       const junta = await juntasService.createJunta({
@@ -210,50 +231,19 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
         finalizar: true,
       });
 
-      toast.success('Junta médica creada y finalizada correctamente!');
+      toast.success('¡Junta médica creada y finalizada correctamente!');
 
       // Reset form
       setDictamenData(null);
       setCurrentJuntaId(null);
+      setDocumentos([]);
 
       if (onJuntaCreated) {
         onJuntaCreated();
       }
     } catch (error: any) {
-      // If patient already exists, try to find and use it
-      if (error.message?.includes('ya existe') || error.message?.includes('already exists')) {
-        try {
-          // Search for existing paciente and create junta with it
-          const pacientes = await juntasService.searchPacientes(dictamenData.dni);
-          if (pacientes && pacientes.length > 0) {
-            const paciente = pacientes[0];
-
-            const junta = await juntasService.createJunta({
-              pacienteId: paciente.id,
-              observaciones: '',
-            });
-
-            setCurrentJuntaId(junta.id);
-
-            await juntasService.saveDictamen(junta.id, {
-              dictamen: dictamenData,
-              finalizar: true,
-            });
-
-            toast.success('Junta médica creada y finalizada correctamente!');
-            setDictamenData(null);
-            setCurrentJuntaId(null);
-
-            if (onJuntaCreated) {
-              onJuntaCreated();
-            }
-            return;
-          }
-        } catch {
-          // ignore nested error
-        }
-      }
-      toast.error(error.message || 'Error al finalizar');
+      console.error('Error al finalizar junta:', error);
+      toast.error(error.message || 'Error al finalizar la junta');
     } finally {
       setIsSubmitting(false);
     }
@@ -271,6 +261,7 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
   const handleCancel = () => {
     setDictamenData(null);
     setCurrentJuntaId(null);
+    setDocumentos([]);
     toast.info('Formulario limpiado');
   };
 
@@ -322,8 +313,39 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
               }}
               onCancel={() => { }}
               initialData={dictamenData || undefined}
-              hideProfesionales={false}
+              hideProfesionales={true}
             />
+          </div>
+
+          {/* Documentos Adjuntos Section */}
+          <div className="border-t border-gray-200 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowDocumentos(!showDocumentos)}
+              className="flex items-center justify-between w-full text-vdc-primary hover:text-vdc-primary/80"
+            >
+              <span className="flex items-center">
+                <PaperClipIcon className="h-5 w-5 mr-2" />
+                Documentos Adjuntos
+                {documentos.length > 0 && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-vdc-primary text-white rounded-full">
+                    {documentos.length}
+                  </span>
+                )}
+              </span>
+              <ChevronDownIcon
+                className={`h-5 w-5 transition-transform ${showDocumentos ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {showDocumentos && (
+              <div className="mt-4">
+                <DocumentosManager
+                  documentos={documentos}
+                  onChange={setDocumentos}
+                />
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -358,8 +380,8 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               className={`px-6 py-2 rounded-card text-white font-medium transition-colors flex items-center ${isSubmitting || !dictamenData
-                ? 'bg-vdc-success/50 cursor-not-allowed'
-                : 'bg-vdc-success hover:bg-vdc-success/90'
+                  ? 'bg-vdc-success/50 cursor-not-allowed'
+                  : 'bg-vdc-success hover:bg-vdc-success/90'
                 }`}
             >
               {isSubmitting ? (

@@ -93,13 +93,11 @@ export interface DictamenMedicoData {
 
 // Función para verificar si el dictamen está completo
 export const isDictamenCompleto = (data: DictamenMedicoData): boolean => {
+  // Solo requerimos los campos mínimos esenciales
   const camposRequeridos: (keyof DictamenMedicoData)[] = [
-    'nombreCompleto', 'dni', 'fechaNacimiento', 'sexo', 'domicilio',
-    'establecimiento', 'cargo', 'legajo',
-    'diagnosticoPrincipal', 'aptitudLaboral',
-    'medicoEvaluador1', 'matricula1', 'fechaDictamen'
+    'nombreCompleto', 'dni',
   ];
-  
+
   for (const campo of camposRequeridos) {
     const valor = data[campo];
     if (Array.isArray(valor)) {
@@ -108,10 +106,7 @@ export const isDictamenCompleto = (data: DictamenMedicoData): boolean => {
       return false;
     }
   }
-  
-  // Verificar que tenga al menos un motivo
-  if (data.motivoJunta.length === 0) return false;
-  
+
   return true;
 };
 
@@ -119,7 +114,7 @@ export const isDictamenCompleto = (data: DictamenMedicoData): boolean => {
 export const contarCamposLlenos = (data: DictamenMedicoData): { llenos: number; total: number } => {
   const campos = Object.keys(data) as (keyof DictamenMedicoData)[];
   let llenos = 0;
-  
+
   for (const campo of campos) {
     const valor = data[campo];
     if (Array.isArray(valor)) {
@@ -128,7 +123,7 @@ export const contarCamposLlenos = (data: DictamenMedicoData): { llenos: number; 
       llenos++;
     }
   }
-  
+
   return { llenos, total: campos.length };
 };
 
@@ -228,7 +223,7 @@ interface DictamenMedicoWizardProps {
 
 const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false }: DictamenMedicoWizardProps) => {
   const [pasoActual, setPasoActual] = useState(1);
-  
+
   // Filtrar pasos si hideProfesionales está activo
   const pasosVisibles = hideProfesionales ? PASOS.filter(p => p.id !== 12) : PASOS;
   const totalPasos = pasosVisibles.length;
@@ -249,19 +244,25 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
 
   const renderPaso = (values: DictamenMedicoData, setFieldValue: (field: string, value: unknown) => void) => {
     const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary";
+    const inputClassRequired = (value: string | undefined) =>
+      `w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary ${!value || value.trim() === '' ? 'border-red-400 bg-red-50' : 'border-gray-300'
+      }`;
     const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+    const labelClassRequired = "block text-sm font-medium text-gray-700 mb-1 after:content-['*'] after:ml-0.5 after:text-red-500";
 
     switch (pasoActual) {
       case 1:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className={labelClass}>Nombre Completo</label>
-              <Field name="nombreCompleto" className={inputClass} placeholder="Apellido y Nombre" />
+              <label className={labelClassRequired}>Nombre Completo</label>
+              <Field name="nombreCompleto" className={inputClassRequired(values.nombreCompleto)} placeholder="Apellido y Nombre" />
+              {!values.nombreCompleto && <p className="text-xs text-red-500 mt-1">Campo requerido</p>}
             </div>
             <div>
-              <label className={labelClass}>DNI</label>
-              <Field name="dni" className={inputClass} placeholder="12345678" />
+              <label className={labelClassRequired}>DNI</label>
+              <Field name="dni" className={inputClassRequired(values.dni)} placeholder="12345678" />
+              {!values.dni && <p className="text-xs text-red-500 mt-1">Campo requerido</p>}
             </div>
             <div>
               <label className={labelClass}>Fecha de Nacimiento</label>
@@ -392,7 +393,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
             </div>
             <div>
               <label className={labelClass}>Diagnósticos Previos</label>
-              <Field as="textarea" name="diagnosticosPrevios" rows={3} className={inputClass} 
+              <Field as="textarea" name="diagnosticosPrevios" rows={3} className={inputClass}
                 placeholder="Detalle los diagnósticos previos relacionados con el motivo de la junta" />
             </div>
           </div>
@@ -667,11 +668,11 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
         <h3 className="text-base sm:text-lg font-semibold text-vdc-navy mb-3 sm:mb-4">
           Dictamen Médico - Junta Médica Laboral
         </h3>
-        
+
         {/* Indicador de pasos */}
         <Formik
           initialValues={initialData || initialValues}
-          onSubmit={() => {}}
+          onSubmit={() => { }}
           enableReinitialize
         >
           {({ values }) => (
@@ -687,7 +688,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-vdc-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(pasoActual / totalPasos) * 100}%` }}
                   />
@@ -701,7 +702,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                   const isActive = paso.id === pasoActual;
                   const tieneAlgo = isPasoCompleto(paso.id, values);
                   const todoLleno = isPasoTodoLleno(paso.id, values);
-                  
+
                   return (
                     <div key={paso.id} className="flex items-center">
                       <button
@@ -709,15 +710,14 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                         onClick={() => setPasoActual(paso.id)}
                         className="flex flex-col items-center min-w-[50px] lg:min-w-[60px] cursor-pointer"
                       >
-                        <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-colors ${
-                          isActive 
-                            ? 'bg-vdc-primary text-white' 
-                            : todoLleno 
-                              ? 'bg-vdc-success text-white'
-                              : tieneAlgo
-                                ? 'bg-yellow-400 text-white'
-                                : 'bg-gray-200 text-gray-500'
-                        }`}>
+                        <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center transition-colors ${isActive
+                          ? 'bg-vdc-primary text-white'
+                          : todoLleno
+                            ? 'bg-vdc-success text-white'
+                            : tieneAlgo
+                              ? 'bg-yellow-400 text-white'
+                              : 'bg-gray-200 text-gray-500'
+                          }`}>
                           {todoLleno ? (
                             <CheckIcon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                           ) : tieneAlgo ? (
@@ -726,16 +726,14 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                             <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                           )}
                         </div>
-                        <span className={`text-[10px] lg:text-xs mt-1 text-center ${
-                          isActive ? 'text-vdc-primary font-medium' : 'text-gray-500'
-                        }`}>
+                        <span className={`text-[10px] lg:text-xs mt-1 text-center ${isActive ? 'text-vdc-primary font-medium' : 'text-gray-500'
+                          }`}>
                           {paso.nombre}
                         </span>
                       </button>
                       {index < pasosVisibles.length - 1 && (
-                        <div className={`w-3 lg:w-4 h-0.5 mx-0.5 lg:mx-1 ${
-                          todoLleno ? 'bg-vdc-success' : tieneAlgo ? 'bg-yellow-400' : 'bg-gray-200'
-                        }`} />
+                        <div className={`w-3 lg:w-4 h-0.5 mx-0.5 lg:mx-1 ${todoLleno ? 'bg-vdc-success' : tieneAlgo ? 'bg-yellow-400' : 'bg-gray-200'
+                          }`} />
                       )}
                     </div>
                   );
@@ -804,17 +802,16 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto order-1 sm:order-2">
                     <button
                       type="button"
                       onClick={retrocederPaso}
                       disabled={pasoActual === 1}
-                      className={`flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        pasoActual === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
+                      className={`flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pasoActual === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
                     >
                       <ChevronLeftIcon className="w-4 h-4 mr-1" />
                       <span className="hidden sm:inline">Anterior</span>
