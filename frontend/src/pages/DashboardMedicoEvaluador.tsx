@@ -18,12 +18,12 @@ import {
 
 const sidebarLinks = [
   {
-    name: 'Cargar Nueva Junta',
+    name: 'Cargar Junta',
     href: '/dashboard/medico-evaluador/nueva-junta',
     icon: <PlusCircleIcon className="h-5 w-5" />,
   },
   {
-    name: 'Todas las Juntas',
+    name: 'Todas Mis Juntas',
     href: '/dashboard/medico-evaluador/mis-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
   },

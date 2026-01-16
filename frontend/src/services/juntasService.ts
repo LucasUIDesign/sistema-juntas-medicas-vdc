@@ -178,4 +178,12 @@ export const juntasService = {
       empresa: '',
     };
   },
+
+  /**
+   * Search pacientes by name or document
+   */
+  async searchPacientes(query: string): Promise<Paciente[]> {
+    return this.getPacientes(query);
+  },
 };
+
