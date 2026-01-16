@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DatePicker from 'react-datepicker';
 import { useAuth } from '../../context/AuthContext';
 import { juntasService } from '../../services/juntasService';
-import { JuntaMedica, PaginatedResult, CATEGORIAS_DOCUMENTO, Medico, JuntaFilters, EstadoJunta } from '../../types';
+import { JuntaMedica, PaginatedResult, JuntaFilters, EstadoJunta } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModal from './JuntaDetailModal';
-import { format, formatDistanceToNow, differenceInHours, differenceInMinutes } from 'date-fns';
+import { format, differenceInHours, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   ChevronUpIcon,
@@ -16,11 +15,9 @@ import {
   ChevronRightIcon,
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
-  DocumentArrowUpIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline';
-import 'react-datepicker/dist/react-datepicker.css';
 
 type SortField = 'fecha' | 'pacienteNombre' | 'estado';
 type SortOrder = 'asc' | 'desc';
@@ -28,21 +25,16 @@ type SortOrder = 'asc' | 'desc';
 const MisJuntas = () => {
   const { user } = useAuth();
   const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
-  const [medicos, setMedicos] = useState<Medico[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
-  const [documentosModal, setDocumentosModal] = useState<JuntaMedica | null>(null);
   const [sortField, setSortField] = useState<SortField>('fecha');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [, setTick] = useState(0);
-  
-  // Filtros para Director Médico
+
+  // Filtros
   const [showFilters, setShowFilters] = useState(false);
-  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
-  const [fechaFin, setFechaFin] = useState<Date | null>(null);
-  const [selectedMedico, setSelectedMedico] = useState<string>('');
   const [selectedEstado, setSelectedEstado] = useState<string>('');
   const [searchPaciente, setSearchPaciente] = useState<string>('');
 
@@ -51,67 +43,54 @@ const MisJuntas = () => {
   useEffect(() => {
     if (user) {
       loadJuntas();
-      if (isDirectorMedico) {
-        loadMedicos();
-      }
     }
   }, [user, page, pageSize, sortField, sortOrder]);
 
-  // Actualizar contador cada minuto
+  // Actualizar cada minuto
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(t => t + 1);
-      juntasService.verificarDocumentosVencidos().then(() => {
-        if (user) loadJuntas();
-      });
+      if (user) loadJuntas();
     }, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
-  const loadMedicos = async () => {
-    try {
-      const data = await juntasService.getMedicos();
-      setMedicos(data);
-    } catch (error) {
-      console.error('Error loading medicos:', error);
-    }
-  };
-
   const loadJuntas = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       const filters: JuntaFilters = {
         page,
         pageSize,
-        sortBy: sortField,
-        sortOrder,
       };
 
-      // Aplicar filtros solo para Director Médico
-      if (isDirectorMedico) {
-        if (fechaInicio) filters.fechaInicio = fechaInicio.toISOString();
-        if (fechaFin) filters.fechaFin = fechaFin.toISOString();
-        if (selectedMedico) filters.medicoId = selectedMedico;
-        if (selectedEstado) filters.estado = selectedEstado as EstadoJunta;
+      // Aplicar filtros
+      if (selectedEstado) filters.estado = selectedEstado as EstadoJunta;
+
+      const data = await juntasService.getJuntas(filters);
+
+      // Map response to expected format
+      const mappedData = {
+        ...data,
+        data: data.data.map((j: any) => ({
+          ...j,
+          pacienteNombre: j.pacienteNombreCompleto || `${j.pacienteNombre || ''} ${j.pacienteApellido || ''}`.trim(),
+          medicoNombre: j.medicoNombreCompleto || `${j.medicoNombre || ''} ${j.medicoApellido || ''}`.trim(),
+        })),
+      };
+
+      // Filtrar por nombre de paciente si hay búsqueda (client-side)
+      if (searchPaciente) {
+        const searchLower = searchPaciente.toLowerCase();
+        mappedData.data = mappedData.data.filter((j: any) =>
+          j.pacienteNombre?.toLowerCase().includes(searchLower) ||
+          j.numeroDocumento?.includes(searchPaciente)
+        );
+        mappedData.total = mappedData.data.length;
       }
 
-      const data = isDirectorMedico 
-        ? await juntasService.getJuntas(filters)
-        : await juntasService.getJuntasByMedico(user.id, filters);
-      
-      // Filtrar por nombre o DNI de paciente si hay búsqueda
-      if (searchPaciente && isDirectorMedico) {
-        const searchLower = searchPaciente.toLowerCase();
-        data.data = data.data.filter(j => 
-          j.pacienteNombre.toLowerCase().includes(searchLower) ||
-          (j.dictamen?.dni && j.dictamen.dni.toLowerCase().includes(searchLower))
-        );
-        data.total = data.data.length;
-      }
-      
-      setJuntas(data);
+      setJuntas(mappedData);
     } catch (error) {
       console.error('Error loading juntas:', error);
     } finally {
@@ -125,9 +104,6 @@ const MisJuntas = () => {
   };
 
   const handleClearFilters = () => {
-    setFechaInicio(null);
-    setFechaFin(null);
-    setSelectedMedico('');
     setSelectedEstado('');
     setSearchPaciente('');
     setPage(1);
@@ -144,15 +120,19 @@ const MisJuntas = () => {
   };
 
   const getEstadoBadge = (junta: JuntaMedica) => {
-    const styles = {
+    const styles: Record<string, string> = {
+      BORRADOR: 'bg-gray-100 text-gray-800',
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
+      COMPLETADA: 'bg-blue-100 text-blue-800',
       APROBADA: 'bg-green-100 text-green-800',
       RECHAZADA: 'bg-red-100 text-red-800',
       DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800',
     };
-    
-    const labels = {
+
+    const labels: Record<string, string> = {
+      BORRADOR: 'Borrador',
       PENDIENTE: 'Pendiente',
+      COMPLETADA: 'Completada',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
       DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
@@ -187,8 +167,8 @@ const MisJuntas = () => {
     }
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[junta.estado]}`}>
-        {labels[junta.estado]}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[junta.estado] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[junta.estado] || junta.estado}
       </span>
     );
   };
@@ -246,107 +226,54 @@ const MisJuntas = () => {
         </p>
       </div>
 
-      {/* Filtros - Solo para Director Médico */}
-      {isDirectorMedico && (
-        <div className="bg-white rounded-card shadow-card mb-6">
-          <div className="p-4">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors lg:hidden mb-4"
-            >
-              <FunnelIcon className="h-5 w-5 mr-2" />
-              {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-            </button>
+      {/* Filtros */}
+      <div className="bg-white rounded-card shadow-card mb-6">
+        <div className="p-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors lg:hidden mb-4"
+          >
+            <FunnelIcon className="h-5 w-5 mr-2" />
+            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+          </button>
 
-            <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-                {/* Buscar Paciente */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Buscar Paciente (Nombre o DNI)
-                  </label>
-                  <input
-                    type="text"
-                    value={searchPaciente}
-                    onChange={(e) => setSearchPaciente(e.target.value)}
-                    placeholder="Nombre o DNI del paciente..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  />
-                </div>
-
-                {/* Fecha Desde */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha Desde
-                  </label>
-                  <DatePicker
-                    selected={fechaInicio}
-                    onChange={(date) => setFechaInicio(date)}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Seleccionar..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                    isClearable
-                    locale={es}
-                  />
-                </div>
-
-                {/* Fecha Hasta */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha Hasta
-                  </label>
-                  <DatePicker
-                    selected={fechaFin}
-                    onChange={(date) => setFechaFin(date)}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Seleccionar..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                    isClearable
-                    minDate={fechaInicio || undefined}
-                    locale={es}
-                  />
-                </div>
-
-                {/* Estado */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Estado
-                  </label>
-                  <select
-                    value={selectedEstado}
-                    onChange={(e) => setSelectedEstado(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  >
-                    <option value="">Todos</option>
-                    <option value="PENDIENTE">Pendiente</option>
-                    <option value="APROBADA">Aprobada</option>
-                    <option value="RECHAZADA">Rechazada</option>
-                    <option value="DOCUMENTOS_PENDIENTES">Docs. Pendientes</option>
-                  </select>
-                </div>
-
-                {/* Médico */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Médico
-                  </label>
-                  <select
-                    value={selectedMedico}
-                    onChange={(e) => setSelectedMedico(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  >
-                    <option value="">Todos</option>
-                    {medicos.map((medico) => (
-                      <option key={medico.id} value={medico.id}>
-                        {medico.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Buscar Paciente */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Buscar Paciente
+                </label>
+                <input
+                  type="text"
+                  value={searchPaciente}
+                  onChange={(e) => setSearchPaciente(e.target.value)}
+                  placeholder="Nombre o documento..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                />
               </div>
 
-              {/* Botones de búsqueda */}
-              <div className="flex justify-end space-x-2 mt-4">
+              {/* Estado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
+                <select
+                  value={selectedEstado}
+                  onChange={(e) => setSelectedEstado(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                >
+                  <option value="">Todos</option>
+                  <option value="BORRADOR">Borrador</option>
+                  <option value="COMPLETADA">Completada</option>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="APROBADA">Aprobada</option>
+                  <option value="RECHAZADA">Rechazada</option>
+                </select>
+              </div>
+
+              {/* Botones */}
+              <div className="flex items-end gap-2">
                 <button
                   onClick={handleClearFilters}
                   className="px-4 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -364,7 +291,7 @@ const MisJuntas = () => {
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Table Card */}
       <div className="bg-white rounded-card shadow-card overflow-hidden">
@@ -435,32 +362,17 @@ const MisJuntas = () => {
                         {getDictamenBadge(junta)}
                       </td>
                       <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-1">
-                          {junta.estado === 'DOCUMENTOS_PENDIENTES' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDocumentosModal(junta);
-                              }}
-                              className="text-orange-500 hover:text-orange-600 transition-colors p-2 rounded-full hover:bg-orange-50"
-                              aria-label={`Subir documentos faltantes para ${junta.pacienteNombre}`}
-                              title="Subir documentos faltantes"
-                            >
-                              <DocumentArrowUpIcon className="h-5 w-5" aria-hidden="true" />
-                            </button>
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedJunta(junta);
-                            }}
-                            className="text-vdc-primary hover:text-vdc-primary/80 transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
-                            aria-label={`Ver detalles de junta de ${junta.pacienteNombre}`}
-                            title="Ver detalles"
-                          >
-                            <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedJunta(junta);
+                          }}
+                          className="text-vdc-primary hover:text-vdc-primary/80 transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
+                          aria-label={`Ver detalles de junta de ${junta.pacienteNombre}`}
+                          title="Ver detalles"
+                        >
+                          <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                        </button>
                       </td>
                     </motion.tr>
                   ))}
@@ -501,17 +413,6 @@ const MisJuntas = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       {getEstadoBadge(junta)}
                       {getDictamenBadge(junta)}
-                      {junta.estado === 'DOCUMENTOS_PENDIENTES' && junta.documentosFaltantes && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDocumentosModal(junta);
-                          }}
-                          className="text-xs text-orange-600 underline"
-                        >
-                          Ver faltantes ({junta.documentosFaltantes.length})
-                        </button>
-                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -590,201 +491,6 @@ const MisJuntas = () => {
         )}
       </AnimatePresence>
 
-      {/* Documentos Faltantes Modal */}
-      <AnimatePresence>
-        {documentosModal && (
-          <DocumentosFaltantesModal
-            junta={documentosModal}
-            onClose={() => setDocumentosModal(null)}
-            onUpload={async () => {
-              await loadJuntas();
-              setDocumentosModal(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
-// Modal para documentos faltantes con funcionalidad de carga
-const DocumentosFaltantesModal = ({ 
-  junta, 
-  onClose, 
-  onUpload 
-}: { 
-  junta: JuntaMedica; 
-  onClose: () => void; 
-  onUpload: () => void;
-}) => {
-  const [uploading, setUploading] = useState(false);
-  const [archivosSeleccionados, setArchivosSeleccionados] = useState<{ [key: string]: File | null }>({});
-  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
-
-  const tiempoRestante = junta.fechaLimiteDocumentos 
-    ? formatDistanceToNow(new Date(junta.fechaLimiteDocumentos), { locale: es, addSuffix: true })
-    : '';
-
-  const getDocumentoLabel = (categoria: string) => {
-    const doc = CATEGORIAS_DOCUMENTO.find(d => d.value === categoria);
-    return doc?.label || categoria;
-  };
-
-  const handleFileChange = (categoria: string, file: File | null) => {
-    setArchivosSeleccionados(prev => ({
-      ...prev,
-      [categoria]: file
-    }));
-    setMensaje(null);
-  };
-
-  const handleSubirDocumentos = async () => {
-    const documentosParaSubir = Object.entries(archivosSeleccionados)
-      .filter(([_, file]) => file !== null)
-      .map(([categoria, file]) => ({
-        categoria: categoria as any,
-        file: file as File
-      }));
-
-    if (documentosParaSubir.length === 0) {
-      setMensaje({ tipo: 'error', texto: 'Selecciona al menos un documento para subir' });
-      return;
-    }
-
-    setUploading(true);
-    setMensaje(null);
-
-    try {
-      await juntasService.subirDocumentosFaltantes(junta.id, documentosParaSubir);
-      setMensaje({ tipo: 'success', texto: '¡Documentos subidos exitosamente!' });
-      setTimeout(() => {
-        onUpload();
-      }, 1500);
-    } catch (error) {
-      setMensaje({ tipo: 'error', texto: 'Error al subir los documentos. Intenta nuevamente.' });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const archivosListos = Object.values(archivosSeleccionados).filter(f => f !== null).length;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Subir Documentos Faltantes
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ✕
-          </button>
-        </div>
-
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">
-            Paciente: <span className="font-medium">{junta.pacienteNombre}</span>
-          </p>
-          <div className="flex items-center text-orange-600 text-sm bg-orange-50 p-2 rounded">
-            <ExclamationTriangleIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span>Tiempo restante: <strong>{tiempoRestante}</strong></span>
-          </div>
-        </div>
-
-        {/* Lista de documentos faltantes con input de archivo */}
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700 mb-3">
-            Selecciona los archivos para cada documento faltante:
-          </p>
-          <div className="space-y-3">
-            {junta.documentosFaltantes?.map((doc) => (
-              <div key={doc} className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 flex items-center">
-                    <span className={`w-2 h-2 rounded-full mr-2 ${archivosSeleccionados[doc] ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    {getDocumentoLabel(doc)}
-                  </span>
-                  {archivosSeleccionados[doc] && (
-                    <span className="text-xs text-green-600">✓ Listo</span>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => handleFileChange(doc, e.target.files?.[0] || null)}
-                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-vdc-primary file:text-white hover:file:bg-vdc-primary/90 file:cursor-pointer"
-                />
-                {archivosSeleccionados[doc] && (
-                  <p className="text-xs text-gray-500 mt-1 truncate">
-                    📎 {archivosSeleccionados[doc]?.name}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mensaje de estado */}
-        {mensaje && (
-          <div className={`mb-4 p-3 rounded text-sm ${
-            mensaje.tipo === 'success' 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {mensaje.tipo === 'success' ? '✅' : '❌'} {mensaje.texto}
-          </div>
-        )}
-
-        <div className="text-xs text-gray-500 mb-4 p-2 bg-yellow-50 rounded">
-          ⚠️ Si no se entregan los documentos antes del plazo, la junta será rechazada automáticamente.
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500">
-            {archivosListos} de {junta.documentosFaltantes?.length || 0} documentos listos
-          </span>
-          <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubirDocumentos}
-              disabled={uploading || archivosListos === 0}
-              className="px-4 py-2 text-sm bg-vdc-primary text-white rounded hover:bg-vdc-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {uploading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Subiendo...
-                </>
-              ) : (
-                <>
-                  <DocumentArrowUpIcon className="h-4 w-4 mr-1" />
-                  Subir Documentos
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </motion.div>
     </motion.div>
   );
 };

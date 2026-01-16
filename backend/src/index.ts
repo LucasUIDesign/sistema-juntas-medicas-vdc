@@ -146,6 +146,54 @@ app.get('/setup-db', async (req, res) => {
           {
             type: 'execute',
             stmt: {
+              sql: `CREATE TABLE IF NOT EXISTS JuntaMedica (
+                id TEXT PRIMARY KEY,
+                pacienteId TEXT NOT NULL,
+                medicoId TEXT NOT NULL,
+                estado TEXT DEFAULT 'BORRADOR',
+                fecha TEXT,
+                fechaDictamen TEXT,
+                aptitudLaboral TEXT,
+                diagnosticoPrincipal TEXT,
+                observaciones TEXT,
+                createdAt TEXT DEFAULT (datetime('now')),
+                updatedAt TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (pacienteId) REFERENCES Paciente(id),
+                FOREIGN KEY (medicoId) REFERENCES User(id)
+              )`,
+            },
+          },
+          {
+            type: 'execute',
+            stmt: {
+              sql: `CREATE TABLE IF NOT EXISTS Dictamen (
+                id TEXT PRIMARY KEY,
+                juntaId TEXT NOT NULL UNIQUE,
+                datosCompletos TEXT NOT NULL,
+                createdAt TEXT DEFAULT (datetime('now')),
+                updatedAt TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (juntaId) REFERENCES JuntaMedica(id)
+              )`,
+            },
+          },
+          {
+            type: 'execute',
+            stmt: {
+              sql: `CREATE TABLE IF NOT EXISTS DocumentoAdjunto (
+                id TEXT PRIMARY KEY,
+                juntaId TEXT NOT NULL,
+                nombre TEXT NOT NULL,
+                tipo TEXT,
+                url TEXT,
+                size INTEGER,
+                createdAt TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (juntaId) REFERENCES JuntaMedica(id)
+              )`,
+            },
+          },
+          {
+            type: 'execute',
+            stmt: {
               sql: `INSERT OR REPLACE INTO User (id, email, password, username, nombre, apellido, role)
                     VALUES ('admin-001', 'admin@vdc.com', '${hashedPassword}', 'admin', 'Administrador', 'Sistema', 'ADMIN')`,
             },
