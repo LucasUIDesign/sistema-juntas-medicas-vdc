@@ -41,7 +41,7 @@ const TABS_DICTAMEN = [
 const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) => {
   const { user } = useAuth();
   const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
-  
+
   const [showDictamen, setShowDictamen] = useState(isDirectorMedico);
   const [activeTab, setActiveTab] = useState('identificacion');
   const [detallesEvaluacion, setDetallesEvaluacion] = useState(junta.detallesDirector || '');
@@ -56,7 +56,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
       DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
     };
-    
+
     const labels: Record<string, string> = {
       PENDIENTE: 'Pendiente',
       APROBADA: 'Aprobada',
@@ -76,7 +76,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
       toast.warning('Por favor ingresa los detalles de la evaluación');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const updated = await juntasService.updateJunta(junta.id, {
@@ -99,7 +99,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
       toast.warning('Por favor ingresa los detalles de la evaluación');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const updated = await juntasService.updateJunta(junta.id, {
@@ -131,7 +131,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
         </div>
       );
     }
-    
+
     return (
       <div className="py-2">
         <p className="text-xs text-gray-500">{label}</p>
@@ -307,21 +307,19 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
       case 'dictamen':
         return (
           <div className="space-y-4">
-            <div className={`p-4 rounded-lg border-2 ${
-              junta.dictamen?.aptitudLaboral === 'APTO' ? 'bg-green-50 border-green-300' :
-              junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'bg-red-50 border-red-300' :
-              'bg-yellow-50 border-yellow-300'
-            }`}>
-              <p className="text-xs text-gray-600 mb-1">Aptitud Laboral</p>
-              <p className={`text-lg font-bold ${
-                junta.dictamen?.aptitudLaboral === 'APTO' ? 'text-green-700' :
-                junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'text-red-700' :
-                'text-yellow-700'
+            <div className={`p-4 rounded-lg border-2 ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'bg-green-50 border-green-300' :
+                junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'bg-red-50 border-red-300' :
+                  'bg-yellow-50 border-yellow-300'
               }`}>
+              <p className="text-xs text-gray-600 mb-1">Aptitud Laboral</p>
+              <p className={`text-lg font-bold ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'text-green-700' :
+                  junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'text-red-700' :
+                    'text-yellow-700'
+                }`}>
                 {junta.dictamen?.aptitudLaboral === 'APTO' ? 'APTO' :
-                 junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'NO APTO' :
-                 junta.dictamen?.aptitudLaboral === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
-                 junta.dictamen?.aptitudLaboral || 'No especificado'}
+                  junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'NO APTO' :
+                    junta.dictamen?.aptitudLaboral === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
+                      junta.dictamen?.aptitudLaboral || 'No especificado'}
               </p>
             </div>
             {renderField('Restricciones', datos?.restricciones)}
@@ -422,16 +420,11 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                 >
                   <span className="font-medium text-gray-900 flex items-center">
                     <DocumentTextIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-                    Dictamen Médico Completo
-                    {junta.dictamen.isCompleto && (
-                      <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
-                        Completo
-                      </span>
-                    )}
+                    Dictamen Medico
                   </span>
                   <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showDictamen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {showDictamen && (
                   <div className="bg-white">
                     {/* Tabs */}
@@ -441,18 +434,17 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                           <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                              activeTab === tab.id
+                            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
                                 ? 'border-vdc-primary text-vdc-primary bg-blue-50'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                            }`}
+                              }`}
                           >
                             {tab.label}
                           </button>
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Tab Content */}
                     <div className="p-4">
                       {renderTabContent()}
@@ -489,7 +481,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
             {isDirectorMedico && junta.estado === 'PENDIENTE' && (
               <div className="border-t border-gray-200 pt-6 space-y-4">
                 <h3 className="font-semibold text-gray-900">Evaluación del Director Médico</h3>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Detalles de la Evaluación *
