@@ -13,28 +13,76 @@ datasource db {
 
 // Modelo de Usuario
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
+  id            String        @id @default(uuid())
+  email         String        @unique
   password      String
   nombre        String?
   apellido      String?
   dni           String?
   telefono      String?
   fotoUrl       String?
-  role          String   @default("ADMIN")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  role          String        @default("ADMIN")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  juntas        JuntaMedica[] @relation("MedicoJuntas")
 }
 
 // Modelo de Paciente
 model Paciente {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   nombre          String
   apellido        String
-  numeroDocumento String   @unique
+  numeroDocumento String        @unique
   correo          String?
   telefono        String?
   domicilio       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  juntas          JuntaMedica[] @relation("PacienteJuntas")
+}
+
+// Modelo de Junta Médica
+model JuntaMedica {
+  id                  String             @id @default(uuid())
+  pacienteId          String
+  medicoId            String
+  estado              String             @default("BORRADOR") // BORRADOR, PENDIENTE, COMPLETADA, APROBADA, RECHAZADA
+  fecha               DateTime           @default(now())
+  fechaDictamen       DateTime?
+  aptitudLaboral      String?            // apto, apto_con_restricciones, no_apto_temporario, no_apto_definitivo
+  diagnosticoPrincipal String?
+  observaciones       String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  
+  paciente            Paciente           @relation("PacienteJuntas", fields: [pacienteId], references: [id])
+  medico              User               @relation("MedicoJuntas", fields: [medicoId], references: [id])
+  dictamen            Dictamen?
+  documentos          DocumentoAdjunto[]
+}
+
+// Modelo de Dictamen (datos completos del cuestionario)
+model Dictamen {
+  id             String      @id @default(uuid())
+  juntaId        String      @unique
+  datosCompletos String      // JSON con todos los datos del cuestionario
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  junta          JuntaMedica @relation(fields: [juntaId], references: [id], onDelete: Cascade)
+}
+
+// Modelo de Documento Adjunto
+model DocumentoAdjunto {
+  id          String      @id @default(uuid())
+  juntaId     String
+  nombre      String
+  tipo        String?     // Tipo MIME
+  url         String
+  categoria   String?     // EXAMEN_PSICOLOGICO, RESULTADOS_BIOQUIMICOS, etc.
+  size        Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  junta       JuntaMedica @relation(fields: [juntaId], references: [id], onDelete: Cascade)
 }
