@@ -171,10 +171,12 @@ export const juntasService = {
     });
 
     const result = await handleResponse(response);
+    // Backend returns { message, paciente: {...} }
+    const pacienteData = result.paciente || result;
     return {
-      id: result.id,
-      nombre: `${result.nombre} ${result.apellido}`.trim(),
-      documento: result.numeroDocumento,
+      id: pacienteData.id,
+      nombre: `${pacienteData.nombre} ${pacienteData.apellido}`.trim(),
+      documento: pacienteData.numeroDocumento,
       empresa: '',
     };
   },
