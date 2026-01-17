@@ -47,10 +47,12 @@ router.get(
           j.aptitudLaboral, j.diagnosticoPrincipal, j.observaciones,
           j.createdAt, j.updatedAt,
           p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
-          u.nombre as medicoNombre, u.apellido as medicoApellido
+          u.nombre as medicoNombre, u.apellido as medicoApellido,
+          d.datosCompletos
         FROM JuntaMedica j
         LEFT JOIN Paciente p ON j.pacienteId = p.id
         LEFT JOIN User u ON j.medicoId = u.id
+        LEFT JOIN Dictamen d ON j.id = d.juntaId
         WHERE 1=1
       `;
       const args: any[] = [];
@@ -81,11 +83,23 @@ router.get(
       const paginatedData = result.rows.slice(start, start + pageSizeNum);
 
       res.json({
-        data: paginatedData.map((row: any) => ({
-          ...row,
-          pacienteNombreCompleto: `${row.pacienteNombre || ''} ${row.pacienteApellido || ''}`.trim(),
-          medicoNombreCompleto: `${row.medicoNombre || ''} ${row.medicoApellido || ''}`.trim(),
-        })),
+        data: paginatedData.map((row: any) => {
+          let dictamenObj = null;
+          if (row.datosCompletos) {
+            try {
+              dictamenObj = JSON.parse(row.datosCompletos);
+            } catch (e) {
+              console.error('Error parsing dictamen JSON', e);
+            }
+          }
+
+          return {
+            ...row,
+            pacienteNombreCompleto: `${row.pacienteNombre || ''} ${row.pacienteApellido || ''}`.trim(),
+            medicoNombreCompleto: `${row.medicoNombre || ''} ${row.medicoApellido || ''}`.trim(),
+            dictamen: dictamenObj, // Add parsed dictamen to response
+          };
+        }),
         total,
         page: pageNum,
         pageSize: pageSizeNum,
