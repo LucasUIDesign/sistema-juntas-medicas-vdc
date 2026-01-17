@@ -335,15 +335,14 @@ const MisJuntas = () => {
                     >
                       Paciente <SortIcon field="pacienteNombre" />
                     </th>
-                    <th className="px-6 py-4 text-center">Dictamen</th>
+                    <th className="px-6 py-4 text-left">Diagnóstico</th>
+                    <th className="px-6 py-4 text-center">Aptitud</th>
                     <th
                       className="px-6 py-4 cursor-pointer hover:text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('estado')}
                     >
-                      Estado <SortIcon field="estado" />
+                      Aprobación <SortIcon field="estado" />
                     </th>
-                    <th className="px-6 py-4 text-center" title="Archivos Adjuntos">Docs</th>
-                    <th className="px-6 py-4 text-center" title="Evaluación Director">Auditoria</th>
                     <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -366,29 +365,16 @@ const MisJuntas = () => {
                         </div>
                         <div className="text-xs text-gray-400">{junta.numeroDocumento}</div>
                       </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-700 line-clamp-2" title={junta.dictamen?.diagnosticoPrincipal || junta.diagnosticoPrincipal}>
+                          {junta.dictamen?.diagnosticoPrincipal || junta.diagnosticoPrincipal || '-'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         {getDictamenBadge(junta)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getEstadoBadge(junta)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {junta.adjuntos && junta.adjuntos.length > 0 ? (
-                          <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600" title={`${junta.adjuntos.length} archivos`}>
-                            <PaperClipIcon className="h-4 w-4" />
-                          </div>
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {junta.detallesDirector ? (
-                          <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-50 text-green-600" title="Evaluado por Director">
-                            <CheckBadgeIcon className="h-5 w-5" />
-                          </div>
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
@@ -424,10 +410,9 @@ const MisJuntas = () => {
                         <p className="text-xs text-gray-500 mt-0.5">
                           {format(new Date(junta.fecha), 'dd de MMMM, yyyy', { locale: es })}
                         </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        {junta.adjuntos && junta.adjuntos.length > 0 && <PaperClipIcon className="h-4 w-4 text-blue-400" />}
-                        {junta.detallesDirector && <CheckBadgeIcon className="h-4 w-4 text-green-500" />}
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-1 italic">
+                          {junta.dictamen?.diagnosticoPrincipal || junta.diagnosticoPrincipal || '-'}
+                        </p>
                       </div>
                     </div>
 
