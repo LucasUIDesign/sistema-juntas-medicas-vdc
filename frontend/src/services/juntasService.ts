@@ -16,6 +16,13 @@ const getAuthHeaders = (): HeadersInit => {
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+
+    // Check for validation errors object
+    if (errorData.errors) {
+      const messages = Object.values(errorData.errors).join(', ');
+      throw new Error(messages || 'Error de validación');
+    }
+
     throw new Error(errorData.error || errorData.message || 'Error en la solicitud');
   }
   return response.json();

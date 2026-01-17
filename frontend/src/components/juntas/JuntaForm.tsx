@@ -380,8 +380,8 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               className={`px-6 py-2 rounded-card text-white font-medium transition-colors flex items-center ${isSubmitting || !dictamenData
-                  ? 'bg-vdc-success/50 cursor-not-allowed'
-                  : 'bg-vdc-success hover:bg-vdc-success/90'
+                ? 'bg-vdc-success/50 cursor-not-allowed'
+                : 'bg-vdc-success hover:bg-vdc-success/90'
                 }`}
             >
               {isSubmitting ? (
