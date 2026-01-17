@@ -17,6 +17,13 @@ import {
   ChevronDownIcon,
   CheckIcon,
   XCircleIcon,
+  BuildingOfficeIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  ClipboardDocumentCheckIcon,
+  PaperClipIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalProps {
@@ -42,7 +49,8 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
   const { user } = useAuth();
   const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
 
-  const [showDictamen, setShowDictamen] = useState(isDirectorMedico);
+  // Mostrar dictamen expandido por defecto para directores, colapsado para otros para reducir ruido inicial
+  const [showDictamen, setShowDictamen] = useState(true);
   const [activeTab, setActiveTab] = useState('identificacion');
   const [detallesEvaluacion, setDetallesEvaluacion] = useState(junta.detallesDirector || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,18 +63,22 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
       APROBADA: 'bg-green-100 text-green-800 border-green-200',
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
       DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
+      BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
+      COMPLETADA: 'bg-blue-100 text-blue-800 border-blue-200'
     };
 
     const labels: Record<string, string> = {
-      PENDIENTE: 'Pendiente',
+      PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      DOCUMENTOS_PENDIENTES: 'Documentación Pendiente',
+      BORRADOR: 'Borrador',
+      COMPLETADA: 'Completada'
     };
 
     return (
-      <span className={`px-3 py-1 text-sm font-medium rounded-full border ${styles[estado]}`}>
-        {labels[estado]}
+      <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${styles[estado] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[estado] || estado}
       </span>
     );
   };
@@ -122,31 +134,36 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
     return cat?.label || categoria;
   };
 
-  const renderField = (label: string, value: string | string[] | undefined) => {
-    if (!value || (Array.isArray(value) && value.length === 0)) {
-      return (
-        <div className="py-2">
-          <p className="text-xs text-gray-500">{label}</p>
-          <p className="text-sm text-gray-400 italic">No especificado</p>
-        </div>
-      );
-    }
-
+  const renderField = (label: string, value: string | string[] | undefined, icon?: React.ReactNode) => {
     return (
-      <div className="py-2">
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-sm text-gray-900">
-          {Array.isArray(value) ? value.join(', ') : value}
+      <div className="py-2 group">
+        <div className="flex items-center text-xs text-gray-500 mb-0.5">
+          {icon && <span className="mr-1.5 text-gray-400 group-hover:text-gray-600 transition-colors">{icon}</span>}
+          {label}
+        </div>
+        <p className={`text-sm ${!value || (Array.isArray(value) && value.length === 0) ? 'text-gray-400 font-light' : 'text-gray-900 font-medium'}`}>
+          {!value || (Array.isArray(value) && value.length === 0)
+            ? '-'
+            : Array.isArray(value) ? value.join(', ') : value}
         </p>
       </div>
     );
   };
 
+  const renderSectionHeader = (title: string, icon: React.ReactNode) => (
+    <div className="flex items-center space-x-2 border-b border-gray-100 pb-2 mb-3 mt-1">
+      <span className="text-vdc-primary">{icon}</span>
+      <h3 className="font-semibold text-gray-800 text-sm">{title}</h3>
+    </div>
+  );
+
   const renderTabContent = () => {
-    if (!datos && !junta.dictamen) {
+    if (!datos && !junta.dictamen && activeTab !== 'identificacion') {
       return (
-        <div className="text-center py-8 text-gray-500">
-          No hay datos del dictamen disponibles
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+          <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+          <p className="text-gray-500 font-medium">No hay datos médicos detallados</p>
+          <p className="text-xs text-gray-400 mt-1">Solo se dispone de la información básica del paciente.</p>
         </div>
       );
     }
@@ -154,69 +171,97 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
     switch (activeTab) {
       case 'identificacion':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 divide-y md:divide-y-0">
-            <div className="space-y-1">
-              {renderField('Nombre Completo', junta.dictamen?.nombrePaciente)}
-              {renderField('DNI', junta.dictamen?.dni)}
-              {renderField('Fecha de Nacimiento', datos?.fechaNacimiento)}
-              {renderField('Sexo', datos?.sexo === 'M' ? 'Masculino' : datos?.sexo === 'F' ? 'Femenino' : datos?.sexo)}
-              {renderField('Estado Civil', datos?.estadoCivil)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Datos Personales', <UserIcon className="h-5 w-5" />)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {renderField('Nombre Completo', junta.dictamen?.nombrePaciente || junta.pacienteNombre)}
+                {renderField('DNI', junta.dictamen?.dni || junta.numeroDocumento)}
+                {renderField('Fecha de Nacimiento', datos?.fechaNacimiento, <CalendarIcon className="h-3 w-3" />)}
+                {renderField('Sexo', datos?.sexo === 'M' ? 'Masculino' : datos?.sexo === 'F' ? 'Femenino' : datos?.sexo)}
+                {renderField('Estado Civil', datos?.estadoCivil)}
+              </div>
             </div>
-            <div className="space-y-1 pt-2 md:pt-0">
-              {renderField('Domicilio', datos?.domicilio)}
-              {renderField('Teléfono', datos?.telefono)}
-              {renderField('Email', datos?.email)}
-              {renderField('Obra Social', datos?.obraSocial)}
+
+            <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Información de Contacto', <MapPinIcon className="h-5 w-5" />)}
+              <div className="grid grid-cols-1 gap-4">
+                {renderField('Domicilio', datos?.domicilio, <MapPinIcon className="h-3 w-3" />)}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {renderField('Teléfono', datos?.telefono, <PhoneIcon className="h-3 w-3" />)}
+                  {renderField('Email', datos?.email, <EnvelopeIcon className="h-3 w-3" />)}
+                </div>
+                {renderField('Obra Social', datos?.obraSocial, <BuildingOfficeIcon className="h-3 w-3" />)}
+              </div>
             </div>
           </div>
         );
 
       case 'laboral':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-            <div className="space-y-1">
-              {renderField('Establecimiento', datos?.establecimiento)}
-              {renderField('Cargo', datos?.cargo)}
-              {renderField('Nivel Educativo', datos?.nivelEducativo)}
-              {renderField('Modalidad', datos?.modalidad)}
-            </div>
-            <div className="space-y-1">
-              {renderField('Situación de Revista', datos?.situacionRevista)}
-              {renderField('Antigüedad', datos?.antiguedad)}
-              {renderField('Carga Horaria', datos?.cargaHoraria)}
-              {renderField('Legajo', datos?.legajo)}
+          <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+            {renderSectionHeader('Antecedentes Laborales', <BriefcaseIcon className="h-5 w-5" />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-1">
+                {renderField('Establecimiento', datos?.establecimiento, <BuildingOfficeIcon className="h-3 w-3" />)}
+                {renderField('Situación de Revista', datos?.situacionRevista)}
+              </div>
+              <div className="space-y-1">
+                {renderField('Cargo', datos?.cargo)}
+                {renderField('Antigüedad', datos?.antiguedad)}
+              </div>
+              <div className="space-y-1">
+                {renderField('Nivel Educativo', datos?.nivelEducativo)}
+                {renderField('Carga Horaria', datos?.cargaHoraria, <ClockIcon className="h-3 w-3" />)}
+              </div>
+              <div className="space-y-1">
+                {renderField('Modalidad', datos?.modalidad)}
+                {renderField('Legajo', datos?.legajo)}
+              </div>
             </div>
           </div>
         );
 
       case 'motivo':
         return (
-          <div className="space-y-1">
-            {renderField('Motivo de la Junta', datos?.motivoJunta)}
-            {renderField('Fecha Inicio Licencia', datos?.fechaInicioLicencia)}
-            {renderField('Diagnósticos Previos', datos?.diagnosticosPrevios)}
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-blue-50/50 rounded-lg p-5 border border-blue-100">
+              <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
+                Motivo de la Junta
+              </h4>
+              <p className="text-gray-900 text-lg font-medium">{datos?.motivoJunta || '-'}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+              {renderField('Fecha Inicio Licencia', datos?.fechaInicioLicencia, <CalendarIcon className="h-3 w-3" />)}
+              {renderField('Diagnósticos Previos', datos?.diagnosticosPrevios)}
+            </div>
           </div>
         );
 
       case 'antecedentes':
         return (
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Antecedentes Médicos</h4>
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Antecedentes Médicos', <ClipboardDocumentCheckIcon className="h-5 w-5" />)}
+              <div className="space-y-2">
                 {renderField('Patologías Previas', datos?.patologiasPrevias)}
                 {renderField('Antecedentes Quirúrgicos', datos?.antecedentesQuirurgicos)}
                 {renderField('Alergias', datos?.alergias)}
-                {renderField('Hábitos', datos?.habitos)}
                 {renderField('Antecedentes Familiares', datos?.antecedentesFamiliares)}
               </div>
             </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Antecedentes Laborales</h4>
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                {renderField('Licencias Anteriores', datos?.licenciasAnteriores)}
-                {renderField('Accidentes Laborales', datos?.accidentesLaborales)}
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Hábitos y Factores', <CheckCircleIcon className="h-5 w-5" />)}
+              <div className="space-y-2">
+                {renderField('Hábitos', datos?.habitos)}
                 {renderField('Factores de Riesgo', datos?.factoresRiesgo)}
+                <div className="border-t border-gray-100 pt-2 mt-2">
+                  <h5 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Laborales</h5>
+                  {renderField('Licencias Anteriores', datos?.licenciasAnteriores)}
+                  {renderField('Accidentes Laborales', datos?.accidentesLaborales)}
+                </div>
               </div>
             </div>
           </div>
@@ -224,108 +269,147 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
 
       case 'enfermedad':
         return (
-          <div className="space-y-1">
-            {renderField('Síntomas Principales', datos?.sintomasPrincipales)}
-            {renderField('Evolución', datos?.evolucion)}
-            {renderField('Tratamientos Actuales', datos?.tratamientosActuales)}
+          <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm space-y-6">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2 bg-gray-50 p-2 rounded">Síntomas Principales</h4>
+              <p className="text-gray-700 whitespace-pre-wrap pl-2 border-l-4 border-vdc-primary/30">{datos?.sintomasPrincipales || '-'}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {renderField('Evolución', datos?.evolucion)}
+              {renderField('Tratamientos Actuales', datos?.tratamientosActuales)}
+            </div>
             {renderField('Interconsultas', datos?.interconsultas)}
           </div>
         );
 
       case 'examen':
         return (
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Signos Vitales</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500">Presión Arterial</p>
-                  <p className="text-sm font-medium text-gray-900">{datos?.presionArterial || '-'}</p>
+          <div className="space-y-6">
+            {/* Signos Vitales Card */}
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Signos Vitales y Antropometría', <CheckIcon className="h-5 w-5" />)}
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
+                <div className="text-center p-2 bg-blue-50/50 rounded-lg">
+                  <span className="block text-xs text-gray-500">PA</span>
+                  <span className="font-semibold text-gray-900">{datos?.presionArterial || '-'}</span>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500">Frec. Cardíaca</p>
-                  <p className="text-sm font-medium text-gray-900">{datos?.frecuenciaCardiaca || '-'}</p>
+                <div className="text-center p-2 bg-blue-50/50 rounded-lg">
+                  <span className="block text-xs text-gray-500">FC</span>
+                  <span className="font-semibold text-gray-900">{datos?.frecuenciaCardiaca || '-'}</span>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500">Frec. Respiratoria</p>
-                  <p className="text-sm font-medium text-gray-900">{datos?.frecuenciaRespiratoria || '-'}</p>
+                <div className="text-center p-2 bg-blue-50/50 rounded-lg">
+                  <span className="block text-xs text-gray-500">FR</span>
+                  <span className="font-semibold text-gray-900">{datos?.frecuenciaRespiratoria || '-'}</span>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-500">Temperatura</p>
-                  <p className="text-sm font-medium text-gray-900">{datos?.temperatura || '-'}</p>
+                <div className="text-center p-2 bg-blue-50/50 rounded-lg">
+                  <span className="block text-xs text-gray-500">Temp</span>
+                  <span className="font-semibold text-gray-900">{datos?.temperatura || '-'}</span>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <span className="block text-xs text-gray-500">Peso</span>
+                  <span className="font-semibold text-gray-900">{datos?.peso || '-'}</span>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <span className="block text-xs text-gray-500">Talla</span>
+                  <span className="font-semibold text-gray-900">{datos?.talla || '-'}</span>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded-lg">
+                  <span className="block text-xs text-gray-500">IMC</span>
+                  <span className="font-semibold text-gray-900">{datos?.imc || '-'}</span>
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500">Peso</p>
-                <p className="text-sm font-medium text-gray-900">{datos?.peso || '-'}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500">Talla</p>
-                <p className="text-sm font-medium text-gray-900">{datos?.talla || '-'}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500">IMC</p>
-                <p className="text-sm font-medium text-gray-900">{datos?.imc || '-'}</p>
+
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Examen Físico General', <DocumentTextIcon className="h-5 w-5" />)}
+              <div className="prose prose-sm max-w-none text-gray-700">
+                {datos?.examenGeneral || '-'}
               </div>
             </div>
-            {renderField('Examen General', datos?.examenGeneral)}
           </div>
         );
 
       case 'estudios':
         return (
-          <div className="space-y-1">
-            {renderField('Laboratorio', datos?.laboratorio)}
-            {renderField('Imágenes', datos?.imagenes)}
-            {renderField('Estudios Funcionales', datos?.estudiosFuncionales)}
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Estudios Complementarios', <PaperClipIcon className="h-5 w-5" />)}
+              <div className="space-y-4">
+                {renderField('Laboratorio', datos?.laboratorio)}
+                {renderField('Imágenes', datos?.imagenes)}
+                {renderField('Estudios Funcionales', datos?.estudiosFuncionales)}
+              </div>
+            </div>
           </div>
         );
 
       case 'diagnostico':
         return (
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-xs text-blue-600 font-medium mb-1">Diagnóstico Principal</p>
-              <p className="text-gray-900">{junta.dictamen?.diagnosticoPrincipal || 'No especificado'}</p>
+          <div className="space-y-6">
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-lg shadow-sm">
+              <h4 className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-2">Diagnóstico Principal</h4>
+              <p className="text-xl font-bold text-gray-900">{junta.dictamen?.diagnosticoPrincipal || 'No especificado'}</p>
+              {datos?.codigoCIE10 && <span className="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">CIE-10: {datos.codigoCIE10}</span>}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderField('Código CIE-10', datos?.codigoCIE10)}
-              {renderField('Naturaleza de la Enfermedad', datos?.naturalezaEnfermedad)}
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Capacidad Laboral</h4>
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                {renderField('Capacidad Funcional', datos?.capacidadFuncional)}
-                {renderField('Factores Limitantes', datos?.factoresLimitantes)}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                {renderSectionHeader('Detalles Clínicos', <ClipboardDocumentCheckIcon className="h-5 w-5" />)}
+                {renderField('Naturaleza de la Enfermedad', datos?.naturalezaEnfermedad)}
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                {renderSectionHeader('Capacidad Laboral', <BriefcaseIcon className="h-5 w-5" />)}
+                <div className="space-y-2">
+                  {renderField('Capacidad Funcional', datos?.capacidadFuncional)}
+                  {renderField('Factores Limitantes', datos?.factoresLimitantes)}
+                </div>
               </div>
             </div>
           </div>
         );
 
       case 'dictamen':
+        const aptitud = junta.dictamen?.aptitudLaboral;
+        const colorClass = aptitud === 'APTO' ? 'green' : aptitud === 'NO_APTO' ? 'red' : 'yellow';
+
         return (
-          <div className="space-y-4">
-            <div className={`p-4 rounded-lg border-2 ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'bg-green-50 border-green-300' :
-              junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'bg-red-50 border-red-300' :
-                'bg-yellow-50 border-yellow-300'
+          <div className="space-y-6">
+            {/* Main Result Banner */}
+            <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
+              aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
+                'bg-yellow-50 border-yellow-200'
               }`}>
-              <p className="text-xs text-gray-600 mb-1">Aptitud Laboral</p>
-              <p className={`text-lg font-bold ${junta.dictamen?.aptitudLaboral === 'APTO' ? 'text-green-700' :
-                junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'text-red-700' :
+              <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
+              <h2 className={`text-3xl font-black tracking-tight ${aptitud === 'APTO' ? 'text-green-700' :
+                aptitud === 'NO_APTO' ? 'text-red-700' :
                   'text-yellow-700'
                 }`}>
-                {junta.dictamen?.aptitudLaboral === 'APTO' ? 'APTO' :
-                  junta.dictamen?.aptitudLaboral === 'NO_APTO' ? 'NO APTO' :
-                    junta.dictamen?.aptitudLaboral === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
-                      junta.dictamen?.aptitudLaboral || 'No especificado'}
-              </p>
+                {aptitud === 'APTO' ? 'APTO' :
+                  aptitud === 'NO_APTO' ? 'NO APTO' :
+                    aptitud === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
+                      aptitud || 'PENDIENTE'}
+              </h2>
+              {junta.dictamen?.fechaDictamen && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Fecha del Dictamen: {format(new Date(junta.dictamen.fechaDictamen), "d 'de' MMMM, yyyy", { locale: es })}
+                </p>
+              )}
             </div>
-            {renderField('Restricciones', datos?.restricciones)}
-            {renderField('Recomendaciones', datos?.recomendaciones)}
-            {renderField('Tiempo de Recuperación', datos?.tiempoRecuperacion)}
-            {renderField('Fecha del Dictamen', junta.dictamen?.fechaDictamen ? format(new Date(junta.dictamen.fechaDictamen), 'dd/MM/yyyy') : undefined)}
+
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                {renderSectionHeader('Indicaciones', <ClipboardDocumentCheckIcon className="h-5 w-5" />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderField('Restricciones', datos?.restricciones)}
+                  {renderField('Recomendaciones', datos?.recomendaciones)}
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                {renderSectionHeader('Pronóstico', <ClockIcon className="h-5 w-5" />)}
+                {renderField('Tiempo Estimado de Recuperación', datos?.tiempoRecuperacion)}
+              </div>
+            </div>
           </div>
         );
 
@@ -341,214 +425,185 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/50 z-50"
+        className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50"
       />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       >
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Detalle de Junta Médica
-            </h2>
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200">
+
+          {/* Main Header */}
+          <div className="bg-white border-b border-gray-200 px-6 py-5 flex items-start justify-between flex-shrink-0">
+            <div className="flex items-start space-x-4">
+              <div className="bg-vdc-primary/10 p-3 rounded-full hidden sm:block">
+                <UserIcon className="h-8 w-8 text-vdc-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+                  {junta.pacienteNombre}
+                </h1>
+                <div className="flex items-center space-x-3 mt-1 text-sm text-gray-500">
+                  <span className="flex items-center">
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    {format(new Date(junta.fecha), "d MMM yyyy", { locale: es })}
+                  </span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="flex items-center">
+                    <UserCircleIcon className="h-4 w-4 mr-1" />
+                    Dr. {junta.medicoNombre}
+                  </span>
+                  <span className="hidden sm:inline">•</span>
+                  {getEstadoBadge(junta.estado)}
+                </div>
+              </div>
+            </div>
+
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <XMarkIcon className="h-5 w-5" />
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
 
-          {/* Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Estado */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Estado:</span>
-              {getEstadoBadge(junta.estado)}
-            </div>
+          {/* Body Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto bg-gray-50/50">
+            <div className="p-6 max-w-5xl mx-auto space-y-6">
 
-            {/* Info básica */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center text-sm text-gray-500">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Fecha de la Junta
+              {/* Dictamen Médico Section - Always valid structure */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="border-b border-gray-200 bg-gray-50/80 px-4">
+                  {/* Navegación Tabs - Scrollable horizontalmente */}
+                  <div className="flex overflow-x-auto hide-scrollbar space-x-1 pt-2">
+                    {TABS_DICTAMEN.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-t-2 border-l border-r rounded-t-lg transition-all relative top-[1px] ${activeTab === tab.id
+                          ? 'border-gray-200 border-b-white bg-white text-vdc-primary z-10'
+                          : 'border-transparent bg-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-gray-900 font-medium">
-                  {format(new Date(junta.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es })}
-                </p>
+
+                <div className="p-6 min-h-[400px]">
+                  {renderTabContent()}
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <div className="flex items-center text-sm text-gray-500">
-                  <UserIcon className="h-4 w-4 mr-2" />
-                  Paciente
-                </div>
-                <p className="text-gray-900 font-medium">{junta.pacienteNombre}</p>
-              </div>
+              {/* Documentos Adjuntos - Grid layout */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <PaperClipIcon className="h-5 w-5 mr-2 text-gray-400" />
+                  Documentación Adjunta
+                </h3>
 
-              <div className="space-y-1">
-                <div className="flex items-center text-sm text-gray-500">
-                  <UserCircleIcon className="h-4 w-4 mr-2" />
-                  Médico Evaluador
-                </div>
-                <p className="text-gray-900 font-medium">{junta.medicoNombre}</p>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center text-sm text-gray-500">
-                  <CheckCircleIcon className="h-4 w-4 mr-2" />
-                  Aprobación
-                </div>
-                <p className={`font-medium ${junta.aprobacion ? 'text-green-600' : 'text-gray-500'}`}>
-                  {junta.estado === 'APROBADA' ? 'Aprobada' : junta.estado === 'RECHAZADA' ? 'Rechazada' : 'Pendiente'}
-                </p>
-              </div>
-            </div>
-
-            {/* Dictamen Médico con Pestañas */}
-            {junta.dictamen && (
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setShowDictamen(!showDictamen)}
-                  className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
-                >
-                  <span className="font-medium text-gray-900 flex items-center">
-                    <DocumentTextIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-                    Dictamen Médico
-                  </span>
-                  <ChevronDownIcon className={`h-5 w-5 text-gray-400 transition-transform ${showDictamen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {showDictamen && (
-                  <div className="bg-white">
-                    {/* Tabs */}
-                    <div className="border-b border-gray-200 overflow-x-auto">
-                      <div className="flex min-w-max">
-                        {TABS_DICTAMEN.map((tab) => (
-                          <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
-                              ? 'border-vdc-primary text-vdc-primary bg-blue-50'
-                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                              }`}
-                          >
-                            {tab.label}
-                          </button>
-                        ))}
+                {junta.adjuntos && junta.adjuntos.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {junta.adjuntos.map((adjunto) => (
+                      <div
+                        key={adjunto.id}
+                        className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-3 hover:bg-blue-50/50 hover:border-blue-100 transition-colors group"
+                      >
+                        <div className="flex items-center overflow-hidden mr-3">
+                          <div className="bg-blue-100 p-2 rounded-lg mr-3 flex-shrink-0 text-blue-600">
+                            <DocumentTextIcon className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate" title={adjunto.nombre}>{adjunto.nombre}</p>
+                            <p className="text-xs text-gray-500 truncate">{getCategoriaLabel(adjunto.categoria)}</p>
+                          </div>
+                        </div>
+                        <button className="text-gray-400 hover:text-vdc-primary p-1.5 hover:bg-white rounded-full transition-all opacity-0 group-hover:opacity-100">
+                          <CheckCircleIcon className="h-5 w-5" />
+                        </button>
                       </div>
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-4">
-                      {renderTabContent()}
-                    </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                    <p className="text-gray-500 text-sm">No hay documentos adjuntos en esta junta.</p>
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Documentos Adjuntos */}
-            {junta.adjuntos && junta.adjuntos.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">Documentos Adjuntos</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {junta.adjuntos.map((adjunto) => (
-                    <div
-                      key={adjunto.id}
-                      className="flex items-center justify-between bg-gray-50 rounded-lg p-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{adjunto.nombre}</p>
-                        <p className="text-xs text-gray-500">{getCategoriaLabel(adjunto.categoria)}</p>
+              {/* Area de Director Médico */}
+              {(isDirectorMedico || junta.detallesDirector) && (
+                <div className={`rounded-xl shadow-sm border border-gray-200 overflow-hidden ${isDirectorMedico && junta.estado === 'PENDIENTE' ? 'bg-blue-50/30' : 'bg-white'}`}>
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <ClipboardDocumentCheckIcon className="h-6 w-6 mr-2 text-vdc-primary" />
+                      Revisión del Director Médico
+                    </h3>
+                  </div>
+
+                  <div className="p-6">
+                    {/* Modo Edicion (Solo Director y Pendiente) */}
+                    {isDirectorMedico && junta.estado === 'PENDIENTE' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Dictamen de Auditoría</label>
+                          <textarea
+                            value={detallesEvaluacion}
+                            onChange={(e) => setDetallesEvaluacion(e.target.value)}
+                            rows={4}
+                            className="w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:ring-vdc-primary focus:border-vdc-primary"
+                            placeholder="Escriba aquí sus observaciones finales para aprobar o rechazar esta junta..."
+                          />
+                        </div>
+                        <div className="flex gap-4 pt-2">
+                          <button
+                            onClick={handleAprobar}
+                            disabled={isSubmitting || !detallesEvaluacion.trim()}
+                            className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+                          >
+                            <CheckIcon className="h-5 w-5 mr-2" />
+                            Aprobar Junta
+                          </button>
+                          <button
+                            onClick={handleRechazar}
+                            disabled={isSubmitting || !detallesEvaluacion.trim()}
+                            className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transition-colors"
+                          >
+                            <XCircleIcon className="h-5 w-5 mr-2" />
+                            Rechazar Junta
+                          </button>
+                        </div>
                       </div>
-                      <button className="text-vdc-primary hover:text-vdc-primary/80 text-sm">
-                        Descargar
-                      </button>
-                    </div>
-                  ))}
+                    )}
+
+                    {/* Modo Visualizacion (Ya evaluado) */}
+                    {junta.detallesDirector && (
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{junta.detallesDirector}</p>
+                        <div className="mt-4 pt-4 border-t border-gray-200 flex items-center text-xs text-gray-500">
+                          <CheckCircleIcon className="h-4 w-4 mr-1 text-green-500" />
+                          Auditado el {format(new Date(junta.updatedAt), "d 'de' MMMM, yyyy", { locale: es })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata Footer */}
+              <div className="flex justify-between items-center text-xs text-gray-400 pt-4 pb-2">
+                <span>ID: {junta.id}</span>
+                <div className="flex space-x-4">
+                  <span>Creado: {format(new Date(junta.createdAt), 'dd/MM/yyyy HH:mm')}</span>
+                  <span>Actualizado: {format(new Date(junta.updatedAt), 'dd/MM/yyyy HH:mm')}</span>
                 </div>
               </div>
-            )}
 
-            {/* Detalles del Director - Solo para Director Médico */}
-            {isDirectorMedico && junta.estado === 'PENDIENTE' && (
-              <div className="border-t border-gray-200 pt-6 space-y-4">
-                <h3 className="font-semibold text-gray-900">Evaluación del Director Médico</h3>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Detalles de la Evaluación *
-                  </label>
-                  <textarea
-                    value={detallesEvaluacion}
-                    onChange={(e) => setDetallesEvaluacion(e.target.value)}
-                    rows={4}
-                    placeholder="Ingrese sus observaciones y detalles de la evaluación..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Este campo es obligatorio para aprobar o rechazar la junta.
-                  </p>
-                </div>
-
-                {/* Botones de acción */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleAprobar}
-                    disabled={isSubmitting || !detallesEvaluacion.trim()}
-                    className="flex-1 flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <CheckIcon className="h-5 w-5 mr-2" />
-                    Aprobar Junta
-                  </button>
-                  <button
-                    onClick={handleRechazar}
-                    disabled={isSubmitting || !detallesEvaluacion.trim()}
-                    className="flex-1 flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <XCircleIcon className="h-5 w-5 mr-2" />
-                    Rechazar Junta
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Mostrar detalles del director si ya fue evaluada */}
-            {junta.detallesDirector && (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700 mb-2">Evaluación del Director Médico:</p>
-                <p className="text-gray-900 whitespace-pre-wrap">{junta.detallesDirector}</p>
-              </div>
-            )}
-
-            {/* Timestamps */}
-            <div className="pt-4 border-t border-gray-200 grid grid-cols-2 gap-4 text-xs text-gray-500">
-              <div className="flex items-center">
-                <ClockIcon className="h-3 w-3 mr-1" />
-                Creado: {format(new Date(junta.createdAt), 'dd/MM/yyyy HH:mm')}
-              </div>
-              <div className="flex items-center">
-                <ClockIcon className="h-3 w-3 mr-1" />
-                Actualizado: {format(new Date(junta.updatedAt), 'dd/MM/yyyy HH:mm')}
-              </div>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end flex-shrink-0">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Cerrar
-            </button>
           </div>
         </div>
       </motion.div>

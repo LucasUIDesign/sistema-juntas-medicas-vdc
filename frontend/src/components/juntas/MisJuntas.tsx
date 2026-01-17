@@ -13,10 +13,13 @@ import {
   EyeIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  PaperClipIcon,
+  CheckBadgeIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 type SortField = 'fecha' | 'pacienteNombre' | 'estado';
@@ -31,7 +34,7 @@ const MisJuntas = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [, setTick] = useState(0);
+  const [, setTick] = useState(0); // Para actualizar tiempos relativos
 
   // Filtros
   const [showFilters, setShowFilters] = useState(false);
@@ -46,14 +49,14 @@ const MisJuntas = () => {
     }
   }, [user, page, pageSize, sortField, sortOrder]);
 
-  // Actualizar cada minuto
+  // Actualizar cada minuto para contadores de tiempo
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(t => t + 1);
-      if (user) loadJuntas();
+      // No recargamos toda la data, solo forzamos re-render para actualizar badges de tiempo
     }, 60000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, []);
 
   const loadJuntas = async () => {
     if (!user) return;
@@ -65,12 +68,10 @@ const MisJuntas = () => {
         pageSize,
       };
 
-      // Aplicar filtros
       if (selectedEstado) filters.estado = selectedEstado as EstadoJunta;
 
       const data = await juntasService.getJuntas(filters);
 
-      // Map response to expected format
       const mappedData = {
         ...data,
         data: data.data.map((j: any) => ({
@@ -80,7 +81,7 @@ const MisJuntas = () => {
         })),
       };
 
-      // Filtrar por nombre de paciente si hay búsqueda (client-side)
+      // Filtrado local simple para búsqueda por nombre (idealmente backend)
       if (searchPaciente) {
         const searchLower = searchPaciente.toLowerCase();
         mappedData.data = mappedData.data.filter((j: any) =>
@@ -121,12 +122,12 @@ const MisJuntas = () => {
 
   const getEstadoBadge = (junta: JuntaMedica) => {
     const styles: Record<string, string> = {
-      BORRADOR: 'bg-gray-100 text-gray-800',
-      PENDIENTE: 'bg-yellow-100 text-yellow-800',
-      COMPLETADA: 'bg-blue-100 text-blue-800',
-      APROBADA: 'bg-green-100 text-green-800',
-      RECHAZADA: 'bg-red-100 text-red-800',
-      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800',
+      BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
+      PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      COMPLETADA: 'bg-blue-100 text-blue-800 border-blue-200',
+      APROBADA: 'bg-green-100 text-green-800 border-green-200',
+      RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
+      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
     };
 
     const labels: Record<string, string> = {
@@ -135,66 +136,69 @@ const MisJuntas = () => {
       COMPLETADA: 'Completada',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      DOCUMENTOS_PENDIENTES: 'Faltan Docs.',
     };
 
-    // Si es DOCUMENTOS_PENDIENTES, mostrar contador
+    // Lógica especial para documentos pendientes con timer
     if (junta.estado === 'DOCUMENTOS_PENDIENTES' && junta.fechaLimiteDocumentos) {
       const fechaLimite = new Date(junta.fechaLimiteDocumentos);
       const ahora = new Date();
       const horasRestantes = differenceInHours(fechaLimite, ahora);
       const minutosRestantes = differenceInMinutes(fechaLimite, ahora) % 60;
-      
-      const tiempoRestante = horasRestantes > 0 
-        ? `${horasRestantes}h ${minutosRestantes}m`
-        : minutosRestantes > 0 
+
+      const tiempoRestante = horasRestantes > 0
+        ? `${horasRestantes}h`
+        : minutosRestantes > 0
           ? `${minutosRestantes}m`
           : 'Vencido';
-      
+
       const isUrgente = horasRestantes < 12;
-      
+
       return (
         <div className="flex flex-col items-start gap-1">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[junta.estado]} flex items-center`}>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${styles[junta.estado]} flex items-center`}>
             <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
             {labels[junta.estado]}
           </span>
-          <span className={`px-2 py-0.5 text-xs font-medium rounded ${isUrgente ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 text-gray-700'}`}>
-            ⏱️ {tiempoRestante}
+          <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wide ${isUrgente ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+            {tiempoRestante}
           </span>
         </div>
       );
     }
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[junta.estado] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${styles[junta.estado] || 'bg-gray-100 text-gray-500'}`}>
         {labels[junta.estado] || junta.estado}
       </span>
     );
   };
 
+  // Badge para Aptitud Laboral (Resultado Médico)
   const getDictamenBadge = (junta: JuntaMedica) => {
-    if (!junta.dictamen) {
+    if (!junta.dictamen?.aptitudLaboral) {
+      return <span className="text-gray-400 text-xs">-</span>;
+    }
+
+    const aptitud = junta.dictamen.aptitudLaboral;
+
+    if (aptitud === 'APTO') {
       return (
-        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
-          Sin dictamen
+        <span className="px-2 py-1 text-xs font-bold bg-green-50 text-green-700 border border-green-200 rounded-md whitespace-nowrap">
+          APTO
         </span>
       );
     }
-    
-    if (junta.dictamen.isCompleto) {
+    if (aptitud === 'NO_APTO') {
       return (
-        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center">
-          <ClipboardDocumentListIcon className="h-3 w-3 mr-1" />
-          Completo
+        <span className="px-2 py-1 text-xs font-bold bg-red-50 text-red-700 border border-red-200 rounded-md whitespace-nowrap">
+          NO APTO
         </span>
       );
     }
-    
     return (
-      <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 flex items-center">
-        <ClipboardDocumentListIcon className="h-3 w-3 mr-1" />
-        Incompleto
+      <span className="px-2 py-1 text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md whitespace-nowrap">
+        {aptitud.replace(/_/g, ' ')}
       </span>
     );
   };
@@ -213,78 +217,81 @@ const MisJuntas = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      className="max-w-7xl mx-auto"
     >
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-subtitle font-semibold text-vdc-primary">
-          {isDirectorMedico ? 'Todas las Juntas Médicas' : 'Mis Juntas Médicas'}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {isDirectorMedico ? 'Gestión de Juntas Médicas' : 'Mis Juntas Médicas'}
         </h2>
-        <p className="text-vdc-secondary text-sm mt-1">
-          {isDirectorMedico 
-            ? 'Revisión y aprobación de evaluaciones médicas' 
-            : 'Historial de evaluaciones médicas registradas'}
+        <p className="text-gray-500 mt-1">
+          {isDirectorMedico
+            ? 'Supervisión y auditoría de todas las evaluaciones médicas realizadas.'
+            : 'Historial completo de tus evaluaciones y dictámenes generados.'}
         </p>
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-card shadow-card mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 transition-all">
         <div className="p-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center text-vdc-primary hover:text-vdc-primary/80 transition-colors lg:hidden mb-4"
+            className="flex items-center text-gray-600 hover:text-vdc-primary transition-colors lg:hidden w-full justify-between"
           >
-            <FunnelIcon className="h-5 w-5 mr-2" />
-            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            <span className="flex items-center"><FunnelIcon className="h-5 w-5 mr-2" /> Filtros</span>
+            <ChevronDownIcon className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
 
-          <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`${showFilters ? 'block mt-4' : 'hidden'} lg:block`}>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
               {/* Buscar Paciente */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="md:col-span-5">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Buscar Paciente
                 </label>
-                <input
-                  type="text"
-                  value={searchPaciente}
-                  onChange={(e) => setSearchPaciente(e.target.value)}
-                  placeholder="Nombre o documento..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                />
+                <div className="relative">
+                  <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchPaciente}
+                    onChange={(e) => setSearchPaciente(e.target.value)}
+                    placeholder="Nombre, apellido o DNI..."
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary transition-shadow"
+                  />
+                </div>
               </div>
 
               {/* Estado */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Estado
+              <div className="md:col-span-4">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Filtrar por Estado
                 </label>
                 <select
                   value={selectedEstado}
                   onChange={(e) => setSelectedEstado(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary bg-white"
                 >
-                  <option value="">Todos</option>
-                  <option value="BORRADOR">Borrador</option>
-                  <option value="COMPLETADA">Completada</option>
-                  <option value="PENDIENTE">Pendiente</option>
-                  <option value="APROBADA">Aprobada</option>
-                  <option value="RECHAZADA">Rechazada</option>
+                  <option value="">Todos los estados</option>
+                  <option value="PENDIENTE">Pendientes de Revisión</option>
+                  <option value="APROBADA">Aprobadas</option>
+                  <option value="RECHAZADA">Rechazadas</option>
+                  <option value="DOCUMENTOS_PENDIENTES">Faltan Documentos</option>
+                  <option value="BORRADOR">Borradores</option>
                 </select>
               </div>
 
               {/* Botones */}
-              <div className="flex items-end gap-2">
+              <div className="md:col-span-3 flex gap-2">
                 <button
                   onClick={handleClearFilters}
-                  className="px-4 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex-1"
                 >
                   Limpiar
                 </button>
                 <button
                   onClick={handleSearch}
-                  className="px-4 py-2 text-sm bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors flex items-center"
+                  className="px-4 py-2.5 text-sm font-medium bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-shadow shadow-sm hover:shadow flex-1"
                 >
-                  <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
                   Buscar
                 </button>
               </div>
@@ -294,84 +301,95 @@ const MisJuntas = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-card shadow-card overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center justify-center py-20">
             <LoadingSpinner size="lg" />
+            <p className="text-gray-500 mt-4 text-sm animate-pulse">Cargando juntas médicas...</p>
           </div>
         ) : juntas && juntas.data.length > 0 ? (
           <>
-            {/* Table */}
-            <div className="overflow-x-auto">
-              {/* Desktop Table */}
-              <table className="w-full hidden sm:table" role="grid">
-                <thead className="bg-vdc-bg">
-                  <tr>
+            <div className="overflow-x-auto min-h-[400px]">
+              <table className="w-full hidden sm:table text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500 font-semibold">
                     <th
-                      scope="col"
-                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      className="px-6 py-4 cursor-pointer hover:text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('fecha')}
-                      aria-sort={sortField === 'fecha' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       Fecha <SortIcon field="fecha" />
                     </th>
                     <th
-                      scope="col"
-                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      className="px-6 py-4 cursor-pointer hover:text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('pacienteNombre')}
-                      aria-sort={sortField === 'pacienteNombre' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       Paciente <SortIcon field="pacienteNombre" />
                     </th>
+                    <th className="px-6 py-4 text-center">Dictamen</th>
                     <th
-                      scope="col"
-                      className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      className="px-6 py-4 cursor-pointer hover:text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort('estado')}
-                      aria-sort={sortField === 'estado' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
                     >
                       Estado <SortIcon field="estado" />
                     </th>
-                    <th scope="col" className="px-4 lg:px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Dictamen
-                    </th>
-                    <th scope="col" className="px-4 lg:px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Acciones
-                    </th>
+                    <th className="px-6 py-4 text-center" title="Archivos Adjuntos">Docs</th>
+                    <th className="px-6 py-4 text-center" title="Evaluación Director">Auditoria</th>
+                    <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {juntas.data.map((junta, index) => (
                     <motion.tr
                       key={junta.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.03 }}
-                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-vdc-row-alt'} hover:bg-blue-50 transition-colors cursor-pointer`}
+                      transition={{ delay: index * 0.05 }}
+                      className="group hover:bg-blue-50/30 transition-colors cursor-pointer"
                       onClick={() => setSelectedJunta(junta)}
                     >
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                         {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {junta.pacienteNombre}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900 group-hover:text-vdc-primary transition-colors">
+                          {junta.pacienteNombre}
+                        </div>
+                        <div className="text-xs text-gray-400">{junta.numeroDocumento}</div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        {getEstadoBadge(junta)}
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         {getDictamenBadge(junta)}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getEstadoBadge(junta)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {junta.adjuntos && junta.adjuntos.length > 0 ? (
+                          <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600" title={`${junta.adjuntos.length} archivos`}>
+                            <PaperClipIcon className="h-4 w-4" />
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {junta.detallesDirector ? (
+                          <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-50 text-green-600" title="Evaluado por Director">
+                            <CheckBadgeIcon className="h-5 w-5" />
+                          </div>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedJunta(junta);
                           }}
-                          className="text-vdc-primary hover:text-vdc-primary/80 transition-colors p-2 rounded-full hover:bg-vdc-primary/10"
-                          aria-label={`Ver detalles de junta de ${junta.pacienteNombre}`}
-                          title="Ver detalles"
+                          className="text-gray-400 hover:text-vdc-primary transition-colors p-2 rounded-full hover:bg-white border border-transparent hover:border-gray-200 hover:shadow-sm"
+                          title="Ver Detalle Completo"
                         >
-                          <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                          <EyeIcon className="h-5 w-5" />
                         </button>
                       </td>
                     </motion.tr>
@@ -379,60 +397,50 @@ const MisJuntas = () => {
                 </tbody>
               </table>
 
-              {/* Mobile Cards */}
-              <div className="sm:hidden divide-y divide-gray-200">
+              {/* Mobile List View */}
+              <div className="sm:hidden divide-y divide-gray-100">
                 {juntas.data.map((junta, index) => (
                   <motion.div
                     key={junta.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="p-4 hover:bg-blue-50 transition-colors"
+                    transition={{ delay: index * 0.05 }}
+                    className="p-5 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
                     onClick={() => setSelectedJunta(junta)}
                   >
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-medium text-gray-900">{junta.pacienteNombre}</p>
-                        <p className="text-sm text-gray-500">
-                          {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
+                        <h3 className="font-semibold text-gray-900">{junta.pacienteNombre}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {format(new Date(junta.fecha), 'dd de MMMM, yyyy', { locale: es })}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedJunta(junta);
-                          }}
-                          className="text-vdc-primary p-2"
-                          aria-label="Ver detalles"
-                        >
-                          <EyeIcon className="h-5 w-5" />
-                        </button>
+                      <div className="flex space-x-2">
+                        {junta.adjuntos && junta.adjuntos.length > 0 && <PaperClipIcon className="h-4 w-4 text-blue-400" />}
+                        {junta.detallesDirector && <CheckBadgeIcon className="h-4 w-4 text-green-500" />}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {getEstadoBadge(junta)}
+
+                    <div className="flex items-center flex-wrap gap-2 mt-3">
                       {getDictamenBadge(junta)}
+                      {getEstadoBadge(junta)}
                     </div>
                   </motion.div>
                 ))}
               </div>
             </div>
 
-            {/* Pagination */}
-            <div className="px-4 lg:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center space-x-2">
-                <label htmlFor="pageSize" className="text-sm text-vdc-secondary">
-                  Mostrar:
-                </label>
+            {/* Pagination Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-3 text-sm text-gray-600">
+                <span>Filas por página:</span>
                 <select
-                  id="pageSize"
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
                     setPage(1);
                   }}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20"
+                  className="border border-gray-300 rounded-md text-sm py-1 pl-2 pr-6 focus:ring-vdc-primary focus:border-vdc-primary bg-white"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -440,24 +448,22 @@ const MisJuntas = () => {
                 </select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-vdc-secondary">
-                  Página {juntas.page} de {juntas.totalPages}
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600 font-medium">
+                  {page} de {juntas.totalPages}
                 </span>
-                <div className="flex space-x-1">
+                <div className="flex rounded-md shadow-sm">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="p-2 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Página anterior"
+                    className="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page === juntas.totalPages}
-                    className="p-2 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Página siguiente"
+                    className="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </button>
@@ -466,8 +472,16 @@ const MisJuntas = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-vdc-secondary">No hay juntas médicas registradas</p>
+          <div className="text-center py-20 bg-gray-50/50">
+            <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-gray-900">No se encontraron juntas</h3>
+            <p className="text-gray-500 mt-1 max-w-sm mx-auto">No hay registros que coincidan con tus filtros de búsqueda.</p>
+            <button
+              onClick={handleClearFilters}
+              className="mt-4 text-vdc-primary hover:text-vdc-primary/80 font-medium text-sm hover:underline"
+            >
+              Limpiar filtros
+            </button>
           </div>
         )}
       </div>
@@ -485,7 +499,7 @@ const MisJuntas = () => {
                   data: juntas.data.map(j => j.id === updatedJunta.id ? updatedJunta : j),
                 });
               }
-              setSelectedJunta(null);
+              // No cerramos el modal automáticmante si es un update, pero aquí se maneja setSelectedJunta(null) en el modal close
             }}
           />
         )}
