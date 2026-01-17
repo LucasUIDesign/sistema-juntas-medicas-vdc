@@ -55,7 +55,7 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
   const [detallesEvaluacion, setDetallesEvaluacion] = useState(junta.detallesDirector || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const datos = junta.dictamen?.datosCompletos;
+  const datos = junta.dictamen; // Backend ya parsea datosCompletos y lo devuelve como 'dictamen'
 
   const getEstadoBadge = (estado: JuntaMedica['estado']) => {
     const styles: Record<string, string> = {
@@ -376,15 +376,15 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
           <div className="space-y-6">
             {/* Main Result Banner */}
             <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
-                aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
-                  aptitud === 'INCOMPLETO' ? 'bg-orange-50 border-orange-200' :
-                    'bg-yellow-50 border-yellow-200'
+              aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
+                aptitud === 'INCOMPLETO' ? 'bg-orange-50 border-orange-200' :
+                  'bg-yellow-50 border-yellow-200'
               }`}>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
               <h2 className={`text-3xl font-black tracking-tight ${aptitud === 'APTO' ? 'text-green-700' :
-                  aptitud === 'NO_APTO' ? 'text-red-700' :
-                    aptitud === 'INCOMPLETO' ? 'text-orange-700' :
-                      'text-yellow-700'
+                aptitud === 'NO_APTO' ? 'text-red-700' :
+                  aptitud === 'INCOMPLETO' ? 'text-orange-700' :
+                    'text-yellow-700'
                 }`}>
                 {aptitud === 'APTO' ? 'APTO' :
                   aptitud === 'NO_APTO' ? 'NO APTO' :
