@@ -176,6 +176,16 @@ const MisJuntas = () => {
 
   // Badge para Aptitud Laboral (Resultado Médico)
   const getDictamenBadge = (junta: JuntaMedica) => {
+    // Si existe dictamen pero NO está completo
+    if (junta.dictamen && !junta.dictamen.isCompleto) {
+      return (
+        <span className="px-2 py-1 text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200 rounded-md whitespace-nowrap flex items-center">
+          <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+          INCOMPLETO
+        </span>
+      );
+    }
+
     if (!junta.dictamen?.aptitudLaboral) {
       return <span className="text-gray-400 text-xs">-</span>;
     }
