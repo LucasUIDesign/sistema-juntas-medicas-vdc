@@ -1,20 +1,29 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
+import { db } from '../index';
 
 const router = Router();
-
-// Mock médicos data
-const MOCK_MEDICOS = [
-  { id: 'user-001', nombre: 'Dr. Carlos Mendoza', especialidad: 'Medicina Ocupacional' },
-  { id: 'user-002', nombre: 'Dra. María González', especialidad: 'Medicina Ocupacional' },
-];
 
 // GET /api/medicos - List médicos for autocomplete/filters
 router.get(
   '/',
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response) => {
-    res.json(MOCK_MEDICOS);
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const result = await db.execute({
+        sql: `SELECT id, nombre, apellido, email FROM User WHERE role IN ('MEDICO_EVALUADOR', 'DIRECTOR_MEDICO')`,
+        args: [],
+      });
+
+      res.json(result.rows.map((row: any) => ({
+        id: row.id,
+        nombre: row.nombre || '',
+        apellido: row.apellido || '',
+        email: row.email,
+      })));
+    } catch (error) {
+      next(error);
+    }
   }
 );
 

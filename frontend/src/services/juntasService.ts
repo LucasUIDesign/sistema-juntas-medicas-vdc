@@ -194,5 +194,30 @@ export const juntasService = {
   async searchPacientes(query: string): Promise<Paciente[]> {
     return this.getPacientes(query);
   },
+
+  /**
+   * Get all medicos for filters
+   */
+  async getMedicos(): Promise<{ id: string; nombre: string }[]> {
+    try {
+      const response = await fetch(`${API_URL}/medicos`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        console.error('Error fetching medicos');
+        return [];
+      }
+
+      const data = await response.json();
+      return data.map((m: any) => ({
+        id: m.id,
+        nombre: `${m.nombre || ''} ${m.apellido || ''}`.trim() || m.email,
+      }));
+    } catch (error) {
+      console.error('Error fetching medicos:', error);
+      return [];
+    }
+  },
 };
 
