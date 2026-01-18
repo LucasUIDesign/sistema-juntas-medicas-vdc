@@ -14,14 +14,19 @@ export type EstadoJunta = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'DOCUMENTOS_P
 // Documentos requeridos para una junta
 export const DOCUMENTOS_REQUERIDOS: CategoriaDocumento[] = [
   'EXAMEN_PSICOLOGICO',
+  'EXAMEN_PSICOLOGICO_PENITENCIARIA',
   'RESULTADOS_BIOQUIMICOS',
   'DD_JJ_EX1',
   'RESULTADO_MEDICO_EX2',
   'CERTIFICADO_APTITUD_EX3',
+  'ESTUDIOS',
+  'REQUERIMIENTO',
+  'CONSTANCIA',
+  'DEVOLUCION',
 ];
 
 // Categorías de documentos médicos
-export type CategoriaDocumento = 
+export type CategoriaDocumento =
   | 'EXAMEN_PSICOLOGICO'
   | 'EXAMEN_PSICOLOGICO_PENITENCIARIA'
   | 'RESULTADOS_BIOQUIMICOS'
@@ -104,7 +109,7 @@ export interface DictamenMedicoResumen {
   aptitudLaboral: string;
   fechaDictamen: string;
   isCompleto: boolean;
-  
+
   // Datos completos del dictamen (opcional, para vista detallada)
   datosCompletos?: {
     // Paso 1: Identificación
