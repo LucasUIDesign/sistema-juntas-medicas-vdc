@@ -370,25 +370,27 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
               <label className={labelClass}>Motivo de la Junta Médica</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
                 {MOTIVOS_JUNTA.map((motivo) => {
-                  const isSelected = values.motivoJunta.includes(motivo);
+                  const motivosArray = Array.isArray(values.motivoJunta) ? values.motivoJunta : [];
+                  const isSelected = motivosArray.includes(motivo);
                   return (
                     <label
                       key={motivo}
                       className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                          ? 'bg-vdc-primary/10 border-vdc-primary text-vdc-primary'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'bg-vdc-primary/10 border-vdc-primary text-vdc-primary'
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => {
+                          const currentMotivos = Array.isArray(values.motivoJunta) ? values.motivoJunta : [];
                           const nuevosMotivos = e.target.checked
-                            ? [...values.motivoJunta, motivo]
-                            : values.motivoJunta.filter(m => m !== motivo);
+                            ? [...currentMotivos, motivo]
+                            : currentMotivos.filter(m => m !== motivo);
                           setFieldValue('motivoJunta', nuevosMotivos);
                         }}
-                        className="h-4 w-4 rounded border-gray-300 text-vdc-primary focus:ring-vdc-primary accent-vdc-primary"
+                        className="h-5 w-5 rounded border-2 border-gray-300 text-vdc-primary focus:ring-vdc-primary checked:bg-vdc-primary checked:border-vdc-primary"
                       />
                       <span className={`text-sm font-medium ${isSelected ? 'text-vdc-primary' : 'text-gray-700'}`}>{motivo}</span>
                     </label>
