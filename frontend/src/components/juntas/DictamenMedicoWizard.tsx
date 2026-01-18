@@ -369,22 +369,31 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
             <div>
               <label className={labelClass}>Motivo de la Junta Médica</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                {MOTIVOS_JUNTA.map((motivo) => (
-                  <label key={motivo} className="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={values.motivoJunta.includes(motivo)}
-                      onChange={(e) => {
-                        const nuevosMotivos = e.target.checked
-                          ? [...values.motivoJunta, motivo]
-                          : values.motivoJunta.filter(m => m !== motivo);
-                        setFieldValue('motivoJunta', nuevosMotivos);
-                      }}
-                      className="h-4 w-4 text-vdc-primary border-gray-300 rounded focus:ring-vdc-primary"
-                    />
-                    <span className="text-sm text-gray-700">{motivo}</span>
-                  </label>
-                ))}
+                {MOTIVOS_JUNTA.map((motivo) => {
+                  const isSelected = values.motivoJunta.includes(motivo);
+                  return (
+                    <label
+                      key={motivo}
+                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
+                          ? 'bg-vdc-primary/10 border-vdc-primary text-vdc-primary'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const nuevosMotivos = e.target.checked
+                            ? [...values.motivoJunta, motivo]
+                            : values.motivoJunta.filter(m => m !== motivo);
+                          setFieldValue('motivoJunta', nuevosMotivos);
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-vdc-primary focus:ring-vdc-primary accent-vdc-primary"
+                      />
+                      <span className={`text-sm font-medium ${isSelected ? 'text-vdc-primary' : 'text-gray-700'}`}>{motivo}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
             <div>
