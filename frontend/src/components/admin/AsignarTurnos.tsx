@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import { format, isSameDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'react-toastify';
+import { juntasService } from '../../services/juntasService';
 import {
   CalendarIcon,
   PlusIcon,
@@ -15,6 +16,7 @@ import {
   XMarkIcon,
   UserGroupIcon,
   AcademicCapIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -33,11 +35,7 @@ interface Turno {
   pacienteDni: string;
 }
 
-// Mock de profesionales de la junta
-const MOCK_PROFESIONALES: Profesional[] = [
-  { id: 'prof-001', nombre: 'Dr. Carlos Mendoza', matricula: 'MP 12345', especialidad: 'Medicina Laboral' },
-  { id: 'prof-002', nombre: 'Dra. María González', matricula: 'MP 23456', especialidad: 'Medicina Ocupacional' },
-];
+// Profesionales se cargarán desde la base de datos
 
 // Mock de turnos existentes
 const MOCK_TURNOS_EXISTENTES: Turno[] = [
@@ -68,7 +66,7 @@ const AsignarTurnos = () => {
   const fechaMinima = addDays(new Date(), 3);
   
   const [turnos, setTurnos] = useState<Turno[]>(MOCK_TURNOS_EXISTENTES);
-  const [profesionales, setProfesionales] = useState<Profesional[]>(MOCK_PROFESIONALES);
+  const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(fechaMinima);
   const [showForm, setShowForm] = useState(false);
   const [showProfesionalForm, setShowProfesionalForm] = useState(false);
@@ -87,6 +85,16 @@ const AsignarTurnos = () => {
     especialidad: '',
   });
 
+  // Autocomplete states
+  const [pacienteSearch, setPacienteSearch] = useState('');
+  const [pacienteSuggestions, setPacienteSuggestions] = useState<any[]>([]);
+  const [showPacienteSuggestions, setShowPacienteSuggestions] = useState(false);
+  const [profesionalSearch, setProfesionalSearch] = useState('');
+  const [profesionalSuggestions, setProfesionalSuggestions] = useState<any[]>([]);
+  const [showProfesionalSuggestions, setShowProfesionalSuggestions] = useState(false);
+  const pacienteInputRef = useRef<HTMLInputElement>(null);
+  const profesionalInputRef = useRef<HTMLInputElement>(null);
+
   // Obtener turnos del día seleccionado
   const turnosDelDia = selectedDate 
     ? turnos.filter(t => isSameDay(t.fecha, selectedDate))
@@ -100,6 +108,90 @@ const AsignarTurnos = () => {
 
   // Fechas con turnos (para marcar en el calendario)
   const fechasConTurnos = turnos.map(t => t.fecha);
+
+  // Búsqueda inteligente de pacientes
+  useEffect(() => {
+    const searchPacientes = async () => {
+      if (pacienteSearch.length >= 2) {
+        try {
+          const results = await juntasService.searchPacientes(pacienteSearch);
+          setPacienteSuggestions(results);
+          setShowPacienteSuggestions(true);
+        } catch (error) {
+          console.error('Error searching pacientes:', error);
+        }
+      } else {
+        setPacienteSuggestions([]);
+        setShowPacienteSuggestions(false);
+      }
+    };
+
+    const debounce = setTimeout(searchPacientes, 300);
+    return () => clearTimeout(debounce);
+  }, [pacienteSearch]);
+
+  // Búsqueda inteligente de profesionales (médicos)
+  useEffect(() => {
+    const searchProfesionales = async () => {
+      if (profesionalSearch.length >= 2) {
+        try {
+          const results = await juntasService.getMedicos();
+          // Filtrar por nombre o matrícula
+          const filtered = results.filter(m => 
+            m.nombre.toLowerCase().includes(profesionalSearch.toLowerCase()) ||
+            (m.id && m.id.toLowerCase().includes(profesionalSearch.toLowerCase()))
+          );
+          setProfesionalSuggestions(filtered);
+          setShowProfesionalSuggestions(true);
+        } catch (error) {
+          console.error('Error searching profesionales:', error);
+        }
+      } else {
+        setProfesionalSuggestions([]);
+        setShowProfesionalSuggestions(false);
+      }
+    };
+
+    const debounce = setTimeout(searchProfesionales, 300);
+    return () => clearTimeout(debounce);
+  }, [profesionalSearch]);
+
+  // Cerrar sugerencias al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pacienteInputRef.current && !pacienteInputRef.current.contains(event.target as Node)) {
+        setShowPacienteSuggestions(false);
+      }
+      if (profesionalInputRef.current && !profesionalInputRef.current.contains(event.target as Node)) {
+        setShowProfesionalSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Seleccionar paciente de las sugerencias
+  const handleSelectPaciente = (paciente: any) => {
+    setFormData({
+      ...formData,
+      pacienteNombre: paciente.nombre,
+      pacienteDni: paciente.documento,
+    });
+    setPacienteSearch('');
+    setShowPacienteSuggestions(false);
+  };
+
+  // Seleccionar profesional de las sugerencias
+  const handleSelectProfesional = (profesional: any) => {
+    setProfesionalForm({
+      nombre: profesional.nombre,
+      matricula: profesional.id, // Usamos el ID como matrícula por ahora
+      especialidad: 'Medicina Laboral', // Valor por defecto
+    });
+    setProfesionalSearch('');
+    setShowProfesionalSuggestions(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -438,14 +530,46 @@ const AsignarTurnos = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nombre del Paciente *
                     </label>
-                    <input
-                      type="text"
-                      value={formData.pacienteNombre}
-                      onChange={(e) => setFormData({ ...formData, pacienteNombre: e.target.value })}
-                      placeholder="Ej: Juan Pérez García"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      required
-                    />
+                    <div className="relative" ref={pacienteInputRef}>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={pacienteSearch || formData.pacienteNombre}
+                          onChange={(e) => {
+                            setPacienteSearch(e.target.value);
+                            setFormData({ ...formData, pacienteNombre: e.target.value, pacienteDni: '' });
+                          }}
+                          onFocus={() => pacienteSearch.length >= 2 && setShowPacienteSuggestions(true)}
+                          placeholder="Buscar por nombre o DNI..."
+                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                          required
+                        />
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      </div>
+                      
+                      {/* Sugerencias de pacientes */}
+                      {showPacienteSuggestions && pacienteSuggestions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {pacienteSuggestions.map((paciente) => (
+                            <button
+                              key={paciente.id}
+                              type="button"
+                              onClick={() => handleSelectPaciente(paciente)}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                            >
+                              <div className="font-medium text-gray-900">{paciente.nombre}</div>
+                              <div className="text-sm text-gray-500">DNI: {paciente.documento}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {showPacienteSuggestions && pacienteSearch.length >= 2 && pacienteSuggestions.length === 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-center text-sm text-gray-500">
+                          No se encontraron pacientes. Ingrese el nombre manualmente.
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -459,6 +583,7 @@ const AsignarTurnos = () => {
                       placeholder="Ej: 32.456.789"
                       className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
                       required
+                      disabled={!!formData.pacienteDni && pacienteSearch === ''}
                     />
                   </div>
 
@@ -549,6 +674,51 @@ const AsignarTurnos = () => {
                 </div>
 
                 <form onSubmit={handleAddProfesional} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Buscar Profesional
+                    </label>
+                    <div className="relative" ref={profesionalInputRef}>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={profesionalSearch || profesionalForm.nombre}
+                          onChange={(e) => {
+                            setProfesionalSearch(e.target.value);
+                            setProfesionalForm({ ...profesionalForm, nombre: e.target.value });
+                          }}
+                          onFocus={() => profesionalSearch.length >= 2 && setShowProfesionalSuggestions(true)}
+                          placeholder="Buscar por nombre o matrícula..."
+                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                        />
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      </div>
+                      
+                      {/* Sugerencias de profesionales */}
+                      {showProfesionalSuggestions && profesionalSuggestions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {profesionalSuggestions.map((prof) => (
+                            <button
+                              key={prof.id}
+                              type="button"
+                              onClick={() => handleSelectProfesional(prof)}
+                              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                            >
+                              <div className="font-medium text-gray-900">{prof.nombre}</div>
+                              <div className="text-sm text-gray-500">ID: {prof.id}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {showProfesionalSuggestions && profesionalSearch.length >= 2 && profesionalSuggestions.length === 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-center text-sm text-gray-500">
+                          No se encontraron profesionales en el sistema.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nombre Completo *
