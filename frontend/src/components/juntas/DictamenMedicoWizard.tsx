@@ -389,8 +389,8 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                     >
                       {/* Custom Checkbox Visual */}
                       <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${isSelected
-                          ? 'bg-vdc-primary border-vdc-primary'
-                          : 'bg-white border-gray-300'
+                        ? 'bg-vdc-primary border-vdc-primary'
+                        : 'bg-white border-gray-300'
                         }`}>
                         {isSelected && (
                           <CheckIcon className="w-3.5 h-3.5 text-white" />
@@ -690,7 +690,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
           onSubmit={() => { }}
           enableReinitialize
         >
-          {({ values }) => (
+          {({ values, setFieldValue }) => (
             <>
               {/* Mobile: Indicador simplificado */}
               <div className="sm:hidden mb-3">
@@ -786,10 +786,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {renderPaso(values, (field, value) => {
-                        // Actualizar el valor en Formik
-                        values[field as keyof DictamenMedicoData] = value as never;
-                      })}
+                      {renderPaso(values, setFieldValue)}
                     </motion.div>
                   </AnimatePresence>
                 </div>
