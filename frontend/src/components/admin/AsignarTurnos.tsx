@@ -207,15 +207,22 @@ const AsignarTurnos = () => {
     }
 
     try {
+      console.log('Iniciando creación de turno...');
+      console.log('Datos del formulario:', formData);
+      
       // Buscar o crear el paciente
       let pacienteId = '';
+      console.log('Buscando paciente con DNI:', formData.pacienteDni);
       const pacientes = await juntasService.searchPacientes(formData.pacienteDni);
+      console.log('Pacientes encontrados:', pacientes);
       
       if (pacientes.length > 0) {
         // Paciente existe
         pacienteId = pacientes[0].id;
+        console.log('Paciente encontrado, ID:', pacienteId);
       } else {
         // Crear nuevo paciente
+        console.log('Creando nuevo paciente...');
         const nombreParts = formData.pacienteNombre.trim().split(' ');
         const nombre = nombreParts[0];
         const apellido = nombreParts.slice(1).join(' ') || nombre;
@@ -226,14 +233,17 @@ const AsignarTurnos = () => {
           numeroDocumento: formData.pacienteDni,
         });
         pacienteId = nuevoPaciente.id;
+        console.log('Paciente creado, ID:', pacienteId);
       }
 
       // Crear la junta médica con el turno asignado
+      console.log('Creando junta médica...');
       const nuevaJunta = await juntasService.createJunta({
         pacienteId,
         hora: formData.hora,
         observaciones: `Turno asignado para el ${format(selectedDate, "dd/MM/yyyy")} a las ${formData.hora}`,
       });
+      console.log('Junta creada:', nuevaJunta);
 
       // Agregar al estado local para mostrar en la UI
       const nuevoTurno: Turno = {
@@ -250,8 +260,10 @@ const AsignarTurnos = () => {
       setShowForm(false);
       toast.success('Turno asignado correctamente. El médico será notificado.');
     } catch (error: any) {
-      console.error('Error creating turno:', error);
-      toast.error(error.message || 'Error al asignar el turno');
+      console.error('Error completo al crear turno:', error);
+      console.error('Mensaje de error:', error.message);
+      console.error('Stack:', error.stack);
+      toast.error(error.message || 'Error al asignar el turno. Revise la consola para más detalles.');
     }
   };
 
