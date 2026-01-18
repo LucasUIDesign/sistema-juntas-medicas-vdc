@@ -373,27 +373,31 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                   const motivosArray = Array.isArray(values.motivoJunta) ? values.motivoJunta : [];
                   const isSelected = motivosArray.includes(motivo);
                   return (
-                    <label
+                    <div
                       key={motivo}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                        ? 'bg-vdc-primary/10 border-vdc-primary text-vdc-primary'
+                      onClick={() => {
+                        const currentMotivos = Array.isArray(values.motivoJunta) ? values.motivoJunta : [];
+                        const nuevosMotivos = isSelected
+                          ? currentMotivos.filter(m => m !== motivo)
+                          : [...currentMotivos, motivo];
+                        setFieldValue('motivoJunta', nuevosMotivos);
+                      }}
+                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all select-none ${isSelected
+                        ? 'bg-vdc-primary/10 border-vdc-primary'
                         : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentMotivos = Array.isArray(values.motivoJunta) ? values.motivoJunta : [];
-                          const nuevosMotivos = e.target.checked
-                            ? [...currentMotivos, motivo]
-                            : currentMotivos.filter(m => m !== motivo);
-                          setFieldValue('motivoJunta', nuevosMotivos);
-                        }}
-                        className="h-5 w-5 rounded border-2 border-gray-300 text-vdc-primary focus:ring-vdc-primary checked:bg-vdc-primary checked:border-vdc-primary"
-                      />
+                      {/* Custom Checkbox Visual */}
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${isSelected
+                          ? 'bg-vdc-primary border-vdc-primary'
+                          : 'bg-white border-gray-300'
+                        }`}>
+                        {isSelected && (
+                          <CheckIcon className="w-3.5 h-3.5 text-white" />
+                        )}
+                      </div>
                       <span className={`text-sm font-medium ${isSelected ? 'text-vdc-primary' : 'text-gray-700'}`}>{motivo}</span>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
