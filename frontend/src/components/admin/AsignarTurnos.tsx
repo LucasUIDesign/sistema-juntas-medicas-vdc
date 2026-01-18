@@ -76,6 +76,7 @@ const AsignarTurnos = () => {
     pacienteNombre: '',
     pacienteDni: '',
     hora: '',
+    medicoId: '', // ID del médico evaluador asignado
   });
 
   // Form state para profesional
@@ -92,6 +93,7 @@ const AsignarTurnos = () => {
   const [profesionalSearch, setProfesionalSearch] = useState('');
   const [profesionalSuggestions, setProfesionalSuggestions] = useState<any[]>([]);
   const [showProfesionalSuggestions, setShowProfesionalSuggestions] = useState(false);
+  const [medicosEvaluadores, setMedicosEvaluadores] = useState<any[]>([]); // Lista de médicos evaluadores
   const pacienteInputRef = useRef<HTMLInputElement>(null);
   const profesionalInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,6 +110,19 @@ const AsignarTurnos = () => {
 
   // Fechas con turnos (para marcar en el calendario)
   const fechasConTurnos = turnos.map(t => t.fecha);
+
+  // Cargar médicos evaluadores al montar el componente
+  useEffect(() => {
+    const loadMedicos = async () => {
+      try {
+        const medicos = await juntasService.getMedicos();
+        setMedicosEvaluadores(medicos);
+      } catch (error) {
+        console.error('Error loading medicos:', error);
+      }
+    };
+    loadMedicos();
+  }, []);
 
   // Búsqueda inteligente de pacientes
   useEffect(() => {
@@ -196,7 +211,7 @@ const AsignarTurnos = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora) {
+    if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora || !formData.medicoId) {
       toast.warning('Por favor complete todos los campos');
       return;
     }
@@ -236,11 +251,13 @@ const AsignarTurnos = () => {
         console.log('Paciente creado, ID:', pacienteId);
       }
 
-      // Crear la junta médica con el turno asignado
-      console.log('Creando junta médica...');
-      const nuevaJunta = await juntasService.createJunta({
+      // Crear la junta médica con el turno asignado al médico seleccionado
+      console.log('Creando junta médica para médico:', formData.medicoId);
+      const nuevaJunta = await juntasService.createJuntaParaMedico({
         pacienteId,
+        medicoId: formData.medicoId,
         hora: formData.hora,
+        fecha: selectedDate.toISOString(),
         observaciones: `Turno asignado para el ${format(selectedDate, "dd/MM/yyyy")} a las ${formData.hora}`,
       });
       console.log('Junta creada:', nuevaJunta);
@@ -255,7 +272,7 @@ const AsignarTurnos = () => {
       };
 
       setTurnos([...turnos, nuevoTurno]);
-      setFormData({ pacienteNombre: '', pacienteDni: '', hora: '' });
+      setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicoId: '' });
       setPacienteSearch('');
       setShowForm(false);
       toast.success('Turno asignado correctamente. El médico será notificado.');
@@ -632,6 +649,23 @@ const AsignarTurnos = () => {
                       required
                       disabled={!!formData.pacienteDni && pacienteSearch === ''}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Médico Evaluador *
+                    </label>
+                    <select
+                      value={formData.medicoId}
+                      onChange={(e) => setFormData({ ...formData, medicoId: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      required
+                    >
+                      <option value="">Seleccionar médico...</option>
+                      {medicosEvaluadores.map((medico) => (
+                        <option key={medico.id} value={medico.id}>{medico.nombre}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>

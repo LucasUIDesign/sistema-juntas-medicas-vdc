@@ -207,7 +207,7 @@ router.post(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { pacienteId, observaciones, hora } = req.body;
+      const { pacienteId, observaciones, hora, medicoId, fecha } = req.body;
 
       // Verify paciente exists
       const pacienteResult = await db.execute({
@@ -220,23 +220,39 @@ router.post(
       }
 
       const id = randomUUID();
-      const fecha = new Date().toISOString();
+      // Si se proporciona medicoId (admin asignando turno), usar ese; sino usar el usuario actual
+      const assignedMedicoId = medicoId || req.user!.id;
+      // Si se proporciona fecha, usar esa; sino usar la fecha actual
+      const assignedFecha = fecha || new Date().toISOString();
 
       await db.execute({
         sql: `INSERT INTO JuntaMedica (id, pacienteId, medicoId, estado, fecha, hora, observaciones, createdAt, updatedAt)
               VALUES (?, ?, ?, 'PENDIENTE', ?, ?, ?, datetime('now'), datetime('now'))`,
-        args: [id, pacienteId, req.user!.id, fecha, hora || null, observaciones || null],
+        args: [id, pacienteId, assignedMedicoId, assignedFecha, hora || null, observaciones || null],
       });
 
       const newJunta = await db.execute({
-        sql: `SELECT j.*, p.nombre as pacienteNombre, p.apellido as pacienteApellido
+        sql: `SELECT j.*, p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento
               FROM JuntaMedica j
               LEFT JOIN Paciente p ON j.pacienteId = p.id
               WHERE j.id = ?`,
         args: [id],
       });
 
-      res.status(201).json(newJunta.rows[0]);
+      const juntaRow = newJunta.rows[0] as any;
+      res.status(201).json({
+        id: juntaRow.id,
+        fecha: juntaRow.fecha,
+        hora: juntaRow.hora,
+        pacienteId: juntaRow.pacienteId,
+        pacienteNombre: `${juntaRow.pacienteNombre || ''} ${juntaRow.pacienteApellido || ''}`.trim(),
+        pacienteDni: juntaRow.numeroDocumento,
+        medicoId: juntaRow.medicoId,
+        estado: juntaRow.estado,
+        observaciones: juntaRow.observaciones,
+        createdAt: juntaRow.createdAt,
+        updatedAt: juntaRow.updatedAt,
+      });
     } catch (error) {
       next(error);
     }
