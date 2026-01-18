@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { JuntaMedica, CATEGORIAS_DOCUMENTO } from '../../types';
+import { JuntaMedica, CATEGORIAS_DOCUMENTO, DOCUMENTOS_REQUERIDOS, CategoriaDocumento } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { juntasService } from '../../services/juntasService';
-import { format } from 'date-fns';
+import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   XMarkIcon,
@@ -24,6 +24,8 @@ import {
   BriefcaseIcon,
   ClipboardDocumentCheckIcon,
   PaperClipIcon,
+  ExclamationTriangleIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalProps {
@@ -502,40 +504,119 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                 </div>
               </div>
 
-              {/* Documentos Adjuntos - Grid layout */}
+              {/* Documentos Adjuntos - Enhanced Section */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <PaperClipIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  Documentación Adjunta
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <PaperClipIcon className="h-5 w-5 mr-2 text-gray-400" />
+                    Documentación Adjunta
+                  </h3>
+                  <button
+                    onClick={() => toast.info('Funcionalidad de subida de archivos próximamente')}
+                    className="flex items-center px-3 py-2 text-sm font-medium text-white bg-vdc-primary rounded-lg hover:bg-vdc-primary/90 transition-colors shadow-sm"
+                  >
+                    <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+                    Adjuntar Archivo
+                  </button>
+                </div>
 
-                {junta.adjuntos && junta.adjuntos.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {junta.adjuntos.map((adjunto) => (
-                      <div
-                        key={adjunto.id}
-                        className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-3 hover:bg-blue-50/50 hover:border-blue-100 transition-colors group"
-                      >
-                        <div className="flex items-center overflow-hidden mr-3">
-                          <div className="bg-blue-100 p-2 rounded-lg mr-3 flex-shrink-0 text-blue-600">
-                            <DocumentTextIcon className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate" title={adjunto.nombre}>{adjunto.nombre}</p>
-                            <p className="text-xs text-gray-500 truncate">{getCategoriaLabel(adjunto.categoria)}</p>
+                {/* Warning: 72 hours to upload missing documents */}
+                {(() => {
+                  const adjuntosCategorias = (junta.adjuntos || []).map(a => a.categoria);
+                  const documentosFaltantes = DOCUMENTOS_REQUERIDOS.filter(
+                    doc => !adjuntosCategorias.includes(doc)
+                  );
+
+                  if (documentosFaltantes.length > 0 && junta.estado !== 'APROBADA' && junta.estado !== 'RECHAZADA') {
+                    const horasRestantes = junta.fechaLimiteDocumentos
+                      ? differenceInHours(new Date(junta.fechaLimiteDocumentos), new Date())
+                      : 72;
+                    const isUrgente = horasRestantes < 24;
+
+                    return (
+                      <div className={`mb-4 p-4 rounded-lg border-2 ${isUrgente ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`}>
+                        <div className="flex items-start">
+                          <ExclamationTriangleIcon className={`h-5 w-5 mr-3 mt-0.5 flex-shrink-0 ${isUrgente ? 'text-red-600' : 'text-orange-600'}`} />
+                          <div className="flex-1">
+                            <p className={`font-semibold text-sm ${isUrgente ? 'text-red-800' : 'text-orange-800'}`}>
+                              {isUrgente ? '⚠️ Urgente: ' : ''}Documentación Pendiente
+                            </p>
+                            <p className={`text-xs mt-1 ${isUrgente ? 'text-red-700' : 'text-orange-700'}`}>
+                              Tiene <span className="font-bold">{horasRestantes > 0 ? `${horasRestantes} horas` : 'poco tiempo'}</span> para subir los documentos faltantes.
+                              Si no se completa la documentación, la junta médica será rechazada automáticamente.
+                            </p>
                           </div>
                         </div>
-                        <button className="text-gray-400 hover:text-vdc-primary p-1.5 hover:bg-white rounded-full transition-all opacity-0 group-hover:opacity-100">
-                          <CheckCircleIcon className="h-5 w-5" />
-                        </button>
                       </div>
-                    ))}
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Documents Grid */}
+                <div className="space-y-4">
+                  {/* Required Documents Checklist */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Documentos Requeridos</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {DOCUMENTOS_REQUERIDOS.map((docRequerido) => {
+                        const adjunto = (junta.adjuntos || []).find(a => a.categoria === docRequerido);
+                        const label = CATEGORIAS_DOCUMENTO.find(c => c.value === docRequerido)?.label || docRequerido;
+
+                        return (
+                          <div
+                            key={docRequerido}
+                            className={`flex items-center p-3 rounded-lg border ${adjunto
+                                ? 'bg-green-50 border-green-200'
+                                : 'bg-red-50 border-red-200'
+                              }`}
+                          >
+                            {adjunto ? (
+                              <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2 flex-shrink-0" />
+                            ) : (
+                              <XCircleIcon className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-sm font-medium truncate ${adjunto ? 'text-green-800' : 'text-red-800'}`}>
+                                {label}
+                              </p>
+                              {adjunto && (
+                                <p className="text-xs text-green-600 truncate">{adjunto.nombre}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                    <p className="text-gray-500 text-sm">No hay documentos adjuntos en esta junta.</p>
-                  </div>
-                )}
+
+                  {/* Other Attached Documents */}
+                  {junta.adjuntos && junta.adjuntos.filter(a => !DOCUMENTOS_REQUERIDOS.includes(a.categoria as CategoriaDocumento)).length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Otros Documentos</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {junta.adjuntos
+                          .filter(a => !DOCUMENTOS_REQUERIDOS.includes(a.categoria as CategoriaDocumento))
+                          .map((adjunto) => (
+                            <div
+                              key={adjunto.id}
+                              className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-3 hover:bg-blue-50/50 hover:border-blue-100 transition-colors group"
+                            >
+                              <div className="flex items-center overflow-hidden mr-3">
+                                <div className="bg-blue-100 p-2 rounded-lg mr-3 flex-shrink-0 text-blue-600">
+                                  <DocumentTextIcon className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate" title={adjunto.nombre}>{adjunto.nombre}</p>
+                                  <p className="text-xs text-gray-500 truncate">{getCategoriaLabel(adjunto.categoria)}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Area de Director Médico */}
