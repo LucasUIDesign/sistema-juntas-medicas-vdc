@@ -94,10 +94,20 @@ router.get(
           }
 
           return {
-            ...row,
-            pacienteNombreCompleto: `${row.pacienteNombre || ''} ${row.pacienteApellido || ''}`.trim(),
-            medicoNombreCompleto: `${row.medicoNombre || ''} ${row.medicoApellido || ''}`.trim(),
-            dictamen: dictamenObj, // Add parsed dictamen to response
+            id: row.id,
+            fecha: row.fecha,
+            pacienteId: row.pacienteId,
+            pacienteNombre: `${row.pacienteNombre || ''} ${row.pacienteApellido || ''}`.trim(),
+            pacienteDni: row.numeroDocumento,
+            medicoId: row.medicoId,
+            medicoNombre: `${row.medicoNombre || ''} ${row.medicoApellido || ''}`.trim(),
+            detalles: row.observaciones || '',
+            estado: row.estado,
+            aptitudLaboral: row.aptitudLaboral,
+            diagnosticoPrincipal: row.diagnosticoPrincipal,
+            dictamen: dictamenObj,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
           };
         }),
         total,
@@ -162,11 +172,22 @@ router.get(
       });
 
       res.json({
-        ...junta,
-        pacienteNombreCompleto: `${junta.pacienteNombre || ''} ${junta.pacienteApellido || ''}`.trim(),
-        medicoNombreCompleto: `${junta.medicoNombre || ''} ${junta.medicoApellido || ''}`.trim(),
+        id: junta.id,
+        fecha: junta.fecha,
+        pacienteId: junta.pacienteId,
+        pacienteNombre: `${junta.pacienteNombre || ''} ${junta.pacienteApellido || ''}`.trim(),
+        pacienteDni: junta.numeroDocumento,
+        medicoId: junta.medicoId,
+        medicoNombre: `${junta.medicoNombre || ''} ${junta.medicoApellido || ''}`.trim(),
+        detalles: junta.observaciones || '',
+        estado: junta.estado,
+        aptitudLaboral: junta.aptitudLaboral,
+        diagnosticoPrincipal: junta.diagnosticoPrincipal,
+        fechaDictamen: junta.fechaDictamen,
         dictamen: dictamenResult.rows[0] ? JSON.parse((dictamenResult.rows[0] as any).datosCompletos) : null,
         documentos: documentosResult.rows,
+        createdAt: junta.createdAt,
+        updatedAt: junta.updatedAt,
       });
     } catch (error) {
       next(error);

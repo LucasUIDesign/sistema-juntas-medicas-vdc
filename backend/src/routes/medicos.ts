@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
-import { db } from '../index';
+import { db } from '../lib/prisma';
+import { NotFoundError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -31,15 +32,29 @@ router.get(
 router.get(
   '/:id',
   authMiddleware,
-  async (req: AuthenticatedRequest, res: Response) => {
-    const { id } = req.params;
-    const medico = MOCK_MEDICOS.find(m => m.id === id);
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      
+      const result = await db.execute({
+        sql: `SELECT id, nombre, apellido, email FROM User WHERE id = ? AND role IN ('MEDICO_EVALUADOR', 'DIRECTOR_MEDICO')`,
+        args: [id],
+      });
 
-    if (!medico) {
-      return res.status(404).json({ error: 'Médico no encontrado' });
+      if (result.rows.length === 0) {
+        throw new NotFoundError('Médico no encontrado');
+      }
+
+      const row: any = result.rows[0];
+      res.json({
+        id: row.id,
+        nombre: row.nombre || '',
+        apellido: row.apellido || '',
+        email: row.email,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    res.json(medico);
   }
 );
 
