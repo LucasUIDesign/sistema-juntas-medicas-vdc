@@ -35,26 +35,6 @@ interface Turno {
   pacienteDni: string;
 }
 
-// Profesionales se cargarán desde la base de datos
-
-// Mock de turnos existentes
-const MOCK_TURNOS_EXISTENTES: Turno[] = [
-  {
-    id: 'turno-001',
-    fecha: new Date(),
-    hora: '09:00',
-    pacienteNombre: 'Juan Pérez García',
-    pacienteDni: '32.456.789',
-  },
-  {
-    id: 'turno-002',
-    fecha: new Date(),
-    hora: '10:30',
-    pacienteNombre: 'María López Rodríguez',
-    pacienteDni: '28.123.456',
-  },
-];
-
 const HORARIOS_DISPONIBLES = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
   '11:00', '11:30', '12:00', '14:00', '14:30', '15:00',
@@ -65,11 +45,12 @@ const AsignarTurnos = () => {
   // Fecha mínima: 72 horas (3 días) de anticipación para notificación
   const fechaMinima = addDays(new Date(), 3);
   
-  const [turnos, setTurnos] = useState<Turno[]>(MOCK_TURNOS_EXISTENTES);
+  const [turnos, setTurnos] = useState<Turno[]>([]);
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(fechaMinima);
   const [showForm, setShowForm] = useState(false);
   const [showProfesionalForm, setShowProfesionalForm] = useState(false);
+  const [isLoadingTurnos, setIsLoadingTurnos] = useState(true);
   
   // Form state para turno
   const [formData, setFormData] = useState({
@@ -122,6 +103,36 @@ const AsignarTurnos = () => {
       }
     };
     loadMedicos();
+  }, []);
+
+  // Cargar turnos existentes al montar el componente
+  useEffect(() => {
+    const loadTurnos = async () => {
+      try {
+        setIsLoadingTurnos(true);
+        // Obtener todas las juntas con estado PENDIENTE (turnos asignados)
+        const response = await juntasService.getJuntas({ estado: 'PENDIENTE', pageSize: 100 });
+        
+        // Transformar a formato Turno
+        const turnosData: Turno[] = response.data
+          .filter(junta => junta.hora) // Solo juntas con hora asignada
+          .map(junta => ({
+            id: junta.id,
+            fecha: new Date(junta.fecha),
+            hora: junta.hora!,
+            pacienteNombre: junta.pacienteNombre,
+            pacienteDni: junta.pacienteDni || '',
+          }));
+        
+        setTurnos(turnosData);
+      } catch (error) {
+        console.error('Error loading turnos:', error);
+        toast.error('Error al cargar los turnos');
+      } finally {
+        setIsLoadingTurnos(false);
+      }
+    };
+    loadTurnos();
   }, []);
 
   // Búsqueda inteligente de pacientes
@@ -275,7 +286,12 @@ const AsignarTurnos = () => {
       setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicoId: '' });
       setPacienteSearch('');
       setShowForm(false);
-      toast.success('Turno asignado correctamente. El médico será notificado.');
+      
+      // Buscar el nombre del médico asignado
+      const medicoAsignado = medicosEvaluadores.find(m => m.id === formData.medicoId);
+      const nombreMedico = medicoAsignado?.nombre || 'médico';
+      
+      toast.success(`Turno asignado correctamente a ${nombreMedico}. Será notificado.`);
     } catch (error: any) {
       console.error('Error completo al crear turno:', error);
       console.error('Mensaje de error:', error.message);
@@ -305,9 +321,18 @@ const AsignarTurnos = () => {
     toast.success('Profesional agregado a la nómina');
   };
 
-  const handleDeleteTurno = (turnoId: string) => {
-    setTurnos(turnos.filter(t => t.id !== turnoId));
-    toast.success('Turno eliminado');
+  const handleDeleteTurno = async (turnoId: string) => {
+    try {
+      // Eliminar de la base de datos
+      await juntasService.deleteJunta(turnoId);
+      
+      // Eliminar del estado local
+      setTurnos(turnos.filter(t => t.id !== turnoId));
+      toast.success('Turno eliminado');
+    } catch (error: any) {
+      console.error('Error al eliminar turno:', error);
+      toast.error('Error al eliminar el turno');
+    }
   };
 
   const handleDeleteProfesional = (profId: string) => {
