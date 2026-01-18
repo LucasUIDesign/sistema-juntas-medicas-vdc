@@ -232,18 +232,30 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
                 Motivo de la Junta
               </h4>
-              {Array.isArray(datos?.motivoJunta) && datos.motivoJunta.length > 0 ? (
-                <ul className="space-y-2">
-                  {datos.motivoJunta.map((motivo: string, index: number) => (
-                    <li key={index} className="flex items-start">
-                      <CheckIcon className="h-4 w-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-900 font-medium">{motivo}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500 text-sm italic">No se especificó motivo</p>
-              )}
+              {(() => {
+                // Handle both array and string formats
+                let motivos: string[] = [];
+                if (Array.isArray(datos?.motivoJunta)) {
+                  motivos = datos.motivoJunta;
+                } else if (typeof datos?.motivoJunta === 'string' && datos.motivoJunta.trim()) {
+                  // If it's a comma-separated string, split it
+                  motivos = datos.motivoJunta.split(',').map((m: string) => m.trim()).filter((m: string) => m);
+                }
+
+                if (motivos.length > 0) {
+                  return (
+                    <ul className="space-y-2">
+                      {motivos.map((motivo: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <CheckIcon className="h-4 w-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-900 font-medium">{motivo}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                }
+                return <p className="text-gray-500 text-sm italic">No se especificó motivo</p>;
+              })()}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
