@@ -48,6 +48,7 @@ model JuntaMedica {
   medicoId            String
   estado              String             @default("BORRADOR") // BORRADOR, PENDIENTE, COMPLETADA, APROBADA, RECHAZADA
   fecha               DateTime           @default(now())
+  hora                String?            // Hora del turno (formato HH:mm)
   fechaDictamen       DateTime?
   aptitudLaboral      String?            // apto, apto_con_restricciones, no_apto_temporario, no_apto_definitivo
   diagnosticoPrincipal String?

@@ -193,7 +193,7 @@ const AsignarTurnos = () => {
     setShowProfesionalSuggestions(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedDate || !formData.pacienteNombre || !formData.pacienteDni || !formData.hora) {
@@ -206,18 +206,53 @@ const AsignarTurnos = () => {
       return;
     }
 
-    const nuevoTurno: Turno = {
-      id: `turno-${Date.now()}`,
-      fecha: selectedDate,
-      hora: formData.hora,
-      pacienteNombre: formData.pacienteNombre,
-      pacienteDni: formData.pacienteDni,
-    };
+    try {
+      // Buscar o crear el paciente
+      let pacienteId = '';
+      const pacientes = await juntasService.searchPacientes(formData.pacienteDni);
+      
+      if (pacientes.length > 0) {
+        // Paciente existe
+        pacienteId = pacientes[0].id;
+      } else {
+        // Crear nuevo paciente
+        const nombreParts = formData.pacienteNombre.trim().split(' ');
+        const nombre = nombreParts[0];
+        const apellido = nombreParts.slice(1).join(' ') || nombre;
+        
+        const nuevoPaciente = await juntasService.createPaciente({
+          nombre,
+          apellido,
+          numeroDocumento: formData.pacienteDni,
+        });
+        pacienteId = nuevoPaciente.id;
+      }
 
-    setTurnos([...turnos, nuevoTurno]);
-    setFormData({ pacienteNombre: '', pacienteDni: '', hora: '' });
-    setShowForm(false);
-    toast.success('Turno asignado correctamente');
+      // Crear la junta médica con el turno asignado
+      const nuevaJunta = await juntasService.createJunta({
+        pacienteId,
+        hora: formData.hora,
+        observaciones: `Turno asignado para el ${format(selectedDate, "dd/MM/yyyy")} a las ${formData.hora}`,
+      });
+
+      // Agregar al estado local para mostrar en la UI
+      const nuevoTurno: Turno = {
+        id: nuevaJunta.id,
+        fecha: selectedDate,
+        hora: formData.hora,
+        pacienteNombre: formData.pacienteNombre,
+        pacienteDni: formData.pacienteDni,
+      };
+
+      setTurnos([...turnos, nuevoTurno]);
+      setFormData({ pacienteNombre: '', pacienteDni: '', hora: '' });
+      setPacienteSearch('');
+      setShowForm(false);
+      toast.success('Turno asignado correctamente. El médico será notificado.');
+    } catch (error: any) {
+      console.error('Error creating turno:', error);
+      toast.error(error.message || 'Error al asignar el turno');
+    }
   };
 
   const handleAddProfesional = (e: React.FormEvent) => {

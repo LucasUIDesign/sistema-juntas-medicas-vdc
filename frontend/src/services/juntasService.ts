@@ -31,6 +31,7 @@ const handleResponse = async (response: Response) => {
 export interface CreateJuntaDTO {
   pacienteId: string;
   observaciones?: string;
+  hora?: string;
 }
 
 export interface SaveDictamenDTO {
@@ -216,6 +217,38 @@ export const juntasService = {
       }));
     } catch (error) {
       console.error('Error fetching medicos:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get juntas asignadas (turnos) for the current user
+   */
+  async getJuntasAsignadas(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_URL}/juntas?estado=PENDIENTE`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        console.error('Error fetching juntas asignadas');
+        return [];
+      }
+
+      const data = await response.json();
+      
+      // Transformar al formato esperado por ProximasJuntas
+      return data.data.map((junta: any) => ({
+        id: junta.id,
+        fecha: junta.fecha,
+        hora: junta.hora || '09:00', // Hora por defecto si no está definida
+        pacienteNombre: junta.pacienteNombre,
+        pacienteDni: junta.pacienteDni,
+        lugar: 'Consultorio VDC',
+        profesionales: [], // Por ahora vacío, se puede agregar después
+      }));
+    } catch (error) {
+      console.error('Error fetching juntas asignadas:', error);
       return [];
     }
   },

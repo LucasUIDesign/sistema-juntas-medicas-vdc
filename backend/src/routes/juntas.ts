@@ -44,7 +44,7 @@ router.get(
       let sql = `
         SELECT
           j.id, j.pacienteId, j.medicoId, j.estado, j.fecha, j.fechaDictamen,
-          j.aptitudLaboral, j.diagnosticoPrincipal, j.observaciones,
+          j.aptitudLaboral, j.diagnosticoPrincipal, j.observaciones, j.hora,
           j.createdAt, j.updatedAt,
           p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
           u.nombre as medicoNombre, u.apellido as medicoApellido,
@@ -96,6 +96,7 @@ router.get(
           return {
             id: row.id,
             fecha: row.fecha,
+            hora: row.hora,
             pacienteId: row.pacienteId,
             pacienteNombre: `${row.pacienteNombre || ''} ${row.pacienteApellido || ''}`.trim(),
             pacienteDni: row.numeroDocumento,
@@ -206,7 +207,7 @@ router.post(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { pacienteId, observaciones } = req.body;
+      const { pacienteId, observaciones, hora } = req.body;
 
       // Verify paciente exists
       const pacienteResult = await db.execute({
@@ -222,9 +223,9 @@ router.post(
       const fecha = new Date().toISOString();
 
       await db.execute({
-        sql: `INSERT INTO JuntaMedica (id, pacienteId, medicoId, estado, fecha, observaciones, createdAt, updatedAt)
-              VALUES (?, ?, ?, 'BORRADOR', ?, ?, datetime('now'), datetime('now'))`,
-        args: [id, pacienteId, req.user!.id, fecha, observaciones || null],
+        sql: `INSERT INTO JuntaMedica (id, pacienteId, medicoId, estado, fecha, hora, observaciones, createdAt, updatedAt)
+              VALUES (?, ?, ?, 'PENDIENTE', ?, ?, ?, datetime('now'), datetime('now'))`,
+        args: [id, pacienteId, req.user!.id, fecha, hora || null, observaciones || null],
       });
 
       const newJunta = await db.execute({
