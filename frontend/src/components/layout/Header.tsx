@@ -67,6 +67,16 @@ const Header = () => {
                 </Link>
               )
             ))}
+            
+            {/* Botón Contacto - Solo para ADMIN */}
+            {isAuthenticated && user?.role === 'ADMIN' && (
+              <Link
+                to="/contacto"
+                className="text-gray-600 hover:text-vdc-primary px-3 py-2 text-sm font-medium transition-colors"
+              >
+                Contacto
+              </Link>
+            )}
           </div>
 
           {/* Auth Button - Desktop (solo cuando está autenticado) */}
@@ -147,6 +157,17 @@ const Header = () => {
                   </Link>
                 )
               ))}
+              
+              {/* Botón Contacto - Solo para ADMIN (Mobile) */}
+              {isAuthenticated && user?.role === 'ADMIN' && (
+                <Link
+                  to="/contacto"
+                  className="block text-gray-600 hover:text-vdc-primary hover:bg-gray-300 px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contacto
+                </Link>
+              )}
             </div>
 
             {/* Auth Button - Mobile (solo cuando está autenticado) */}
