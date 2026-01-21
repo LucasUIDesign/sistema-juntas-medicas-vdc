@@ -33,6 +33,8 @@ interface Turno {
   hora: string;
   pacienteNombre: string;
   pacienteDni: string;
+  medicoNombre?: string; // Agregar nombre del médico
+  medicoId?: string; // Agregar ID del médico
 }
 
 const HORARIOS_DISPONIBLES = [
@@ -122,6 +124,8 @@ const AsignarTurnos = () => {
             hora: junta.hora!,
             pacienteNombre: junta.pacienteNombre,
             pacienteDni: junta.pacienteDni || '',
+            medicoNombre: junta.medicoNombre || 'Médico no asignado',
+            medicoId: junta.medicoId,
           }));
         
         setTurnos(turnosData);
@@ -273,6 +277,10 @@ const AsignarTurnos = () => {
       });
       console.log('Junta creada:', nuevaJunta);
 
+      // Buscar el nombre del médico asignado
+      const medicoAsignado = medicosEvaluadores.find(m => m.id === formData.medicoId);
+      const nombreMedico = medicoAsignado?.nombre || 'médico';
+      
       // Agregar al estado local para mostrar en la UI
       const nuevoTurno: Turno = {
         id: nuevaJunta.id,
@@ -280,16 +288,14 @@ const AsignarTurnos = () => {
         hora: formData.hora,
         pacienteNombre: formData.pacienteNombre,
         pacienteDni: formData.pacienteDni,
+        medicoNombre: nombreMedico,
+        medicoId: formData.medicoId,
       };
 
       setTurnos([...turnos, nuevoTurno]);
       setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicoId: '' });
       setPacienteSearch('');
       setShowForm(false);
-      
-      // Buscar el nombre del médico asignado
-      const medicoAsignado = medicosEvaluadores.find(m => m.id === formData.medicoId);
-      const nombreMedico = medicoAsignado?.nombre || 'médico';
       
       toast.success(`Turno asignado correctamente a ${nombreMedico}. Será notificado.`);
     } catch (error: any) {
@@ -523,6 +529,18 @@ const AsignarTurnos = () => {
                                     DNI: {turno.pacienteDni}
                                   </p>
                                 </div>
+                                {/* Médico Evaluador Asignado */}
+                                {turno.medicoNombre && (
+                                  <div className="pt-2 border-t border-gray-200">
+                                    <p className="text-xs text-gray-500 mb-1 flex items-center">
+                                      <AcademicCapIcon className="h-3 w-3 mr-1" />
+                                      Médico Evaluador:
+                                    </p>
+                                    <span className="inline-flex items-center px-2 py-0.5 bg-vdc-primary/10 text-vdc-primary text-xs rounded-full font-medium">
+                                      {turno.medicoNombre}
+                                    </span>
+                                  </div>
+                                )}
                                 {/* Profesionales de la Junta */}
                                 {profesionales.length > 0 && (
                                   <div className="pt-2 border-t border-gray-200">
