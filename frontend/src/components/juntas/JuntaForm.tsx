@@ -192,9 +192,25 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       console.log('Datos del dictamen:', dictamenData);
       
       // Create paciente with data from dictamen
-      const nombreParts = dictamenData.nombreCompleto.split(' ');
-      const apellido = nombreParts[0] || '';
-      const nombre = nombreParts.slice(1).join(' ') || nombreParts[0] || '';
+      // Dividir nombre completo: asumimos formato "Apellido Nombre" o "Nombre Apellido"
+      const nombreParts = dictamenData.nombreCompleto.trim().split(/\s+/); // Split por espacios
+      let nombre = '';
+      let apellido = '';
+      
+      if (nombreParts.length === 1) {
+        // Solo una palabra: usar como apellido y nombre
+        apellido = nombreParts[0];
+        nombre = nombreParts[0];
+      } else if (nombreParts.length === 2) {
+        // Dos palabras: primera es nombre, segunda es apellido
+        nombre = nombreParts[0];
+        apellido = nombreParts[1];
+      } else {
+        // Más de dos palabras: primera mitad es nombre, segunda mitad es apellido
+        const mitad = Math.ceil(nombreParts.length / 2);
+        nombre = nombreParts.slice(0, mitad).join(' ');
+        apellido = nombreParts.slice(mitad).join(' ');
+      }
 
       console.log('Intentando crear/buscar paciente:', { nombre, apellido, dni: dictamenData.dni });
 
