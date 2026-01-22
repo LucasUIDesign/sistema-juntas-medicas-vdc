@@ -24,7 +24,7 @@ const sidebarLinks = [
     icon: <CalendarDaysIcon className="h-5 w-5" />,
   },
   {
-    name: 'Todas las Juntas',
+    name: 'Todas las Juntas Asignadas',
     href: '/dashboard/admin/todas-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
   },

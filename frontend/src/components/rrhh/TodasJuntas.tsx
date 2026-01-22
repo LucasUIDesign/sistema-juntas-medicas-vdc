@@ -298,13 +298,6 @@ const TodasJuntas = () => {
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Detalles
                     </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => handleSort('estado')}
-                    >
-                      Estado <SortIcon field="estado" />
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -333,9 +326,6 @@ const TodasJuntas = () => {
                         <span title={junta.detalles}>
                           {truncateText(junta.detalles, 50)}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {getEstadoBadge(junta.estado)}
                       </td>
                     </motion.tr>
                   ))}
