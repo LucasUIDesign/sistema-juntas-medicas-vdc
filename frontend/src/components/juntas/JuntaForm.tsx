@@ -216,14 +216,17 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
 
       let paciente;
       try {
-        paciente = await juntasService.createPaciente({
+        const pacienteData = {
           nombre,
           apellido,
           numeroDocumento: dictamenData.dni,
           correo: dictamenData.email || '',
           telefono: dictamenData.telefono || '',
           domicilio: dictamenData.domicilio || '',
-        });
+        };
+        console.log('Datos a enviar al backend:', pacienteData);
+        
+        paciente = await juntasService.createPaciente(pacienteData);
         console.log('Paciente creado exitosamente:', paciente);
       } catch (error: any) {
         console.log('Error al crear paciente:', error);
@@ -343,10 +346,6 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
 
             <DictamenMedicoWizard
               onComplete={(data, _isCompleto) => {
-                handleDictamenChange(data);
-              }}
-              onChange={(data) => {
-                // Actualizar en tiempo real mientras el usuario completa el formulario
                 handleDictamenChange(data);
               }}
               onCancel={() => { }}
