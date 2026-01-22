@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -219,9 +219,10 @@ interface DictamenMedicoWizardProps {
   onCancel?: () => void;
   initialData?: DictamenMedicoData;
   hideProfesionales?: boolean;
+  onChange?: (data: DictamenMedicoData) => void; // Nuevo: callback para cambios en tiempo real
 }
 
-const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false }: DictamenMedicoWizardProps) => {
+const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false, onChange }: DictamenMedicoWizardProps) => {
   const [pasoActual, setPasoActual] = useState(1);
 
   // Filtrar pasos si hideProfesionales está activo
@@ -690,7 +691,15 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
           onSubmit={() => { }}
           enableReinitialize
         >
-          {({ values, setFieldValue }) => (
+          {({ values, setFieldValue }) => {
+            // Llamar a onChange cuando cambien los valores (en tiempo real)
+            useEffect(() => {
+              if (onChange) {
+                onChange(values);
+              }
+            }, [values, onChange]);
+
+            return (
             <>
               {/* Mobile: Indicador simplificado */}
               <div className="sm:hidden mb-3">
@@ -849,7 +858,8 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                 </div>
               </Form>
             </>
-          )}
+            );
+          }}
         </Formik>
       </div>
     </div>

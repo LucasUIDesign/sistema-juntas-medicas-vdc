@@ -311,6 +311,10 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
               onComplete={(data, _isCompleto) => {
                 handleDictamenChange(data);
               }}
+              onChange={(data) => {
+                // Actualizar en tiempo real mientras el usuario completa el formulario
+                handleDictamenChange(data);
+              }}
               onCancel={() => { }}
               initialData={dictamenData || undefined}
               hideProfesionales={true}
