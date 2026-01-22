@@ -65,6 +65,7 @@ const TodasJuntas = () => {
         pageSize,
         sortBy: sortField,
         sortOrder,
+        estado: 'COMPLETADA', // Solo mostrar juntas completadas (cargadas por médicos)
       };
       
       if (searchTerm) filters.search = searchTerm;

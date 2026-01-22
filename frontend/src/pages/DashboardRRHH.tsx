@@ -4,11 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/layout/Sidebar';
 import Breadcrumbs from '../components/layout/Breadcrumbs';
 import TodasJuntas from '../components/rrhh/TodasJuntas';
-import Reportes from '../components/rrhh/Reportes';
 import GestionUsuarios from '../components/rrhh/GestionUsuarios';
 import { 
   ClipboardDocumentListIcon, 
-  ChartBarIcon, 
   UsersIcon,
   Bars3Icon 
 } from '@heroicons/react/24/outline';
@@ -18,11 +16,6 @@ const sidebarLinks = [
     name: 'Todas las Juntas',
     href: '/dashboard/rrhh/todas-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
-  },
-  {
-    name: 'Reportes',
-    href: '/dashboard/rrhh/reportes',
-    icon: <ChartBarIcon className="h-5 w-5" />,
   },
   {
     name: 'Gestionar Usuarios',
@@ -77,7 +70,6 @@ const DashboardRRHH = () => {
           <Routes>
             <Route index element={<Navigate to="todas-juntas" replace />} />
             <Route path="todas-juntas" element={<TodasJuntas />} />
-            <Route path="reportes" element={<Reportes />} />
             <Route path="usuarios" element={<GestionUsuarios />} />
           </Routes>
         </div>
