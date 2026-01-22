@@ -17,13 +17,27 @@ const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
 
+    console.error('API Error Response:', errorData);
+
     // Check for validation errors object
     if (errorData.errors) {
-      const messages = Object.values(errorData.errors).join(', ');
+      const messages = Object.entries(errorData.errors)
+        .map(([field, msg]) => `${field}: ${msg}`)
+        .join(', ');
       throw new Error(messages || 'Error de validación');
     }
 
-    throw new Error(errorData.error || errorData.message || 'Error en la solicitud');
+    // Check for single error field
+    if (errorData.error) {
+      throw new Error(errorData.error);
+    }
+
+    // Check for message field
+    if (errorData.message) {
+      throw new Error(errorData.message);
+    }
+
+    throw new Error('Error en la solicitud');
   }
   return response.json();
 };
