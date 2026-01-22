@@ -188,10 +188,15 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
 
     setIsSubmitting(true);
     try {
+      console.log('=== INICIANDO PROCESO DE FINALIZACIÓN ===');
+      console.log('Datos del dictamen:', dictamenData);
+      
       // Create paciente with data from dictamen
       const nombreParts = dictamenData.nombreCompleto.split(' ');
       const apellido = nombreParts[0] || '';
       const nombre = nombreParts.slice(1).join(' ') || nombreParts[0] || '';
+
+      console.log('Intentando crear/buscar paciente:', { nombre, apellido, dni: dictamenData.dni });
 
       let paciente;
       try {
@@ -203,12 +208,17 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
           telefono: dictamenData.telefono || '',
           domicilio: dictamenData.domicilio || '',
         });
+        console.log('Paciente creado exitosamente:', paciente);
       } catch (error: any) {
+        console.log('Error al crear paciente:', error);
         // If patient already exists, search for it
         if (error.message?.includes('ya existe') || error.message?.includes('already exists') || error.message?.includes('UNIQUE')) {
+          console.log('Paciente ya existe, buscando...');
           const pacientes = await juntasService.searchPacientes(dictamenData.dni);
+          console.log('Pacientes encontrados:', pacientes);
           if (pacientes && pacientes.length > 0) {
             paciente = pacientes[0];
+            console.log('Usando paciente existente:', paciente);
           } else {
             throw new Error('No se pudo encontrar el paciente existente');
           }
@@ -218,18 +228,22 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       }
 
       // Create junta
+      console.log('Creando junta para paciente:', paciente.id);
       const junta = await juntasService.createJunta({
         pacienteId: paciente.id,
         observaciones: '',
       });
+      console.log('Junta creada exitosamente:', junta);
 
       setCurrentJuntaId(junta.id);
 
       // Save dictamen and finalize
+      console.log('Guardando dictamen y finalizando junta...');
       await juntasService.saveDictamen(junta.id, {
         dictamen: dictamenData,
         finalizar: true,
       });
+      console.log('Dictamen guardado y junta finalizada');
 
       toast.success('¡Junta médica creada y finalizada correctamente!');
 
@@ -242,8 +256,12 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
         onJuntaCreated();
       }
     } catch (error: any) {
-      console.error('Error al finalizar junta:', error);
-      toast.error(error.message || 'Error al finalizar la junta');
+      console.error('=== ERROR AL FINALIZAR JUNTA ===');
+      console.error('Error completo:', error);
+      console.error('Mensaje:', error.message);
+      console.error('Stack:', error.stack);
+      console.error('Response:', error.response);
+      toast.error(error.message || 'Error al finalizar la junta. Revise la consola del navegador para más detalles.');
     } finally {
       setIsSubmitting(false);
     }
