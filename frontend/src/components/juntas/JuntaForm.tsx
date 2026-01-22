@@ -220,9 +220,9 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
           nombre,
           apellido,
           numeroDocumento: dictamenData.dni,
-          correo: dictamenData.email || '',
-          telefono: dictamenData.telefono || '',
-          domicilio: dictamenData.domicilio || '',
+          correo: dictamenData.email || undefined, // undefined en lugar de ''
+          telefono: dictamenData.telefono || undefined, // undefined en lugar de ''
+          domicilio: dictamenData.domicilio || undefined, // undefined en lugar de ''
         };
         console.log('Datos a enviar al backend:', pacienteData);
         
