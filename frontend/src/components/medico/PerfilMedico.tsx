@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/userService';
 import {
   EnvelopeIcon,
   IdentificationIcon,
@@ -28,11 +29,12 @@ const PerfilMedico = () => {
   
   // Estado para modo edición
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Campos editables
   const [editableData, setEditableData] = useState({
-    telefono: '+507 6123-4567',
-    direccion: 'Ciudad de Panamá, Panamá',
+    telefono: '',
+    direccion: '',
   });
   
   const [tempData, setTempData] = useState(editableData);
@@ -45,6 +47,34 @@ const PerfilMedico = () => {
     departamento: 'Salud Ocupacional',
   };
 
+  // Cargar datos del perfil al montar el componente
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const profile = await userService.getProfile(token);
+        
+        const loadedData = {
+          telefono: profile.telefono || '',
+          direccion: '', // La dirección no está en el backend aún
+        };
+        
+        setEditableData(loadedData);
+        setTempData(loadedData);
+        
+        if (profile.fotoUrl) {
+          setProfilePhoto(profile.fotoUrl);
+        }
+      } catch (error) {
+        console.error('Error al cargar perfil:', error);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
   const getRoleName = (role: string) => {
     const roles: Record<string, string> = {
       MEDICO_EVALUADOR: 'Médico Evaluador',
@@ -56,7 +86,7 @@ const PerfilMedico = () => {
     return roles[role] || role;
   };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -65,18 +95,52 @@ const PerfilMedico = () => {
       }
       
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePhoto(e.target?.result as string);
-        toast.success('Foto actualizada correctamente');
+      reader.onload = async (e) => {
+        const photoUrl = e.target?.result as string;
+        setProfilePhoto(photoUrl);
+        
+        // Guardar foto en el backend
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            toast.error('No se encontró token de autenticación');
+            return;
+          }
+
+          await userService.updateProfile(token, { fotoUrl: photoUrl });
+          toast.success('Foto actualizada correctamente');
+        } catch (error) {
+          console.error('Error al actualizar foto:', error);
+          toast.error('Error al guardar la foto');
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = () => {
-    setEditableData(tempData);
-    setIsEditing(false);
-    toast.success('Perfil actualizado correctamente');
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('No se encontró token de autenticación');
+        return;
+      }
+
+      // Actualizar perfil en el backend
+      await userService.updateProfile(token, {
+        telefono: tempData.telefono || undefined,
+      });
+
+      setEditableData(tempData);
+      setIsEditing(false);
+      toast.success('Perfil actualizado correctamente');
+    } catch (error) {
+      console.error('Error al actualizar perfil:', error);
+      toast.error('Error al guardar los cambios');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -122,12 +186,13 @@ const PerfilMedico = () => {
             </motion.button>
             <motion.button
               onClick={handleSave}
+              disabled={isLoading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-vdc-success rounded-lg hover:bg-vdc-success/90 transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-vdc-success rounded-lg hover:bg-vdc-success/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckIcon className="w-4 h-4" />
-              Guardar
+              {isLoading ? 'Guardando...' : 'Guardar'}
             </motion.button>
           </div>
         )}
