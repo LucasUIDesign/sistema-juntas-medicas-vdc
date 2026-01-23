@@ -153,94 +153,209 @@ const TodasJuntas = () => {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const contentWidth = pageWidth - (margin * 2);
+    let yPosition = 20;
     
-    // Título
+    // Función para agregar nueva página si es necesario
+    const checkPageBreak = (requiredSpace: number) => {
+      if (yPosition + requiredSpace > pageHeight - 20) {
+        doc.addPage();
+        yPosition = 20;
+        return true;
+      }
+      return false;
+    };
+
+    // Función para obtener el texto del estado
+    const getEstadoTexto = (estado: string) => {
+      const labels: Record<string, string> = {
+        PENDIENTE: 'Pendiente',
+        APROBADA: 'Aprobada',
+        RECHAZADA: 'Rechazada',
+        COMPLETADA: 'Completada',
+        DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      };
+      return labels[estado] || estado;
+    };
+
+    // Función para obtener el estado de aprobación
+    const getAprobacionTexto = (estado: string) => {
+      if (estado === 'APROBADA') return 'Aprobada por Director Médico';
+      if (estado === 'RECHAZADA') return 'Rechazada por Director Médico';
+      return 'Pendiente de aprobación';
+    };
+    
+    // Título principal
     doc.setFontSize(18);
-    doc.setTextColor(30, 64, 175); // Color VDC primary
-    doc.text('VDC Internacional', 14, 20);
+    doc.setTextColor(30, 64, 175);
+    doc.text('VDC Internacional', margin, yPosition);
+    yPosition += 8;
     
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text('Nómina de Juntas Médicas', 14, 28);
+    doc.text('Nómina de Juntas Médicas', margin, yPosition);
+    yPosition += 6;
     
     // Fecha de generación
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 14, 35);
+    doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, margin, yPosition);
+    yPosition += 4;
+    doc.text(`Total de registros: ${juntas.total}`, margin, yPosition);
+    yPosition += 10;
     
     // Filtros aplicados
-    let yPosition = 42;
     if (searchTerm || fechaInicio || fechaFin || selectedMedicos.length > 0) {
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
-      doc.text('Filtros aplicados:', 14, yPosition);
+      doc.text('Filtros aplicados:', margin, yPosition);
       yPosition += 5;
       
       if (searchTerm) {
-        doc.text(`• Búsqueda: ${searchTerm}`, 14, yPosition);
+        doc.text(`• Búsqueda: ${searchTerm}`, margin + 2, yPosition);
         yPosition += 4;
       }
       if (fechaInicio) {
-        doc.text(`• Desde: ${format(fechaInicio, 'dd/MM/yyyy')}`, 14, yPosition);
+        doc.text(`• Desde: ${format(fechaInicio, 'dd/MM/yyyy')}`, margin + 2, yPosition);
         yPosition += 4;
       }
       if (fechaFin) {
-        doc.text(`• Hasta: ${format(fechaFin, 'dd/MM/yyyy')}`, 14, yPosition);
+        doc.text(`• Hasta: ${format(fechaFin, 'dd/MM/yyyy')}`, margin + 2, yPosition);
         yPosition += 4;
       }
       if (selectedMedicos.length > 0) {
         const medicoNombre = medicos.find(m => m.id === selectedMedicos[0])?.nombre || 'Desconocido';
-        doc.text(`• Médico: ${medicoNombre}`, 14, yPosition);
+        doc.text(`• Médico: ${medicoNombre}`, margin + 2, yPosition);
         yPosition += 4;
       }
-      yPosition += 3;
+      yPosition += 5;
     }
     
-    // Preparar datos para la tabla
-    const tableData = juntas.data.map(junta => [
-      format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es }),
-      junta.pacienteNombre,
-      junta.pacienteDni || junta.dictamen?.dni || '-',
-      junta.medicoNombre,
-      junta.detalles.length > 40 ? junta.detalles.substring(0, 40) + '...' : junta.detalles,
-    ]);
-    
-    // Generar tabla
-    autoTable(doc, {
-      startY: yPosition,
-      head: [['Fecha', 'Paciente', 'DNI', 'Médico', 'Detalles']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [30, 64, 175], // Color VDC primary
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 10,
-      },
-      bodyStyles: {
-        fontSize: 9,
-        textColor: [50, 50, 50],
-      },
-      alternateRowStyles: {
-        fillColor: [245, 247, 250], // Color VDC bg
-      },
-      margin: { top: 10, left: 14, right: 14 },
-      styles: {
-        cellPadding: 3,
-        lineColor: [220, 220, 220],
-        lineWidth: 0.1,
-      },
+    // Iterar sobre cada junta y crear una ficha
+    juntas.data.forEach((junta, index) => {
+      // Verificar si necesitamos una nueva página (estimando ~70mm por ficha)
+      checkPageBreak(70);
+      
+      // Dibujar borde de la ficha
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      const fichaHeight = 65;
+      doc.rect(margin, yPosition, contentWidth, fichaHeight);
+      
+      // Fondo del header de la ficha
+      doc.setFillColor(245, 247, 250);
+      doc.rect(margin, yPosition, contentWidth, 10, 'F');
+      
+      // Número de ficha y estado
+      doc.setFontSize(10);
+      doc.setTextColor(30, 64, 175);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Junta Médica #${index + 1}`, margin + 3, yPosition + 6.5);
+      
+      // Estado en el lado derecho
+      const estadoTexto = getEstadoTexto(junta.estado);
+      const estadoWidth = doc.getTextWidth(estadoTexto);
+      doc.setFontSize(9);
+      
+      // Color del estado
+      if (junta.estado === 'APROBADA') {
+        doc.setTextColor(22, 163, 74); // Verde
+      } else if (junta.estado === 'RECHAZADA') {
+        doc.setTextColor(220, 38, 38); // Rojo
+      } else {
+        doc.setTextColor(234, 179, 8); // Amarillo
+      }
+      doc.text(estadoTexto, pageWidth - margin - estadoWidth - 3, yPosition + 6.5);
+      
+      // Contenido de la ficha
+      let yFicha = yPosition + 15;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      
+      // Fecha de la Junta
+      doc.setTextColor(100, 100, 100);
+      doc.text('Fecha de la Junta:', margin + 3, yFicha);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(format(new Date(junta.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es }), margin + 35, yFicha);
+      yFicha += 7;
+      
+      // Paciente
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Paciente:', margin + 3, yFicha);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(junta.pacienteNombre, margin + 35, yFicha);
+      yFicha += 7;
+      
+      // DNI
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('DNI:', margin + 3, yFicha);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(junta.pacienteDni || junta.dictamen?.dni || '-', margin + 35, yFicha);
+      yFicha += 7;
+      
+      // Médico Evaluador
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Médico Evaluador:', margin + 3, yFicha);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(junta.medicoNombre, margin + 35, yFicha);
+      yFicha += 7;
+      
+      // Aprobación
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Aprobación:', margin + 3, yFicha);
+      
+      const aprobacionTexto = getAprobacionTexto(junta.estado);
+      if (junta.estado === 'APROBADA') {
+        doc.setTextColor(22, 163, 74);
+      } else if (junta.estado === 'RECHAZADA') {
+        doc.setTextColor(220, 38, 38);
+      } else {
+        doc.setTextColor(100, 100, 100);
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text(aprobacionTexto, margin + 35, yFicha);
+      yFicha += 7;
+      
+      // Detalles (si existen y hay espacio)
+      if (junta.detalles && junta.detalles.trim()) {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Detalles:', margin + 3, yFicha);
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(8);
+        
+        // Truncar detalles si son muy largos
+        const detallesMaxLength = 80;
+        const detallesTexto = junta.detalles.length > detallesMaxLength 
+          ? junta.detalles.substring(0, detallesMaxLength) + '...'
+          : junta.detalles;
+        
+        const detallesLines = doc.splitTextToSize(detallesTexto, contentWidth - 40);
+        doc.text(detallesLines.slice(0, 2), margin + 35, yFicha); // Máximo 2 líneas
+      }
+      
+      // Mover posición para la siguiente ficha
+      yPosition += fichaHeight + 8;
     });
     
-    // Footer con total de registros
-    const finalY = (doc as any).lastAutoTable.finalY || yPosition + 50;
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Total de registros: ${juntas.total}`, 14, finalY + 10);
-    doc.text(`Página ${juntas.page} de ${juntas.totalPages}`, 14, finalY + 15);
+    // Footer en la última página
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('VDC Internacional - Sistema de Gestión de Juntas Médicas', margin, pageHeight - 10);
     
     // Guardar PDF
-    const fileName = `juntas-medicas-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`;
+    const fileName = `nomina-juntas-medicas-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`;
     doc.save(fileName);
   };
 
