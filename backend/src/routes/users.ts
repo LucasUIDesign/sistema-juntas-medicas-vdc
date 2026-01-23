@@ -127,6 +127,7 @@ router.put(
   [
     body('nombre').optional().trim().notEmpty().withMessage('Nombre no puede estar vacío'),
     body('apellido').optional().trim().notEmpty().withMessage('Apellido no puede estar vacío'),
+    body('email').optional().isEmail().withMessage('Email inválido'),
     body('dni').optional().trim(),
     body('telefono').optional().trim(),
     body('fotoUrl').optional().trim(),
@@ -143,12 +144,25 @@ router.put(
       }
 
       const userId = (req as any).user.sub;
-      const { nombre, apellido, dni, telefono, fotoUrl } = req.body;
+      const { nombre, apellido, email, dni, telefono, fotoUrl } = req.body;
+
+      // Check if email already exists (if email is being updated)
+      if (email !== undefined) {
+        const existingUser = await db.execute({
+          sql: 'SELECT id FROM User WHERE email = ? AND id != ?',
+          args: [email, userId],
+        });
+
+        if (existingUser.rows.length > 0) {
+          throw new ValidationError({ email: 'Este correo ya está en uso' });
+        }
+      }
 
       // Build update data
       const updateData: Record<string, any> = {};
       if (nombre !== undefined) updateData.nombre = nombre;
       if (apellido !== undefined) updateData.apellido = apellido;
+      if (email !== undefined) updateData.email = email;
       if (dni !== undefined) updateData.dni = dni;
       if (telefono !== undefined) updateData.telefono = telefono;
       if (fotoUrl !== undefined) updateData.fotoUrl = fotoUrl;

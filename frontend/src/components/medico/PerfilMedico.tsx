@@ -33,6 +33,7 @@ const PerfilMedico = () => {
   
   // Campos editables
   const [editableData, setEditableData] = useState({
+    email: '',
     telefono: '',
     direccion: '',
   });
@@ -56,6 +57,7 @@ const PerfilMedico = () => {
         const profile = await userService.getProfile(token);
         
         const loadedData = {
+          email: profile.email || '',
           telefono: profile.telefono || '',
           direccion: '', // La dirección no está en el backend aún
         };
@@ -126,6 +128,7 @@ const PerfilMedico = () => {
 
       // Actualizar perfil en el backend
       await userService.updateProfile(token, {
+        email: tempData.email || undefined,
         telefono: tempData.telefono || undefined,
       });
 
@@ -252,14 +255,6 @@ const PerfilMedico = () => {
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <EnvelopeIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400">Email Institucional</p>
-                  <p className="text-sm text-gray-700 truncate">{user?.email}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <IdentificationIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-400">Colegiatura</p>
@@ -311,6 +306,26 @@ const PerfilMedico = () => {
               {isEditing && <span className="text-vdc-primary ml-2">(Editando)</span>}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              }`}>
+                <EnvelopeIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Correo Electrónico</p>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={tempData.email}
+                      onChange={(e) => setTempData({ ...tempData, email: e.target.value })}
+                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                      placeholder="Ingresa tu correo"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-700 truncate">{editableData.email}</p>
+                  )}
+                </div>
+              </div>
+              
               <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                 isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
               }`}>

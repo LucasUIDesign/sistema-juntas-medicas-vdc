@@ -3,6 +3,7 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001
 export interface UpdateProfileData {
   nombre?: string;
   apellido?: string;
+  email?: string;
   dni?: string;
   telefono?: string;
   fotoUrl?: string;
