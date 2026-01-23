@@ -7,6 +7,8 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModalRRHH from './JuntaDetailModalRRHH';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   MagnifyingGlassIcon,
   ChevronUpIcon,
@@ -14,6 +16,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -141,6 +144,104 @@ const TodasJuntas = () => {
     return text.substring(0, maxLength) + '...';
   };
 
+  const exportToPDF = () => {
+    if (!juntas || juntas.data.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(18);
+    doc.setTextColor(30, 64, 175); // Color VDC primary
+    doc.text('VDC Internacional', 14, 20);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Nómina de Juntas Médicas', 14, 28);
+    
+    // Fecha de generación
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, 14, 35);
+    
+    // Filtros aplicados
+    let yPosition = 42;
+    if (searchTerm || fechaInicio || fechaFin || selectedMedicos.length > 0) {
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text('Filtros aplicados:', 14, yPosition);
+      yPosition += 5;
+      
+      if (searchTerm) {
+        doc.text(`• Búsqueda: ${searchTerm}`, 14, yPosition);
+        yPosition += 4;
+      }
+      if (fechaInicio) {
+        doc.text(`• Desde: ${format(fechaInicio, 'dd/MM/yyyy')}`, 14, yPosition);
+        yPosition += 4;
+      }
+      if (fechaFin) {
+        doc.text(`• Hasta: ${format(fechaFin, 'dd/MM/yyyy')}`, 14, yPosition);
+        yPosition += 4;
+      }
+      if (selectedMedicos.length > 0) {
+        const medicoNombre = medicos.find(m => m.id === selectedMedicos[0])?.nombre || 'Desconocido';
+        doc.text(`• Médico: ${medicoNombre}`, 14, yPosition);
+        yPosition += 4;
+      }
+      yPosition += 3;
+    }
+    
+    // Preparar datos para la tabla
+    const tableData = juntas.data.map(junta => [
+      format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es }),
+      junta.pacienteNombre,
+      junta.pacienteDni || junta.dictamen?.dni || '-',
+      junta.medicoNombre,
+      junta.detalles.length > 40 ? junta.detalles.substring(0, 40) + '...' : junta.detalles,
+    ]);
+    
+    // Generar tabla
+    autoTable(doc, {
+      startY: yPosition,
+      head: [['Fecha', 'Paciente', 'DNI', 'Médico', 'Detalles']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [30, 64, 175], // Color VDC primary
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [50, 50, 50],
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250], // Color VDC bg
+      },
+      margin: { top: 10, left: 14, right: 14 },
+      styles: {
+        cellPadding: 3,
+        lineColor: [220, 220, 220],
+        lineWidth: 0.1,
+      },
+    });
+    
+    // Footer con total de registros
+    const finalY = (doc as any).lastAutoTable.finalY || yPosition + 50;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Total de registros: ${juntas.total}`, 14, finalY + 10);
+    doc.text(`Página ${juntas.page} de ${juntas.totalPages}`, 14, finalY + 15);
+    
+    // Guardar PDF
+    const fileName = `juntas-medicas-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`;
+    doc.save(fileName);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -155,6 +256,20 @@ const TodasJuntas = () => {
         <p className="text-vdc-secondary text-sm mt-1">
           Supervisión y gestión de todas las evaluaciones médicas
         </p>
+      </div>
+
+      {/* Botón Exportar PDF - Por encima del buscador */}
+      <div className="mb-4">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={exportToPDF}
+          disabled={!juntas || juntas.data.length === 0}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+          <span>Descargar Nómina en PDF</span>
+        </motion.button>
       </div>
 
       {/* Filter Toolbar */}
