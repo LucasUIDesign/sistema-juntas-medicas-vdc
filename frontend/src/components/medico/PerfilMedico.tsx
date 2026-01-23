@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const PerfilMedico = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Estado para foto de perfil
@@ -51,7 +51,6 @@ const PerfilMedico = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
         if (!token) return;
 
         const profile = await userService.getProfile(token);
@@ -73,7 +72,7 @@ const PerfilMedico = () => {
     };
 
     loadProfile();
-  }, []);
+  }, [token]);
 
   const getRoleName = (role: string) => {
     const roles: Record<string, string> = {
@@ -101,7 +100,6 @@ const PerfilMedico = () => {
         
         // Guardar foto en el backend
         try {
-          const token = localStorage.getItem('token');
           if (!token) {
             toast.error('No se encontró token de autenticación');
             return;
@@ -121,7 +119,6 @@ const PerfilMedico = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
         toast.error('No se encontró token de autenticación');
         return;
