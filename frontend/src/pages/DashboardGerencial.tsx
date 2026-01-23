@@ -10,8 +10,7 @@ import {
   ClipboardDocumentListIcon,
   UserGroupIcon,
   UserCircleIcon,
-  Bars3Icon,
-  ChartBarIcon
+  Bars3Icon
 } from '@heroicons/react/24/outline';
 
 const sidebarLinks = [
@@ -24,11 +23,6 @@ const sidebarLinks = [
     name: 'Pacientes',
     href: '/dashboard/gerencial/pacientes',
     icon: <UserGroupIcon className="h-5 w-5" />,
-  },
-  {
-    name: 'Reportes',
-    href: '/dashboard/gerencial/reportes',
-    icon: <ChartBarIcon className="h-5 w-5" />,
   },
   {
     name: 'Mi Perfil',
@@ -79,7 +73,6 @@ const DashboardGerencial = () => {
               <Route index element={<Navigate to="juntas" replace />} />
               <Route path="juntas" element={<TodasJuntas />} />
               <Route path="pacientes" element={<GestionPacientes />} />
-              <Route path="reportes" element={<div className="bg-white rounded-card shadow-card p-8 text-center text-gray-500">Módulo de reportes en desarrollo</div>} />
               <Route path="perfil" element={<PerfilAdmin />} />
             </Routes>
           </div>

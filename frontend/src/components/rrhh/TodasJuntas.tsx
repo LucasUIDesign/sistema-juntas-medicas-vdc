@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAuth } from '../../context/AuthContext';
 import {
   MagnifyingGlassIcon,
   ChevronUpIcon,
@@ -24,6 +25,7 @@ type SortField = 'fecha' | 'pacienteNombre' | 'medicoNombre' | 'estado';
 type SortOrder = 'asc' | 'desc';
 
 const TodasJuntas = () => {
+  const { user } = useAuth(); // Agregar useAuth para verificar el rol
   const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,19 +260,21 @@ const TodasJuntas = () => {
         </p>
       </div>
 
-      {/* Botón Exportar PDF - Por encima del buscador */}
-      <div className="mb-4">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={exportToPDF}
-          disabled={!juntas || juntas.data.length === 0}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-        >
-          <ArrowDownTrayIcon className="h-5 w-5" />
-          <span>Descargar Nómina en PDF</span>
-        </motion.button>
-      </div>
+      {/* Botón Exportar PDF - Solo para RRHH */}
+      {user?.role === 'RRHH' && (
+        <div className="mb-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={exportToPDF}
+            disabled={!juntas || juntas.data.length === 0}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            <span>Descargar Nómina en PDF</span>
+          </motion.button>
+        </div>
+      )}
 
       {/* Filter Toolbar */}
       <div className="bg-white rounded-card shadow-card mb-6 sticky top-32 z-20">
