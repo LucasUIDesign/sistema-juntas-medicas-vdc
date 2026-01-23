@@ -4,6 +4,7 @@ import { authMiddleware, AuthenticatedRequest, roleMiddleware } from '../middlew
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 import { db } from '../lib/prisma';
 import { randomUUID } from 'crypto';
+import { emailService } from '../services/emailService';
 
 const router = Router();
 
@@ -207,7 +208,7 @@ router.post(
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { pacienteId, observaciones, hora, medicoId, fecha } = req.body;
+      const { pacienteId, observaciones, hora, medicoId, fecha, lugar } = req.body;
 
       // Verify paciente exists
       const pacienteResult = await db.execute({
@@ -219,11 +220,15 @@ router.post(
         throw new ValidationError('Paciente no encontrado', { pacienteId: 'Paciente no válido' });
       }
 
+      const paciente = pacienteResult.rows[0] as any;
+
       const id = randomUUID();
       // Si se proporciona medicoId (admin asignando turno), usar ese; sino usar el usuario actual
       const assignedMedicoId = medicoId || req.user!.id;
       // Si se proporciona fecha, usar esa; sino usar la fecha actual
       const assignedFecha = fecha || new Date().toISOString();
+      // Lugar por defecto si no se proporciona
+      const assignedLugar = lugar || 'VDC Internacional - Sede Principal';
 
       await db.execute({
         sql: `INSERT INTO JuntaMedica (id, pacienteId, medicoId, estado, fecha, hora, observaciones, createdAt, updatedAt)
@@ -232,20 +237,58 @@ router.post(
       });
 
       const newJunta = await db.execute({
-        sql: `SELECT j.*, p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento
+        sql: `SELECT j.*, p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento, p.correo as pacienteCorreo,
+              u.nombre as medicoNombre, u.apellido as medicoApellido, u.email as medicoEmail
               FROM JuntaMedica j
               LEFT JOIN Paciente p ON j.pacienteId = p.id
+              LEFT JOIN User u ON j.medicoId = u.id
               WHERE j.id = ?`,
         args: [id],
       });
 
       const juntaRow = newJunta.rows[0] as any;
+
+      // Enviar notificaciones por email (no bloqueante)
+      const medicoNombreCompleto = `${juntaRow.medicoNombre || ''} ${juntaRow.medicoApellido || ''}`.trim();
+      const pacienteNombreCompleto = `${juntaRow.pacienteNombre || ''} ${juntaRow.pacienteApellido || ''}`.trim();
+      
+      // Formatear fecha para el email
+      const fechaFormateada = new Date(assignedFecha).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const emailData = {
+        pacienteNombre: pacienteNombreCompleto,
+        pacienteEmail: juntaRow.pacienteCorreo || '',
+        medicoNombre: medicoNombreCompleto,
+        medicoEmail: juntaRow.medicoEmail || '',
+        fecha: fechaFormateada,
+        hora: hora || 'Por confirmar',
+        lugar: assignedLugar,
+      };
+
+      // Enviar emails de forma asíncrona (no esperar respuesta)
+      if (juntaRow.medicoEmail) {
+        emailService.sendJuntaNotificationToMedico(emailData).catch(err => {
+          console.error('Error enviando email al médico:', err);
+        });
+      }
+
+      if (juntaRow.pacienteCorreo) {
+        emailService.sendJuntaNotificationToPaciente(emailData).catch(err => {
+          console.error('Error enviando email al paciente:', err);
+        });
+      }
+
       res.status(201).json({
         id: juntaRow.id,
         fecha: juntaRow.fecha,
         hora: juntaRow.hora,
         pacienteId: juntaRow.pacienteId,
-        pacienteNombre: `${juntaRow.pacienteNombre || ''} ${juntaRow.pacienteApellido || ''}`.trim(),
+        pacienteNombre: pacienteNombreCompleto,
         pacienteDni: juntaRow.numeroDocumento,
         medicoId: juntaRow.medicoId,
         estado: juntaRow.estado,

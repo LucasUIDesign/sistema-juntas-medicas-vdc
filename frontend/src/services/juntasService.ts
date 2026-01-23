@@ -115,7 +115,7 @@ export const juntasService = {
   /**
    * Create new junta for a specific medico (admin assigning shifts)
    */
-  async createJuntaParaMedico(data: { pacienteId: string; medicoId: string; hora: string; fecha: string; observaciones?: string }): Promise<JuntaMedica> {
+  async createJuntaParaMedico(data: { pacienteId: string; medicoId: string; hora: string; fecha: string; lugar?: string; observaciones?: string }): Promise<JuntaMedica> {
     const response = await fetch(`${API_URL}/juntas`, {
       method: 'POST',
       headers: getAuthHeaders(),

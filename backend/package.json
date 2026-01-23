@@ -35,11 +35,13 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.12",
     "typescript": "^5.3.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
+    "@types/nodemailer": "^7.0.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8.56.0",

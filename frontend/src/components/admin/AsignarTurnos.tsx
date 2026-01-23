@@ -60,6 +60,7 @@ const AsignarTurnos = () => {
     pacienteDni: '',
     hora: '',
     medicoId: '', // ID del médico evaluador asignado
+    lugar: 'VDC Internacional - Sede Principal', // Lugar por defecto
   });
 
   // Form state para profesional
@@ -273,6 +274,7 @@ const AsignarTurnos = () => {
         medicoId: formData.medicoId,
         hora: formData.hora,
         fecha: selectedDate.toISOString(),
+        lugar: formData.lugar,
         observaciones: `Turno asignado para el ${format(selectedDate, "dd/MM/yyyy")} a las ${formData.hora}`,
       });
       console.log('Junta creada:', nuevaJunta);
@@ -293,7 +295,7 @@ const AsignarTurnos = () => {
       };
 
       setTurnos([...turnos, nuevoTurno]);
-      setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicoId: '' });
+      setFormData({ pacienteNombre: '', pacienteDni: '', hora: '', medicoId: '', lugar: 'VDC Internacional - Sede Principal' });
       setPacienteSearch('');
       setShowForm(false);
       
@@ -709,6 +711,20 @@ const AsignarTurnos = () => {
                         <option key={medico.id} value={medico.id}>{medico.nombre}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lugar *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lugar}
+                      onChange={(e) => setFormData({ ...formData, lugar: e.target.value })}
+                      placeholder="Ej: VDC Internacional - Sede Principal"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                      required
+                    />
                   </div>
 
                   <div>
