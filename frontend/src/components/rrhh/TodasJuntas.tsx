@@ -386,7 +386,7 @@ const TodasJuntas = () => {
             className="flex items-center justify-center gap-2 px-6 py-3 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             <ArrowDownTrayIcon className="h-5 w-5" />
-            <span>Descargar Nómina en PDF</span>
+            <span>Descargar toda la Nómina en PDF</span>
           </motion.button>
         </div>
       )}
