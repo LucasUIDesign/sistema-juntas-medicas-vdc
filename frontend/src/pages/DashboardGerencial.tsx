@@ -5,10 +5,12 @@ import Sidebar from '../components/layout/Sidebar';
 import Breadcrumbs from '../components/layout/Breadcrumbs';
 import TodasJuntas from '../components/rrhh/TodasJuntas';
 import GestionPacientes from '../components/admin/GestionPacientes';
+import VerUsuarios from '../components/gerencial/VerUsuarios';
 import PerfilAdmin from '../components/admin/PerfilAdmin';
 import {
   ClipboardDocumentListIcon,
   UserGroupIcon,
+  UsersIcon,
   UserCircleIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
@@ -23,6 +25,11 @@ const sidebarLinks = [
     name: 'Pacientes',
     href: '/dashboard/gerencial/pacientes',
     icon: <UserGroupIcon className="h-5 w-5" />,
+  },
+  {
+    name: 'Usuarios',
+    href: '/dashboard/gerencial/usuarios',
+    icon: <UsersIcon className="h-5 w-5" />,
   },
   {
     name: 'Mi Perfil',
@@ -73,6 +80,7 @@ const DashboardGerencial = () => {
               <Route index element={<Navigate to="juntas" replace />} />
               <Route path="juntas" element={<TodasJuntas />} />
               <Route path="pacientes" element={<GestionPacientes />} />
+              <Route path="usuarios" element={<VerUsuarios />} />
               <Route path="perfil" element={<PerfilAdmin />} />
             </Routes>
           </div>
