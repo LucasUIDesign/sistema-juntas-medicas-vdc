@@ -341,7 +341,7 @@ const AsignarTurnos = () => {
                     className="flex items-center px-4 py-2 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors"
                   >
                     <PlusIcon className="h-4 w-4 mr-2" />
-                    Agregar Paciente
+                    Agregar Turno
                   </motion.button>
                 )}
               </div>
@@ -445,7 +445,7 @@ const AsignarTurnos = () => {
             >
               <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Agregar Paciente</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Agregar Turno</h3>
                   <button
                     onClick={() => setShowForm(false)}
                     className="p-2 text-gray-400 hover:text-gray-600 rounded-full"
