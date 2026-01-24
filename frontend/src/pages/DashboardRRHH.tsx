@@ -52,7 +52,7 @@ const DashboardRRHH = () => {
           {/* Welcome Message */}
           <div className="mb-6">
             <h1 className="text-subtitle font-semibold text-gray-900">
-              Bienvenido, {user?.nombre}
+              Bienvenido, RRHH
             </h1>
             <p className="text-vdc-secondary text-sm mt-1">
               Recursos Humanos - Supervisión total del sistema
