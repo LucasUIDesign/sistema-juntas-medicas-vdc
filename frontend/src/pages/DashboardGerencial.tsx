@@ -68,10 +68,10 @@ const DashboardGerencial = () => {
 
           <div className="mb-6">
             <h1 className="text-subtitle font-semibold text-gray-900">
-              Bienvenido, {user?.nombre}
+              Bienvenido, Gerencial
             </h1>
             <p className="text-vdc-secondary text-sm mt-1">
-              Gerencial - Panel de control y reportes
+              Panel de control y reportes
             </p>
           </div>
 

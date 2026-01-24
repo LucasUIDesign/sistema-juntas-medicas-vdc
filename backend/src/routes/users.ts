@@ -13,8 +13,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response, next: NextFu
   try {
     const userRole = (req as any).user.role;
 
-    // Only admins can view all users
-    if (userRole !== 'ADMIN') {
+    // Only admins and gerencial can view all users
+    if (userRole !== 'ADMIN' && userRole !== 'GERENCIAL') {
       return res.status(403).json({ error: 'No tienes permiso para ver usuarios' });
     }
 
