@@ -14,18 +14,10 @@ import {
   IdentificationIcon,
   CheckCircleIcon,
   XMarkIcon,
-  UserGroupIcon,
   AcademicCapIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
-
-interface Profesional {
-  id: string;
-  nombre: string;
-  matricula: string;
-  especialidad: string;
-}
 
 interface Turno {
   id: string;
@@ -48,10 +40,8 @@ const AsignarTurnos = () => {
   const fechaMinima = addDays(new Date(), 3);
   
   const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(fechaMinima);
   const [showForm, setShowForm] = useState(false);
-  const [showProfesionalForm, setShowProfesionalForm] = useState(false);
   const [isLoadingTurnos, setIsLoadingTurnos] = useState(true);
   
   // Form state para turno
@@ -63,23 +53,12 @@ const AsignarTurnos = () => {
     lugar: 'VDC Internacional - Sede Principal', // Lugar por defecto
   });
 
-  // Form state para profesional
-  const [profesionalForm, setProfesionalForm] = useState({
-    nombre: '',
-    matricula: '',
-    especialidad: '',
-  });
-
   // Autocomplete states
   const [pacienteSearch, setPacienteSearch] = useState('');
   const [pacienteSuggestions, setPacienteSuggestions] = useState<any[]>([]);
   const [showPacienteSuggestions, setShowPacienteSuggestions] = useState(false);
-  const [profesionalSearch, setProfesionalSearch] = useState('');
-  const [profesionalSuggestions, setProfesionalSuggestions] = useState<any[]>([]);
-  const [showProfesionalSuggestions, setShowProfesionalSuggestions] = useState(false);
   const [medicosEvaluadores, setMedicosEvaluadores] = useState<any[]>([]); // Lista de médicos evaluadores
   const pacienteInputRef = useRef<HTMLInputElement>(null);
-  const profesionalInputRef = useRef<HTMLInputElement>(null);
 
   // Obtener turnos del día seleccionado
   const turnosDelDia = selectedDate 
@@ -161,40 +140,11 @@ const AsignarTurnos = () => {
     return () => clearTimeout(debounce);
   }, [pacienteSearch]);
 
-  // Búsqueda inteligente de profesionales (médicos)
-  useEffect(() => {
-    const searchProfesionales = async () => {
-      if (profesionalSearch.length >= 2) {
-        try {
-          const results = await juntasService.getMedicos();
-          // Filtrar por nombre o matrícula
-          const filtered = results.filter(m => 
-            m.nombre.toLowerCase().includes(profesionalSearch.toLowerCase()) ||
-            (m.id && m.id.toLowerCase().includes(profesionalSearch.toLowerCase()))
-          );
-          setProfesionalSuggestions(filtered);
-          setShowProfesionalSuggestions(true);
-        } catch (error) {
-          console.error('Error searching profesionales:', error);
-        }
-      } else {
-        setProfesionalSuggestions([]);
-        setShowProfesionalSuggestions(false);
-      }
-    };
-
-    const debounce = setTimeout(searchProfesionales, 300);
-    return () => clearTimeout(debounce);
-  }, [profesionalSearch]);
-
   // Cerrar sugerencias al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (pacienteInputRef.current && !pacienteInputRef.current.contains(event.target as Node)) {
         setShowPacienteSuggestions(false);
-      }
-      if (profesionalInputRef.current && !profesionalInputRef.current.contains(event.target as Node)) {
-        setShowProfesionalSuggestions(false);
       }
     };
 
@@ -211,17 +161,6 @@ const AsignarTurnos = () => {
     });
     setPacienteSearch('');
     setShowPacienteSuggestions(false);
-  };
-
-  // Seleccionar profesional de las sugerencias
-  const handleSelectProfesional = (profesional: any) => {
-    setProfesionalForm({
-      nombre: profesional.nombre,
-      matricula: profesional.id, // Usamos el ID como matrícula por ahora
-      especialidad: 'Medicina Laboral', // Valor por defecto
-    });
-    setProfesionalSearch('');
-    setShowProfesionalSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -308,27 +247,6 @@ const AsignarTurnos = () => {
     }
   };
 
-  const handleAddProfesional = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!profesionalForm.nombre || !profesionalForm.matricula || !profesionalForm.especialidad) {
-      toast.warning('Por favor complete todos los campos');
-      return;
-    }
-
-    const nuevoProfesional: Profesional = {
-      id: `prof-${Date.now()}`,
-      nombre: profesionalForm.nombre,
-      matricula: profesionalForm.matricula,
-      especialidad: profesionalForm.especialidad,
-    };
-
-    setProfesionales([...profesionales, nuevoProfesional]);
-    setProfesionalForm({ nombre: '', matricula: '', especialidad: '' });
-    setShowProfesionalForm(false);
-    toast.success('Profesional agregado a la nómina');
-  };
-
   const handleDeleteTurno = async (turnoId: string) => {
     try {
       // Eliminar de la base de datos
@@ -341,11 +259,6 @@ const AsignarTurnos = () => {
       console.error('Error al eliminar turno:', error);
       toast.error('Error al eliminar el turno');
     }
-  };
-
-  const handleDeleteProfesional = (profId: string) => {
-    setProfesionales(profesionales.filter(p => p.id !== profId));
-    toast.success('Profesional eliminado de la nómina');
   };
 
   const getDayClassName = (date: Date) => {
@@ -363,73 +276,6 @@ const AsignarTurnos = () => {
       transition={{ duration: 0.3 }}
       className="space-y-8"
     >
-      {/* Profesionales de la Junta */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-subtitle font-semibold text-gray-900 flex items-center">
-              <UserGroupIcon className="h-6 w-6 mr-2 text-vdc-primary" />
-              Profesionales de la Junta
-            </h2>
-            <p className="text-vdc-secondary text-sm mt-1">
-              Nómina de médicos que participan en las juntas médicas
-            </p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowProfesionalForm(true)}
-            className="flex items-center px-4 py-2 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Agregar Profesional
-          </motion.button>
-        </div>
-
-        <div className="bg-white rounded-card shadow-card overflow-hidden">
-          {profesionales.length > 0 ? (
-            <div className="divide-y divide-gray-200">
-              {profesionales.map((prof) => (
-                <div
-                  key={prof.id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-vdc-primary/10 rounded-full flex items-center justify-center">
-                      <AcademicCapIcon className="h-6 w-6 text-vdc-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{prof.nombre}</p>
-                      <p className="text-sm text-vdc-secondary">
-                        {prof.matricula} • {prof.especialidad}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteProfesional(prof.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                    aria-label="Eliminar profesional"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <UserGroupIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-vdc-secondary">No hay profesionales en la nómina</p>
-              <button
-                onClick={() => setShowProfesionalForm(true)}
-                className="mt-4 text-vdc-primary hover:text-vdc-primary/80 font-medium"
-              >
-                + Agregar primer profesional
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Asignar Turnos */}
       <div>
         <div className="mb-4">
@@ -541,25 +387,6 @@ const AsignarTurnos = () => {
                                     <span className="inline-flex items-center px-2 py-0.5 bg-vdc-primary/10 text-vdc-primary text-xs rounded-full font-medium">
                                       {turno.medicoNombre}
                                     </span>
-                                  </div>
-                                )}
-                                {/* Profesionales de la Junta */}
-                                {profesionales.length > 0 && (
-                                  <div className="pt-2 border-t border-gray-200">
-                                    <p className="text-xs text-gray-500 mb-1 flex items-center">
-                                      <UserGroupIcon className="h-3 w-3 mr-1" />
-                                      Profesionales de la Junta:
-                                    </p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {profesionales.map((prof) => (
-                                        <span
-                                          key={prof.id}
-                                          className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full"
-                                        >
-                                          {prof.nombre}
-                                        </span>
-                                      ))}
-                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -785,144 +612,6 @@ const AsignarTurnos = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal de nuevo profesional */}
-      <AnimatePresence>
-        {showProfesionalForm && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowProfesionalForm(false)}
-              className="fixed inset-0 bg-black/50 z-50"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Agregar Profesional</h3>
-                  <button
-                    onClick={() => setShowProfesionalForm(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 rounded-full"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleAddProfesional} className="p-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Buscar Profesional
-                    </label>
-                    <div className="relative" ref={profesionalInputRef}>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={profesionalSearch || profesionalForm.nombre}
-                          onChange={(e) => {
-                            setProfesionalSearch(e.target.value);
-                            setProfesionalForm({ ...profesionalForm, nombre: e.target.value });
-                          }}
-                          onFocus={() => profesionalSearch.length >= 2 && setShowProfesionalSuggestions(true)}
-                          placeholder="Buscar por nombre o matrícula..."
-                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                        />
-                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      </div>
-                      
-                      {/* Sugerencias de profesionales */}
-                      {showProfesionalSuggestions && profesionalSuggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {profesionalSuggestions.map((prof) => (
-                            <button
-                              key={prof.id}
-                              type="button"
-                              onClick={() => handleSelectProfesional(prof)}
-                              className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
-                            >
-                              <div className="font-medium text-gray-900">{prof.nombre}</div>
-                              <div className="text-sm text-gray-500">ID: {prof.id}</div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {showProfesionalSuggestions && profesionalSearch.length >= 2 && profesionalSuggestions.length === 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-center text-sm text-gray-500">
-                          No se encontraron profesionales en el sistema.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre Completo *
-                    </label>
-                    <input
-                      type="text"
-                      value={profesionalForm.nombre}
-                      onChange={(e) => setProfesionalForm({ ...profesionalForm, nombre: e.target.value })}
-                      placeholder="Ej: Dr. Juan Pérez"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Matrícula *
-                    </label>
-                    <input
-                      type="text"
-                      value={profesionalForm.matricula}
-                      onChange={(e) => setProfesionalForm({ ...profesionalForm, matricula: e.target.value })}
-                      placeholder="Ej: MP 12345"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Especialidad *
-                    </label>
-                    <input
-                      type="text"
-                      value={profesionalForm.especialidad}
-                      onChange={(e) => setProfesionalForm({ ...profesionalForm, especialidad: e.target.value })}
-                      placeholder="Ej: Medicina Laboral"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-card focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowProfesionalForm(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-card hover:bg-gray-50 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-vdc-primary text-white rounded-card hover:bg-vdc-primary/90 transition-colors"
-                    >
-                      <CheckCircleIcon className="h-4 w-4 mr-2" />
-                      Agregar
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
