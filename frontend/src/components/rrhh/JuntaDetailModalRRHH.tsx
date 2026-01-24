@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { JuntaMedica } from '../../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import jsPDF from 'jspdf';
 import {
   XMarkIcon,
   CalendarIcon,
@@ -10,6 +11,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   IdentificationIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalRRHHProps {
@@ -18,6 +20,161 @@ interface JuntaDetailModalRRHHProps {
 }
 
 const JuntaDetailModalRRHH = ({ junta, onClose }: JuntaDetailModalRRHHProps) => {
+  const exportJuntaToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    const contentWidth = pageWidth - (margin * 2);
+    let yPosition = 20;
+
+    // Función para obtener el texto del estado
+    const getEstadoTexto = (estado: string) => {
+      const labels: Record<string, string> = {
+        PENDIENTE: 'Pendiente',
+        APROBADA: 'Aprobada',
+        RECHAZADA: 'Rechazada',
+        COMPLETADA: 'Completada',
+        DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      };
+      return labels[estado] || estado;
+    };
+
+    // Función para obtener el estado de aprobación
+    const getAprobacionTexto = (estado: string) => {
+      if (estado === 'APROBADA') return 'Aprobada por Director Medico';
+      if (estado === 'RECHAZADA') return 'Rechazada por Director Medico';
+      return 'Pendiente de aprobacion';
+    };
+
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(30, 64, 175);
+    doc.text('VDC Internacional', margin, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Ficha de Junta Medica', margin, yPosition);
+    yPosition += 6;
+
+    // Fecha de generación
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })}`, margin, yPosition);
+    yPosition += 15;
+
+    // Dibujar borde de la ficha
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    const fichaHeight = 120;
+    doc.rect(margin, yPosition, contentWidth, fichaHeight);
+
+    // Fondo del header de la ficha
+    doc.setFillColor(245, 247, 250);
+    doc.rect(margin, yPosition, contentWidth, 12, 'F');
+
+    // Título y estado
+    doc.setFontSize(11);
+    doc.setTextColor(30, 64, 175);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Junta Medica', margin + 3, yPosition + 8);
+
+    // Estado en el lado derecho
+    const estadoTexto = getEstadoTexto(junta.estado);
+    const estadoWidth = doc.getTextWidth(estadoTexto);
+    doc.setFontSize(10);
+
+    if (junta.estado === 'APROBADA') {
+      doc.setTextColor(22, 163, 74);
+    } else if (junta.estado === 'RECHAZADA') {
+      doc.setTextColor(220, 38, 38);
+    } else {
+      doc.setTextColor(234, 179, 8);
+    }
+    doc.text(estadoTexto, pageWidth - margin - estadoWidth - 3, yPosition + 8);
+
+    // Contenido de la ficha
+    let yFicha = yPosition + 20;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    // Fecha de la Junta
+    doc.setTextColor(100, 100, 100);
+    doc.text('Fecha de la Junta:', margin + 3, yFicha);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(format(new Date(junta.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es }), margin + 45, yFicha);
+    yFicha += 10;
+
+    // Paciente
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Paciente:', margin + 3, yFicha);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(junta.pacienteNombre, margin + 45, yFicha);
+    yFicha += 10;
+
+    // DNI
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('DNI:', margin + 3, yFicha);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(junta.pacienteDni || junta.dictamen?.dni || '-', margin + 45, yFicha);
+    yFicha += 10;
+
+    // Médico Evaluador
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Medico Evaluador:', margin + 3, yFicha);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text(junta.medicoNombre, margin + 45, yFicha);
+    yFicha += 10;
+
+    // Aprobación
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Aprobacion:', margin + 3, yFicha);
+
+    const aprobacionTexto = getAprobacionTexto(junta.estado);
+    if (junta.estado === 'APROBADA') {
+      doc.setTextColor(22, 163, 74);
+    } else if (junta.estado === 'RECHAZADA') {
+      doc.setTextColor(220, 38, 38);
+    } else {
+      doc.setTextColor(100, 100, 100);
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text(aprobacionTexto, margin + 45, yFicha);
+    yFicha += 12;
+
+    // Detalles
+    if (junta.detalles && junta.detalles.trim()) {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Detalles:', margin + 3, yFicha);
+      yFicha += 5;
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(9);
+
+      const detallesLines = doc.splitTextToSize(junta.detalles, contentWidth - 10);
+      doc.text(detallesLines.slice(0, 4), margin + 3, yFicha);
+    }
+
+    // Footer
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('VDC Internacional - Sistema de Gestion de Juntas Medicas', margin, pageHeight - 10);
+
+    // Guardar PDF
+    const pacienteNombreLimpio = junta.pacienteNombre.replace(/[^a-zA-Z0-9]/g, '-');
+    const fileName = `junta-medica-${pacienteNombreLimpio}-${format(new Date(junta.fecha), 'yyyy-MM-dd')}.pdf`;
+    doc.save(fileName);
+  };
+
   const getEstadoBadge = (estado: JuntaMedica['estado']) => {
     const styles: Record<string, string> = {
       PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -161,7 +318,14 @@ const JuntaDetailModalRRHH = ({ junta, onClose }: JuntaDetailModalRRHHProps) => 
           </div>
 
           {/* Footer */}
-          <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end flex-shrink-0">
+          <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-between flex-shrink-0">
+            <button
+              onClick={exportJuntaToPDF}
+              className="flex items-center px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+              Descargar PDF
+            </button>
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
