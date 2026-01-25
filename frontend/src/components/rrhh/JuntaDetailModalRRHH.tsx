@@ -17,9 +17,10 @@ import {
 interface JuntaDetailModalRRHHProps {
   junta: JuntaMedica;
   onClose: () => void;
+  showPdfButton?: boolean;
 }
 
-const JuntaDetailModalRRHH = ({ junta, onClose }: JuntaDetailModalRRHHProps) => {
+const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDetailModalRRHHProps) => {
   const exportJuntaToPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -318,14 +319,16 @@ const JuntaDetailModalRRHH = ({ junta, onClose }: JuntaDetailModalRRHHProps) => 
           </div>
 
           {/* Footer */}
-          <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-between flex-shrink-0">
-            <button
-              onClick={exportJuntaToPDF}
-              className="flex items-center px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors"
-            >
-              <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-              Descargar PDF
-            </button>
+          <div className={`bg-white border-t border-gray-200 px-6 py-4 flex ${showPdfButton ? 'justify-between' : 'justify-end'} flex-shrink-0`}>
+            {showPdfButton && (
+              <button
+                onClick={exportJuntaToPDF}
+                className="flex items-center px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+                Descargar PDF
+              </button>
+            )}
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"

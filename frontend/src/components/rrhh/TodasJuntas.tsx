@@ -630,6 +630,7 @@ const TodasJuntas = () => {
           <JuntaDetailModalRRHH
             junta={selectedJunta}
             onClose={() => setSelectedJunta(null)}
+            showPdfButton={user?.role === 'RRHH'}
           />
         )}
       </AnimatePresence>
