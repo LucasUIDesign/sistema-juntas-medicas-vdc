@@ -542,6 +542,102 @@ router.get(
   }
 );
 
+// POST /api/juntas/:id/documentos - Upload document for junta
+router.post(
+  '/:id/documentos',
+  authMiddleware,
+  [
+    param('id').isString().notEmpty(),
+    body('nombre').isString().notEmpty().withMessage('Nombre del documento requerido'),
+    body('tipo').isString().notEmpty().withMessage('Tipo de documento requerido'),
+    body('url').isString().notEmpty().withMessage('URL del documento requerida'),
+    body('categoria').isString().notEmpty().withMessage('Categoría requerida'),
+    body('size').isInt({ min: 0 }).withMessage('Tamaño del archivo requerido'),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { nombre, tipo, url, categoria, size } = req.body;
+
+      // Check if junta exists
+      const juntaResult = await db.execute({
+        sql: 'SELECT * FROM JuntaMedica WHERE id = ?',
+        args: [id],
+      });
+
+      if (juntaResult.rows.length === 0) {
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      const junta = juntaResult.rows[0] as any;
+
+      // Check permissions
+      if (req.user?.role === 'MEDICO_EVALUADOR' && junta.medicoId !== req.user.id) {
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      // Check if document already exists for this category
+      const existingDoc = await db.execute({
+        sql: 'SELECT * FROM DocumentoAdjunto WHERE juntaId = ? AND categoria = ?',
+        args: [id, categoria],
+      });
+
+      const docId = randomUUID();
+
+      if (existingDoc.rows.length > 0) {
+        // Update existing document
+        const oldDoc = existingDoc.rows[0] as any;
+        await db.execute({
+          sql: `UPDATE DocumentoAdjunto 
+                SET nombre = ?, tipo = ?, url = ?, size = ?, updatedAt = datetime('now')
+                WHERE id = ?`,
+          args: [nombre, tipo, url, size, oldDoc.id],
+        });
+
+        res.json({
+          message: 'Documento actualizado exitosamente',
+          documento: {
+            id: oldDoc.id,
+            juntaId: id,
+            nombre,
+            tipo,
+            url,
+            categoria,
+            size,
+            createdAt: oldDoc.createdAt,
+            updatedAt: new Date().toISOString(),
+          },
+        });
+      } else {
+        // Insert new document
+        await db.execute({
+          sql: `INSERT INTO DocumentoAdjunto (id, juntaId, nombre, tipo, url, categoria, size, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          args: [docId, id, nombre, tipo, url, categoria, size],
+        });
+
+        res.status(201).json({
+          message: 'Documento guardado exitosamente',
+          documento: {
+            id: docId,
+            juntaId: id,
+            nombre,
+            tipo,
+            url,
+            categoria,
+            size,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // DELETE /api/juntas/:id - Delete junta (ADMIN/RRHH only)
 router.delete(
   '/:id',

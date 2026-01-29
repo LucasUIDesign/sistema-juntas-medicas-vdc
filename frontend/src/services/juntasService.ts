@@ -295,5 +295,33 @@ export const juntasService = {
       return [];
     }
   },
+
+  /**
+   * Upload document for a junta
+   */
+  async uploadDocumento(juntaId: string, file: File, categoria: string): Promise<any> {
+    try {
+      // Para desarrollo, usamos una URL mock directamente
+      // En producción, esto debería subir a S3 o similar
+      const mockUrl = `https://mock-storage.vdc-internacional.com/documents/${juntaId}/${Date.now()}-${file.name}`;
+
+      const response = await fetch(`${API_URL}/juntas/${juntaId}/documentos`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          nombre: file.name,
+          tipo: file.type,
+          url: mockUrl,
+          categoria,
+          size: file.size,
+        }),
+      });
+
+      return handleResponse(response);
+    } catch (error) {
+      console.error('Error uploading documento:', error);
+      throw error;
+    }
+  },
 };
 

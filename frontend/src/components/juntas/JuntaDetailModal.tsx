@@ -578,14 +578,26 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                         const label = CATEGORIAS_DOCUMENTO.find(c => c.value === docRequerido)?.label || docRequerido;
                         const inputId = `file-upload-${docRequerido}`;
 
-                        const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                        const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            toast.success(`Archivo "${file.name}" seleccionado para ${label}. Subiendo...`);
-                            // TODO: Implementar subida real al backend
-                            setTimeout(() => {
-                              toast.info(`Archivo guardado: ${file.name}`);
-                            }, 1500);
+                            try {
+                              toast.info(`Subiendo: ${file.name}...`);
+                              
+                              // Subir el documento al backend
+                              const result = await juntasService.uploadDocumento(junta.id, file, docRequerido);
+                              
+                              toast.success(`Documento "${file.name}" guardado exitosamente`);
+                              
+                              // Recargar los datos de la junta para mostrar el documento actualizado
+                              const updatedJunta = await juntasService.getJuntaById(junta.id);
+                              if (updatedJunta && onUpdate) {
+                                onUpdate(updatedJunta);
+                              }
+                            } catch (error) {
+                              console.error('Error subiendo documento:', error);
+                              toast.error('Error al guardar el documento');
+                            }
                           }
                         };
 
