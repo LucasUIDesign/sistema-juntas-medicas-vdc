@@ -653,6 +653,8 @@ router.get(
     try {
       const { id, docId } = req.params;
 
+      console.log(`[DOWNLOAD] Intentando descargar documento ${docId} de junta ${id}`);
+
       // Check if junta exists
       const juntaResult = await db.execute({
         sql: 'SELECT * FROM JuntaMedica WHERE id = ?',
@@ -660,6 +662,7 @@ router.get(
       });
 
       if (juntaResult.rows.length === 0) {
+        console.log(`[DOWNLOAD] Junta ${id} no encontrada`);
         throw new NotFoundError('Junta no encontrada');
       }
 
@@ -667,6 +670,7 @@ router.get(
 
       // Check permissions
       if (req.user?.role === 'MEDICO_EVALUADOR' && junta.medicoId !== req.user.id) {
+        console.log(`[DOWNLOAD] Usuario ${req.user.id} no tiene permisos para junta ${id}`);
         throw new NotFoundError('Junta no encontrada');
       }
 
@@ -677,25 +681,31 @@ router.get(
       });
 
       if (docResult.rows.length === 0) {
+        console.log(`[DOWNLOAD] Documento ${docId} no encontrado`);
         throw new NotFoundError('Documento no encontrado');
       }
 
       const doc = docResult.rows[0] as any;
+      console.log(`[DOWNLOAD] Documento encontrado: ${doc.nombre}, tiene contenido: ${!!doc.contenido}`);
 
       if (!doc.contenido) {
+        console.log(`[DOWNLOAD] Documento ${docId} no tiene contenido`);
         throw new NotFoundError('Contenido del documento no disponible');
       }
 
       // Convert Base64 to Buffer
       const buffer = Buffer.from(doc.contenido, 'base64');
+      console.log(`[DOWNLOAD] Buffer creado, tamaño: ${buffer.length} bytes`);
 
       // Set headers for file download
       res.setHeader('Content-Type', doc.tipo || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `inline; filename="${doc.nombre}"`);
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.nombre)}"`);
       res.setHeader('Content-Length', buffer.length);
 
+      console.log(`[DOWNLOAD] Enviando archivo ${doc.nombre}`);
       res.send(buffer);
     } catch (error) {
+      console.error('[DOWNLOAD] Error:', error);
       next(error);
     }
   }

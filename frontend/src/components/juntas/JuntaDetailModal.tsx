@@ -651,6 +651,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                                       type="button"
                                       onClick={async () => {
                                         try {
+                                          console.log('[DOWNLOAD] Iniciando descarga:', adjunto.nombre);
                                           toast.info(`Descargando: ${adjunto.nombre}`);
                                           
                                           // Construir URL del backend para descargar
@@ -662,6 +663,9 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                                             ? adjunto.url 
                                             : `${API_URL}${adjunto.url}`;
                                           
+                                          console.log('[DOWNLOAD] URL:', downloadUrl);
+                                          console.log('[DOWNLOAD] Token presente:', !!token);
+                                          
                                           // Abrir en nueva pestaña con autenticación
                                           const response = await fetch(downloadUrl, {
                                             headers: {
@@ -669,12 +673,19 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                                             },
                                           });
                                           
+                                          console.log('[DOWNLOAD] Response status:', response.status);
+                                          console.log('[DOWNLOAD] Response ok:', response.ok);
+                                          
                                           if (!response.ok) {
+                                            const errorText = await response.text();
+                                            console.error('[DOWNLOAD] Error response:', errorText);
                                             throw new Error('Error al descargar el documento');
                                           }
                                           
                                           // Crear blob y descargar
                                           const blob = await response.blob();
+                                          console.log('[DOWNLOAD] Blob size:', blob.size, 'type:', blob.type);
+                                          
                                           const url = window.URL.createObjectURL(blob);
                                           const a = document.createElement('a');
                                           a.href = url;
@@ -684,9 +695,10 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                                           window.URL.revokeObjectURL(url);
                                           document.body.removeChild(a);
                                           
+                                          console.log('[DOWNLOAD] Descarga completada');
                                           toast.success('Documento descargado');
                                         } catch (error) {
-                                          console.error('Error descargando documento:', error);
+                                          console.error('[DOWNLOAD] Error descargando documento:', error);
                                           toast.error('Error al descargar el documento');
                                         }
                                       }}
