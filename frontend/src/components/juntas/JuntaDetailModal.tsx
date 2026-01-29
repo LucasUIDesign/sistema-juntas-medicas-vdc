@@ -614,7 +614,53 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                             </div>
 
                             {/* Upload Button */}
-                            <div className="ml-2 flex-shrink-0">
+                            <div className="ml-2 flex-shrink-0 flex gap-1">
+                              {/* Botón de Descarga (si existe el documento) */}
+                              {adjunto && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      toast.info(`Descargando: ${adjunto.nombre}`);
+                                      
+                                      // Si la URL es una URL completa (mock o real), descargar directamente
+                                      if (adjunto.url.startsWith('http')) {
+                                        // Abrir en nueva pestaña para descargar
+                                        window.open(adjunto.url, '_blank');
+                                      } else {
+                                        // Si es una key, obtener URL de descarga del backend
+                                        const token = localStorage.getItem('vdc_token');
+                                        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload/${adjunto.url}`, {
+                                          headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                          },
+                                        });
+                                        
+                                        if (!response.ok) {
+                                          throw new Error('Error al obtener URL de descarga');
+                                        }
+                                        
+                                        const data = await response.json();
+                                        window.open(data.downloadUrl, '_blank');
+                                      }
+                                      
+                                      toast.success('Documento descargado');
+                                    } catch (error) {
+                                      console.error('Error descargando documento:', error);
+                                      toast.error('Error al descargar el documento');
+                                    }
+                                  }}
+                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  title="Descargar documento"
+                                >
+                                  <svg className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                  </svg>
+                                  Descargar
+                                </button>
+                              )}
+                              
+                              {/* Botón de Subir/Reemplazar */}
                               <input
                                 type="file"
                                 id={inputId}

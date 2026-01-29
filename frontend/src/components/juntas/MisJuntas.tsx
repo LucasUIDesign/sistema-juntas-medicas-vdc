@@ -30,6 +30,7 @@ const MisJuntas = () => {
   const [juntas, setJuntas] = useState<PaginatedResult<JuntaMedica> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [sortField, setSortField] = useState<SortField>('fecha');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [page, setPage] = useState(1);
@@ -42,6 +43,25 @@ const MisJuntas = () => {
   const [searchPaciente, setSearchPaciente] = useState<string>('');
 
   const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
+
+  // Función para cargar los datos completos de una junta (incluyendo adjuntos)
+  const handleSelectJunta = async (junta: JuntaMedica) => {
+    setIsLoadingDetail(true);
+    try {
+      // Recargar los datos completos desde el backend
+      const fullJunta = await juntasService.getJuntaById(junta.id);
+      if (fullJunta) {
+        setSelectedJunta(fullJunta);
+      } else {
+        setSelectedJunta(junta); // Fallback a los datos que ya tenemos
+      }
+    } catch (error) {
+      console.error('Error loading junta details:', error);
+      setSelectedJunta(junta); // Fallback a los datos que ya tenemos
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -351,7 +371,7 @@ const MisJuntas = () => {
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.05 }}
                       className="group hover:bg-blue-50/30 transition-colors cursor-pointer"
-                      onClick={() => setSelectedJunta(junta)}
+                      onClick={() => handleSelectJunta(junta)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                         {format(new Date(junta.fecha), 'dd/MM/yyyy', { locale: es })}
@@ -377,7 +397,7 @@ const MisJuntas = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedJunta(junta);
+                            handleSelectJunta(junta);
                           }}
                           className="text-gray-400 hover:text-vdc-primary transition-colors p-2 rounded-full hover:bg-white border border-transparent hover:border-gray-200 hover:shadow-sm"
                           title="Ver Detalle Completo"
@@ -399,7 +419,7 @@ const MisJuntas = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.05 }}
                     className="p-5 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
-                    onClick={() => setSelectedJunta(junta)}
+                    onClick={() => handleSelectJunta(junta)}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -480,7 +500,7 @@ const MisJuntas = () => {
 
       {/* Detail Modal */}
       <AnimatePresence>
-        {selectedJunta && (
+        {selectedJunta && !isLoadingDetail && (
           <JuntaDetailModal
             junta={selectedJunta}
             onClose={() => setSelectedJunta(null)}

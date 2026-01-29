@@ -92,7 +92,23 @@ export const juntasService = {
         return null;
       }
 
-      return handleResponse(response);
+      const data = await handleResponse(response);
+      
+      // Map 'documentos' from backend to 'adjuntos' in frontend
+      if (data.documentos) {
+        data.adjuntos = data.documentos.map((doc: any) => ({
+          id: doc.id,
+          nombre: doc.nombre,
+          tipo: doc.tipo,
+          url: doc.url,
+          size: doc.size || 0,
+          categoria: doc.categoria,
+          uploadedAt: doc.createdAt,
+        }));
+        delete data.documentos;
+      }
+      
+      return data;
     } catch (error) {
       console.error('Error fetching junta:', error);
       return null;
