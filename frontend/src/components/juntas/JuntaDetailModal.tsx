@@ -637,57 +637,69 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                             <div className="ml-2 flex-shrink-0 flex gap-1">
                               {/* Botón de Descarga (si existe el documento) */}
                               {adjunto && (
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    try {
-                                      toast.info(`Descargando: ${adjunto.nombre}`);
-                                      
-                                      // Construir URL del backend para descargar
-                                      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                                      const token = localStorage.getItem('vdc_token');
-                                      
-                                      // La URL ya viene en el formato correcto desde el backend
-                                      const downloadUrl = adjunto.url.startsWith('http') 
-                                        ? adjunto.url 
-                                        : `${API_URL}${adjunto.url}`;
-                                      
-                                      // Abrir en nueva pestaña con autenticación
-                                      const response = await fetch(downloadUrl, {
-                                        headers: {
-                                          'Authorization': `Bearer ${token}`,
-                                        },
-                                      });
-                                      
-                                      if (!response.ok) {
-                                        throw new Error('Error al descargar el documento');
-                                      }
-                                      
-                                      // Crear blob y descargar
-                                      const blob = await response.blob();
-                                      const url = window.URL.createObjectURL(blob);
-                                      const a = document.createElement('a');
-                                      a.href = url;
-                                      a.download = adjunto.nombre;
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      window.URL.revokeObjectURL(url);
-                                      document.body.removeChild(a);
-                                      
-                                      toast.success('Documento descargado');
-                                    } catch (error) {
-                                      console.error('Error descargando documento:', error);
-                                      toast.error('Error al descargar el documento');
-                                    }
-                                  }}
-                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                  title="Descargar documento"
-                                >
-                                  <svg className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                  </svg>
-                                  Descargar
-                                </button>
+                                <>
+                                  {/* Verificar si es un documento viejo sin contenido (URL mock) */}
+                                  {adjunto.url.includes('mock-storage') ? (
+                                    <div className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-yellow-100 text-yellow-700" title="Este documento fue subido antes de la actualización y debe ser reemplazado">
+                                      <svg className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                      </svg>
+                                      Reemplazar
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        try {
+                                          toast.info(`Descargando: ${adjunto.nombre}`);
+                                          
+                                          // Construir URL del backend para descargar
+                                          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                          const token = localStorage.getItem('vdc_token');
+                                          
+                                          // La URL ya viene en el formato correcto desde el backend
+                                          const downloadUrl = adjunto.url.startsWith('http') 
+                                            ? adjunto.url 
+                                            : `${API_URL}${adjunto.url}`;
+                                          
+                                          // Abrir en nueva pestaña con autenticación
+                                          const response = await fetch(downloadUrl, {
+                                            headers: {
+                                              'Authorization': `Bearer ${token}`,
+                                            },
+                                          });
+                                          
+                                          if (!response.ok) {
+                                            throw new Error('Error al descargar el documento');
+                                          }
+                                          
+                                          // Crear blob y descargar
+                                          const blob = await response.blob();
+                                          const url = window.URL.createObjectURL(blob);
+                                          const a = document.createElement('a');
+                                          a.href = url;
+                                          a.download = adjunto.nombre;
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          window.URL.revokeObjectURL(url);
+                                          document.body.removeChild(a);
+                                          
+                                          toast.success('Documento descargado');
+                                        } catch (error) {
+                                          console.error('Error descargando documento:', error);
+                                          toast.error('Error al descargar el documento');
+                                        }
+                                      }}
+                                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                      title="Descargar documento"
+                                    >
+                                      <svg className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                      Descargar
+                                    </button>
+                                  )}
+                                </>
                               )}
                               
                               {/* Botón de Subir/Reemplazar */}
