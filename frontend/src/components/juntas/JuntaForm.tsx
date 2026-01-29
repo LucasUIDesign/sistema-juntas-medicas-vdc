@@ -264,6 +264,31 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       });
       console.log('Dictamen guardado y junta finalizada');
 
+      // Upload documents if any
+      if (documentos.length > 0) {
+        console.log(`Subiendo ${documentos.length} documento(s)...`);
+        let uploadedCount = 0;
+        let failedCount = 0;
+
+        for (const doc of documentos) {
+          try {
+            await juntasService.uploadDocumento(junta.id, doc.file, doc.categoria);
+            uploadedCount++;
+            console.log(`✅ Documento subido: ${doc.file.name}`);
+          } catch (error) {
+            failedCount++;
+            console.error(`❌ Error subiendo ${doc.file.name}:`, error);
+          }
+        }
+
+        if (uploadedCount > 0) {
+          toast.success(`${uploadedCount} documento(s) subido(s) exitosamente`);
+        }
+        if (failedCount > 0) {
+          toast.warning(`${failedCount} documento(s) no se pudieron subir`);
+        }
+      }
+
       toast.success('¡Junta médica creada y finalizada correctamente!');
 
       // Reset form
