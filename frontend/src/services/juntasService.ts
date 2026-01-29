@@ -309,9 +309,18 @@ export const juntasService = {
    */
   async uploadDocumento(juntaId: string, file: File, categoria: string): Promise<any> {
     try {
-      // Para desarrollo, usamos una URL mock directamente
-      // En producción, esto debería subir a S3 o similar
-      const mockUrl = `https://mock-storage.vdc-internacional.com/documents/${juntaId}/${Date.now()}-${file.name}`;
+      // Convertir archivo a Base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Extraer solo la parte Base64 (sin el prefijo data:...)
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
       const response = await fetch(`${API_URL}/juntas/${juntaId}/documentos`, {
         method: 'POST',
@@ -319,7 +328,7 @@ export const juntasService = {
         body: JSON.stringify({
           nombre: file.name,
           tipo: file.type,
-          url: mockUrl,
+          contenido: base64,
           categoria,
           size: file.size,
         }),

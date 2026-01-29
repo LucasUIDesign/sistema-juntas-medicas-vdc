@@ -643,26 +643,36 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                                     try {
                                       toast.info(`Descargando: ${adjunto.nombre}`);
                                       
-                                      // Si la URL es una URL completa (mock o real), descargar directamente
-                                      if (adjunto.url.startsWith('http')) {
-                                        // Abrir en nueva pestaña para descargar
-                                        window.open(adjunto.url, '_blank');
-                                      } else {
-                                        // Si es una key, obtener URL de descarga del backend
-                                        const token = localStorage.getItem('vdc_token');
-                                        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload/${adjunto.url}`, {
-                                          headers: {
-                                            'Authorization': `Bearer ${token}`,
-                                          },
-                                        });
-                                        
-                                        if (!response.ok) {
-                                          throw new Error('Error al obtener URL de descarga');
-                                        }
-                                        
-                                        const data = await response.json();
-                                        window.open(data.downloadUrl, '_blank');
+                                      // Construir URL del backend para descargar
+                                      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                      const token = localStorage.getItem('vdc_token');
+                                      
+                                      // La URL ya viene en el formato correcto desde el backend
+                                      const downloadUrl = adjunto.url.startsWith('http') 
+                                        ? adjunto.url 
+                                        : `${API_URL}${adjunto.url}`;
+                                      
+                                      // Abrir en nueva pestaña con autenticación
+                                      const response = await fetch(downloadUrl, {
+                                        headers: {
+                                          'Authorization': `Bearer ${token}`,
+                                        },
+                                      });
+                                      
+                                      if (!response.ok) {
+                                        throw new Error('Error al descargar el documento');
                                       }
+                                      
+                                      // Crear blob y descargar
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = adjunto.nombre;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      window.URL.revokeObjectURL(url);
+                                      document.body.removeChild(a);
                                       
                                       toast.success('Documento descargado');
                                     } catch (error) {

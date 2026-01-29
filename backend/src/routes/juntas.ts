@@ -550,7 +550,7 @@ router.post(
     param('id').isString().notEmpty(),
     body('nombre').isString().notEmpty().withMessage('Nombre del documento requerido'),
     body('tipo').isString().notEmpty().withMessage('Tipo de documento requerido'),
-    body('url').isString().notEmpty().withMessage('URL del documento requerida'),
+    body('contenido').isString().notEmpty().withMessage('Contenido del documento requerido'),
     body('categoria').isString().notEmpty().withMessage('Categoría requerida'),
     body('size').isInt({ min: 0 }).withMessage('Tamaño del archivo requerido'),
   ],
@@ -558,7 +558,7 @@ router.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { nombre, tipo, url, categoria, size } = req.body;
+      const { nombre, tipo, contenido, categoria, size } = req.body;
 
       // Check if junta exists
       const juntaResult = await db.execute({
@@ -584,15 +584,17 @@ router.post(
       });
 
       const docId = randomUUID();
+      // Generate internal URL for the document
+      const url = `/api/juntas/${id}/documentos/${docId}/download`;
 
       if (existingDoc.rows.length > 0) {
         // Update existing document
         const oldDoc = existingDoc.rows[0] as any;
         await db.execute({
           sql: `UPDATE DocumentoAdjunto 
-                SET nombre = ?, tipo = ?, url = ?, size = ?, updatedAt = datetime('now')
+                SET nombre = ?, tipo = ?, contenido = ?, size = ?, url = ?, updatedAt = datetime('now')
                 WHERE id = ?`,
-          args: [nombre, tipo, url, size, oldDoc.id],
+          args: [nombre, tipo, contenido, size, url, oldDoc.id],
         });
 
         res.json({
@@ -612,9 +614,9 @@ router.post(
       } else {
         // Insert new document
         await db.execute({
-          sql: `INSERT INTO DocumentoAdjunto (id, juntaId, nombre, tipo, url, categoria, size, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-          args: [docId, id, nombre, tipo, url, categoria, size],
+          sql: `INSERT INTO DocumentoAdjunto (id, juntaId, nombre, tipo, url, contenido, categoria, size, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          args: [docId, id, nombre, tipo, url, contenido, categoria, size],
         });
 
         res.status(201).json({
@@ -632,6 +634,67 @@ router.post(
           },
         });
       }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /api/juntas/:id/documentos/:docId/download - Download document
+router.get(
+  '/:id/documentos/:docId/download',
+  authMiddleware,
+  [
+    param('id').isString().notEmpty(),
+    param('docId').isString().notEmpty(),
+  ],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id, docId } = req.params;
+
+      // Check if junta exists
+      const juntaResult = await db.execute({
+        sql: 'SELECT * FROM JuntaMedica WHERE id = ?',
+        args: [id],
+      });
+
+      if (juntaResult.rows.length === 0) {
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      const junta = juntaResult.rows[0] as any;
+
+      // Check permissions
+      if (req.user?.role === 'MEDICO_EVALUADOR' && junta.medicoId !== req.user.id) {
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      // Get document
+      const docResult = await db.execute({
+        sql: 'SELECT * FROM DocumentoAdjunto WHERE id = ? AND juntaId = ?',
+        args: [docId, id],
+      });
+
+      if (docResult.rows.length === 0) {
+        throw new NotFoundError('Documento no encontrado');
+      }
+
+      const doc = docResult.rows[0] as any;
+
+      if (!doc.contenido) {
+        throw new NotFoundError('Contenido del documento no disponible');
+      }
+
+      // Convert Base64 to Buffer
+      const buffer = Buffer.from(doc.contenido, 'base64');
+
+      // Set headers for file download
+      res.setHeader('Content-Type', doc.tipo || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${doc.nombre}"`);
+      res.setHeader('Content-Length', buffer.length);
+
+      res.send(buffer);
     } catch (error) {
       next(error);
     }
