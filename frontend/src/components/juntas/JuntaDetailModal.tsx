@@ -47,10 +47,13 @@ const TABS_DICTAMEN = [
   { id: 'dictamen', label: 'Dictamen' },
 ];
 
-const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) => {
+const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetailModalProps) => {
   const { user } = useAuth();
   const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
 
+  // Estado local para la junta (permite actualizaciones en tiempo real)
+  const [junta, setJunta] = useState<JuntaMedica>(initialJunta);
+  
   // Mostrar dictamen expandido por defecto para directores, colapsado para otros para reducir ruido inicial
   const [showDictamen, setShowDictamen] = useState(true);
   const [activeTab, setActiveTab] = useState('identificacion');
@@ -591,8 +594,13 @@ const JuntaDetailModal = ({ junta, onClose, onUpdate }: JuntaDetailModalProps) =
                               
                               // Recargar los datos de la junta para mostrar el documento actualizado
                               const updatedJunta = await juntasService.getJuntaById(junta.id);
-                              if (updatedJunta && onUpdate) {
-                                onUpdate(updatedJunta);
+                              if (updatedJunta) {
+                                // Actualizar el estado local del modal
+                                setJunta(updatedJunta);
+                                // Notificar al componente padre
+                                if (onUpdate) {
+                                  onUpdate(updatedJunta);
+                                }
                               }
                             } catch (error) {
                               console.error('Error subiendo documento:', error);
