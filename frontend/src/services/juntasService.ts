@@ -19,7 +19,15 @@ const handleResponse = async (response: Response) => {
 
     console.error('API Error Response:', errorData);
 
-    // Check for validation errors object
+    // Check for validation errors object (backend usa 'details')
+    if (errorData.details) {
+      const messages = Object.entries(errorData.details)
+        .map(([field, msg]) => `${field}: ${msg}`)
+        .join(', ');
+      throw new Error(messages || 'Error de validación');
+    }
+
+    // Check for validation errors object (legacy, usa 'errors')
     if (errorData.errors) {
       const messages = Object.entries(errorData.errors)
         .map(([field, msg]) => `${field}: ${msg}`)
