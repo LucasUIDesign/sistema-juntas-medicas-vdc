@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
-import { format, isSameDay, addDays } from 'date-fns';
+import { format, isSameDay, addDays, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import { juntasService } from '../../services/juntasService';
@@ -261,7 +261,21 @@ const AsignarTurnos = () => {
     }
   };
 
+  // Función para deshabilitar sábados (6) y domingos (0)
+  const isWeekday = (date: Date) => {
+    const day = getDay(date);
+    return day !== 0 && day !== 6; // 0 = Domingo, 6 = Sábado
+  };
+
   const getDayClassName = (date: Date) => {
+    const day = getDay(date);
+    const isWeekend = day === 0 || day === 6;
+    
+    // Si es fin de semana, aplicar estilo deshabilitado
+    if (isWeekend) {
+      return 'text-gray-300 cursor-not-allowed';
+    }
+    
     const tieneTurnos = fechasConTurnos.some(f => isSameDay(f, date));
     if (tieneTurnos) {
       return 'bg-vdc-primary/20 text-vdc-primary font-semibold rounded-full';
@@ -302,6 +316,7 @@ const AsignarTurnos = () => {
                 inline
                 locale={es}
                 minDate={fechaMinima}
+                filterDate={isWeekday}
                 dayClassName={getDayClassName}
                 calendarClassName="!border-0 !font-sans"
               />
@@ -309,6 +324,11 @@ const AsignarTurnos = () => {
                 <div className="flex items-center text-sm text-gray-600">
                   <div className="w-3 h-3 rounded-full bg-vdc-primary/20 mr-2"></div>
                   <span>Días con turnos asignados</span>
+                </div>
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    <strong>Días laborables:</strong> Lunes a Viernes. Los fines de semana no están disponibles para asignar turnos.
+                  </p>
                 </div>
                 <div className="p-2 bg-amber-50 rounded-lg">
                   <p className="text-xs text-amber-700">
