@@ -375,7 +375,7 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
               }}
               onCancel={() => { }}
               initialData={dictamenData || undefined}
-              hideProfesionales={true}
+              hideProfesionales={false}
             />
           </div>
 
