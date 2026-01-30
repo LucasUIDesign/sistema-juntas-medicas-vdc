@@ -182,7 +182,7 @@ const initialValues: DictamenMedicoData = {
   capacidadFuncional: '', factoresLimitantes: '',
   aptitudLaboral: '', restricciones: '', recomendaciones: '', tiempoRecuperacion: '',
   medicosEvaluadores: [{ nombre: '', matricula: '', especialidad: '' }],
-  fechaDictamen: '',
+  fechaDictamen: new Date().toISOString().split('T')[0], // Auto-completar con fecha actual
 };
 
 const PASOS = [
