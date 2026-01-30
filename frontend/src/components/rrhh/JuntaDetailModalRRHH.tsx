@@ -167,7 +167,16 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
 
     // Médicos Evaluadores (si existen)
     const medicosArray = junta.dictamen?.medicosEvaluadores;
-    if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+    // Filtrar médicos que tengan al menos un campo lleno
+    const medicosConDatos = Array.isArray(medicosArray) 
+      ? medicosArray.filter((m: any) => 
+          (m.nombre && m.nombre.trim()) || 
+          (m.matricula && m.matricula.trim()) || 
+          (m.especialidad && m.especialidad.trim())
+        )
+      : [];
+    
+    if (medicosConDatos.length > 0) {
       // Agregar nueva página si es necesario
       if (yFicha > 200) {
         doc.addPage();
@@ -182,7 +191,7 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
       doc.text('Medicos Evaluadores', margin, yFicha);
       yFicha += 8;
 
-      medicosArray.forEach((medico: any, index: number) => {
+      medicosConDatos.forEach((medico: any, index: number) => {
         doc.setFontSize(10);
         doc.setTextColor(100, 100, 100);
         doc.setFont('helvetica', 'bold');
@@ -347,8 +356,17 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
               // Intentar obtener médicos del nuevo formato (array)
               const medicosArray = junta.dictamen?.medicosEvaluadores;
               
-              // Si existe el array y tiene médicos
-              if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+              // Filtrar médicos que tengan al menos un campo lleno
+              const medicosConDatos = Array.isArray(medicosArray) 
+                ? medicosArray.filter((m: any) => 
+                    (m.nombre && m.nombre.trim()) || 
+                    (m.matricula && m.matricula.trim()) || 
+                    (m.especialidad && m.especialidad.trim())
+                  )
+                : [];
+              
+              // Si existe el array y tiene médicos con datos
+              if (medicosConDatos.length > 0) {
                 return (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-gray-700 flex items-center">
@@ -356,7 +374,7 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
                       Médicos Evaluadores
                     </p>
                     <div className="space-y-3">
-                      {medicosArray.map((medico: any, index: number) => (
+                      {medicosConDatos.map((medico: any, index: number) => (
                         <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                           <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
                             {index === 0 ? 'Médico Principal' : `Médico ${index + 1}`}

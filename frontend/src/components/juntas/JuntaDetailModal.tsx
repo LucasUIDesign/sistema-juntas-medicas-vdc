@@ -458,11 +458,20 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                 // Intentar obtener médicos del nuevo formato (array)
                 const medicosArray = datos?.medicosEvaluadores;
                 
-                // Si existe el array y tiene médicos
-                if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+                // Filtrar médicos que tengan al menos un campo lleno
+                const medicosConDatos = Array.isArray(medicosArray) 
+                  ? medicosArray.filter((m: any) => 
+                      (m.nombre && m.nombre.trim()) || 
+                      (m.matricula && m.matricula.trim()) || 
+                      (m.especialidad && m.especialidad.trim())
+                    )
+                  : [];
+                
+                // Si existe el array y tiene médicos con datos
+                if (medicosConDatos.length > 0) {
                   return (
                     <div className="space-y-4">
-                      {medicosArray.map((medico: any, index: number) => (
+                      {medicosConDatos.map((medico: any, index: number) => (
                         <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                           <div className="flex items-center mb-3">
                             <div className="bg-vdc-primary/10 p-2 rounded-full mr-3">
