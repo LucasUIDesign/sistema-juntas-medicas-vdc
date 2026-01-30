@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, FieldArray } from 'formik';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -14,9 +14,18 @@ import {
   DocumentCheckIcon,
   UserGroupIcon,
   ExclamationCircleIcon,
+  PlusIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 // Tipos para el formulario
+// Interfaz para médico evaluador
+export interface MedicoEvaluador {
+  nombre: string;
+  matricula: string;
+  especialidad: string;
+}
+
 export interface DictamenMedicoData {
   // Paso 1: Datos de Identificación
   nombreCompleto: string;
@@ -82,12 +91,7 @@ export interface DictamenMedicoData {
   recomendaciones: string;
   tiempoRecuperacion: string;
   // Paso 12: Profesionales
-  medicoEvaluador1: string;
-  matricula1: string;
-  especialidad1: string;
-  medicoEvaluador2: string;
-  matricula2: string;
-  especialidad2: string;
+  medicosEvaluadores: MedicoEvaluador[];
   fechaDictamen: string;
 }
 
@@ -112,31 +116,53 @@ export const isDictamenCompleto = (data: DictamenMedicoData): boolean => {
 
 // Función para contar campos llenos
 export const contarCamposLlenos = (data: DictamenMedicoData): { llenos: number; total: number } => {
-  const campos = Object.keys(data) as (keyof DictamenMedicoData)[];
   let llenos = 0;
+  let total = 0;
   const vacios: string[] = [];
 
-  for (const campo of campos) {
+  // Contar campos simples (excluyendo medicosEvaluadores)
+  const camposSimples = Object.keys(data).filter(k => k !== 'medicosEvaluadores' && k !== 'motivoJunta') as (keyof DictamenMedicoData)[];
+  
+  for (const campo of camposSimples) {
+    total++;
     const valor = data[campo];
-    if (Array.isArray(valor)) {
-      if (valor.length > 0) {
-        llenos++;
-      } else {
-        vacios.push(campo);
-      }
-    } else if (valor && valor.trim() !== '') {
+    if (valor && typeof valor === 'string' && valor.trim() !== '') {
       llenos++;
     } else {
       vacios.push(campo);
     }
   }
 
+  // Contar motivoJunta (array de strings)
+  total++;
+  if (Array.isArray(data.motivoJunta) && data.motivoJunta.length > 0) {
+    llenos++;
+  } else {
+    vacios.push('motivoJunta');
+  }
+
+  // Contar medicosEvaluadores (array de objetos)
+  if (Array.isArray(data.medicosEvaluadores)) {
+    data.medicosEvaluadores.forEach((medico, index) => {
+      // Cada médico tiene 3 campos
+      total += 3;
+      if (medico.nombre && medico.nombre.trim() !== '') llenos++;
+      else vacios.push(`medicosEvaluadores[${index}].nombre`);
+      
+      if (medico.matricula && medico.matricula.trim() !== '') llenos++;
+      else vacios.push(`medicosEvaluadores[${index}].matricula`);
+      
+      if (medico.especialidad && medico.especialidad.trim() !== '') llenos++;
+      else vacios.push(`medicosEvaluadores[${index}].especialidad`);
+    });
+  }
+
   // Debug: mostrar campos vacíos en consola
-  if (vacios.length > 0 && vacios.length < 10) {
+  if (vacios.length > 0 && vacios.length < 15) {
     console.log('Campos vacíos:', vacios);
   }
 
-  return { llenos, total: campos.length };
+  return { llenos, total };
 };
 
 const initialValues: DictamenMedicoData = {
@@ -154,8 +180,8 @@ const initialValues: DictamenMedicoData = {
   diagnosticoPrincipal: '', codigoCIE10: '', naturalezaEnfermedad: '',
   capacidadFuncional: '', factoresLimitantes: '',
   aptitudLaboral: '', restricciones: '', recomendaciones: '', tiempoRecuperacion: '',
-  medicoEvaluador1: '', matricula1: '', especialidad1: '',
-  medicoEvaluador2: '', matricula2: '', especialidad2: '', fechaDictamen: '',
+  medicosEvaluadores: [{ nombre: '', matricula: '', especialidad: '' }],
+  fechaDictamen: '',
 };
 
 const PASOS = [
@@ -197,7 +223,7 @@ const CAMPOS_POR_PASO: Record<number, (keyof DictamenMedicoData)[]> = {
   9: ['diagnosticoPrincipal', 'codigoCIE10', 'naturalezaEnfermedad'],
   10: ['capacidadFuncional', 'factoresLimitantes'],
   11: ['aptitudLaboral', 'restricciones', 'recomendaciones', 'tiempoRecuperacion'],
-  12: ['medicoEvaluador1', 'matricula1', 'especialidad1', 'medicoEvaluador2', 'matricula2', 'especialidad2', 'fechaDictamen'],
+  12: ['medicosEvaluadores', 'fechaDictamen'],
 };
 
 const isPasoCompleto = (paso: number, values: DictamenMedicoData): boolean => {
@@ -640,46 +666,71 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
 
       case 12:
         return (
-          <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Principal</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className={labelClass}>Nombre Completo</label>
-                  <Field name="medicoEvaluador1" className={inputClass} placeholder="Dr./Dra. Nombre Apellido" />
-                </div>
-                <div>
-                  <label className={labelClass}>Matrícula</label>
-                  <Field name="matricula1" className={inputClass} placeholder="MP 12345" />
-                </div>
-                <div>
-                  <label className={labelClass}>Especialidad</label>
-                  <Field name="especialidad1" className={inputClass} placeholder="Medicina Laboral" />
+          <FieldArray name="medicosEvaluadores">
+            {({ push, remove }) => (
+              <div className="space-y-6">
+                {values.medicosEvaluadores.map((medico, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-gray-700">
+                        {index === 0 ? 'Médico Evaluador Principal' : `Médico Evaluador ${index + 1}`}
+                      </p>
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+                          title="Eliminar médico"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className={labelClass}>Nombre Completo *</label>
+                        <Field
+                          name={`medicosEvaluadores.${index}.nombre`}
+                          className={inputClass}
+                          placeholder="Dr./Dra. Nombre Apellido"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Matrícula *</label>
+                        <Field
+                          name={`medicosEvaluadores.${index}.matricula`}
+                          className={inputClass}
+                          placeholder="MP 12345"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Especialidad *</label>
+                        <Field
+                          name={`medicosEvaluadores.${index}.especialidad`}
+                          className={inputClass}
+                          placeholder="Medicina Laboral"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={() => push({ nombre: '', matricula: '', especialidad: '' })}
+                  className="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-vdc-primary hover:text-vdc-primary transition-colors"
+                >
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Agregar Médico Evaluador
+                </button>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <label className={labelClass}>Fecha del Dictamen *</label>
+                  <Field name="fechaDictamen" type="date" className={inputClass} />
                 </div>
               </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-3">Médico Evaluador Secundario (opcional)</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className={labelClass}>Nombre Completo</label>
-                  <Field name="medicoEvaluador2" className={inputClass} placeholder="Dr./Dra. Nombre Apellido" />
-                </div>
-                <div>
-                  <label className={labelClass}>Matrícula</label>
-                  <Field name="matricula2" className={inputClass} placeholder="MP 12345" />
-                </div>
-                <div>
-                  <label className={labelClass}>Especialidad</label>
-                  <Field name="especialidad2" className={inputClass} placeholder="Especialidad" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>Fecha del Dictamen</label>
-              <Field name="fechaDictamen" type="date" className={inputClass} />
-            </div>
-          </div>
+            )}
+          </FieldArray>
         );
 
       default:

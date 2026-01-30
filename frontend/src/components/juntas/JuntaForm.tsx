@@ -134,16 +134,17 @@ const generatePDF = async (dictamen: DictamenMedicoData, juntaId: string) => {
       <div class="field"><span class="label">Tiempo Recuperacion:</span><span class="value">${dictamen.tiempoRecuperacion || '-'}</span></div>
 
       <div class="firma">
+        ${dictamen.medicosEvaluadores && dictamen.medicosEvaluadores.length > 0 ? dictamen.medicosEvaluadores.map((medico: any) => `
         <div class="firma-box">
-          <p>${dictamen.medicoEvaluador1 || 'Medico Evaluador'}</p>
-          <p style="font-size: 12px;">${dictamen.matricula1 || ''} - ${dictamen.especialidad1 || ''}</p>
+          <p>${medico.nombre || 'Médico Evaluador'}</p>
+          <p style="font-size: 12px;">${medico.matricula || ''} - ${medico.especialidad || ''}</p>
         </div>
-        ${dictamen.medicoEvaluador2 ? `
+        `).join('') : `
         <div class="firma-box">
-          <p>${dictamen.medicoEvaluador2}</p>
-          <p style="font-size: 12px;">${dictamen.matricula2 || ''} - ${dictamen.especialidad2 || ''}</p>
+          <p>Médico Evaluador</p>
+          <p style="font-size: 12px;">-</p>
         </div>
-        ` : '<div></div>'}
+        `}
       </div>
     </body>
     </html>
