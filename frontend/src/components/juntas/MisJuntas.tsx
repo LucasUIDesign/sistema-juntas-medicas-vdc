@@ -147,9 +147,11 @@ const MisJuntas = () => {
 
   const getEstadoBadge = (junta: JuntaMedica) => {
     // Verificar si todos los documentos requeridos están cargados
-    const documentosCargados = (junta.adjuntos || []).filter(adj => 
-      DOCUMENTOS_REQUERIDOS.includes(adj.categoria as any)
-    ).length;
+    // Si tenemos adjuntos (vista detalle), usar esa info; sino usar documentosCount (vista lista)
+    const documentosCargados = junta.adjuntos 
+      ? junta.adjuntos.filter(adj => DOCUMENTOS_REQUERIDOS.includes(adj.categoria as any)).length
+      : (junta.documentosCount || 0);
+    
     const todosDocumentosCargados = documentosCargados === DOCUMENTOS_REQUERIDOS.length;
 
     // Si el estado es COMPLETADA pero faltan documentos, mostrar como Incompleta

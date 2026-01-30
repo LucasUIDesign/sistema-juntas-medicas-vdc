@@ -49,7 +49,8 @@ router.get(
           j.createdAt, j.updatedAt,
           p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
           u.nombre as medicoNombre, u.apellido as medicoApellido,
-          d.datosCompletos
+          d.datosCompletos,
+          (SELECT COUNT(*) FROM DocumentoAdjunto WHERE juntaId = j.id) as documentosCount
         FROM JuntaMedica j
         LEFT JOIN Paciente p ON j.pacienteId = p.id
         LEFT JOIN User u ON j.medicoId = u.id
@@ -108,6 +109,7 @@ router.get(
             aptitudLaboral: row.aptitudLaboral,
             diagnosticoPrincipal: row.diagnosticoPrincipal,
             dictamen: dictamenObj,
+            documentosCount: row.documentosCount || 0,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
           };

@@ -74,6 +74,7 @@ export interface JuntaMedica {
   detallesDirector?: string; // Detalles de evaluación del Director Médico
   aprobacion?: boolean;
   adjuntos?: Adjunto[];
+  documentosCount?: number; // Conteo de documentos adjuntos (usado en lista)
   dictamen?: DictamenMedicoResumen;
   estado: EstadoJunta;
   documentosFaltantes?: CategoriaDocumento[]; // Documentos que faltan entregar
