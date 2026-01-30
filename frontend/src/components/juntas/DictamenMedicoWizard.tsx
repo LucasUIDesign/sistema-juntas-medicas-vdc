@@ -114,14 +114,26 @@ export const isDictamenCompleto = (data: DictamenMedicoData): boolean => {
 export const contarCamposLlenos = (data: DictamenMedicoData): { llenos: number; total: number } => {
   const campos = Object.keys(data) as (keyof DictamenMedicoData)[];
   let llenos = 0;
+  const vacios: string[] = [];
 
   for (const campo of campos) {
     const valor = data[campo];
     if (Array.isArray(valor)) {
-      if (valor.length > 0) llenos++;
+      if (valor.length > 0) {
+        llenos++;
+      } else {
+        vacios.push(campo);
+      }
     } else if (valor && valor.trim() !== '') {
       llenos++;
+    } else {
+      vacios.push(campo);
     }
+  }
+
+  // Debug: mostrar campos vacíos en consola
+  if (vacios.length > 0 && vacios.length < 10) {
+    console.log('Campos vacíos:', vacios);
   }
 
   return { llenos, total: campos.length };
