@@ -850,7 +850,24 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                     ) : (
                       <button
                         type="button"
-                        onClick={() => onComplete(values, isDictamenCompleto(values))}
+                        onClick={() => {
+                          const { llenos, total } = contarCamposLlenos(values);
+                          if (llenos < total) {
+                            const vacios: string[] = [];
+                            const campos = Object.keys(values) as (keyof DictamenMedicoData)[];
+                            for (const campo of campos) {
+                              const valor = values[campo];
+                              if (Array.isArray(valor)) {
+                                if (valor.length === 0) vacios.push(campo);
+                              } else if (!valor || valor.trim() === '') {
+                                vacios.push(campo);
+                              }
+                            }
+                            console.log('⚠️ CAMPOS VACÍOS AL GUARDAR:', vacios);
+                            console.log(`📊 Completado: ${llenos}/${total} campos`);
+                          }
+                          onComplete(values, isDictamenCompleto(values));
+                        }}
                         className="flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-2 bg-vdc-success text-white rounded-lg text-sm font-medium hover:bg-vdc-success/90 transition-colors"
                       >
                         <CheckIcon className="w-4 h-4 mr-1" />
