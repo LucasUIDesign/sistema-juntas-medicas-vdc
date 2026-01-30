@@ -26,6 +26,7 @@ import {
   PaperClipIcon,
   ExclamationTriangleIcon,
   ArrowUpTrayIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalProps {
