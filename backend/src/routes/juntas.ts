@@ -186,6 +186,7 @@ router.get(
         aptitudLaboral: junta.aptitudLaboral,
         diagnosticoPrincipal: junta.diagnosticoPrincipal,
         fechaDictamen: junta.fechaDictamen,
+        detallesDirector: junta.detallesDirector,
         dictamen: dictamenResult.rows[0] ? JSON.parse((dictamenResult.rows[0] as any).datosCompletos) : null,
         documentos: documentosResult.rows,
         createdAt: junta.createdAt,
@@ -315,7 +316,7 @@ router.put(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { estado, observaciones, aptitudLaboral, diagnosticoPrincipal, fechaDictamen } = req.body;
+      const { estado, observaciones, aptitudLaboral, diagnosticoPrincipal, fechaDictamen, detallesDirector } = req.body;
 
       // Check if junta exists
       const juntaResult = await db.execute({
@@ -367,6 +368,11 @@ router.put(
       if (fechaDictamen) {
         updates.push('fechaDictamen = ?');
         args.push(fechaDictamen);
+      }
+
+      if (detallesDirector !== undefined) {
+        updates.push('detallesDirector = ?');
+        args.push(detallesDirector);
       }
 
       if (updates.length > 0) {
