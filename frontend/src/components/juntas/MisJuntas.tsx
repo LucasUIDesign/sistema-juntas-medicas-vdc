@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { juntasService } from '../../services/juntasService';
-import { JuntaMedica, PaginatedResult, JuntaFilters, EstadoJunta } from '../../types';
+import { JuntaMedica, PaginatedResult, JuntaFilters, EstadoJunta, DOCUMENTOS_REQUERIDOS } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModal from './JuntaDetailModal';
 import { format, differenceInHours, differenceInMinutes } from 'date-fns';
@@ -146,10 +146,22 @@ const MisJuntas = () => {
   };
 
   const getEstadoBadge = (junta: JuntaMedica) => {
+    // Verificar si todos los documentos requeridos están cargados
+    const documentosCargados = (junta.adjuntos || []).filter(adj => 
+      DOCUMENTOS_REQUERIDOS.includes(adj.categoria as any)
+    ).length;
+    const todosDocumentosCargados = documentosCargados === DOCUMENTOS_REQUERIDOS.length;
+
+    // Si el estado es COMPLETADA pero faltan documentos, mostrar como Incompleta
+    const estadoReal = junta.estado === 'COMPLETADA' && !todosDocumentosCargados 
+      ? 'INCOMPLETA' 
+      : junta.estado;
+
     const styles: Record<string, string> = {
       BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
       PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       COMPLETADA: 'bg-blue-100 text-blue-800 border-blue-200',
+      INCOMPLETA: 'bg-orange-100 text-orange-800 border-orange-200',
       APROBADA: 'bg-green-100 text-green-800 border-green-200',
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
       DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
@@ -159,6 +171,7 @@ const MisJuntas = () => {
       BORRADOR: 'Borrador',
       PENDIENTE: 'Pendiente',
       COMPLETADA: 'Completada',
+      INCOMPLETA: 'Incompleta',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
       DOCUMENTOS_PENDIENTES: 'Faltan Docs.',
@@ -193,8 +206,8 @@ const MisJuntas = () => {
     }
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${styles[junta.estado] || 'bg-gray-100 text-gray-500'}`}>
-        {labels[junta.estado] || junta.estado}
+      <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${styles[estadoReal] || 'bg-gray-100 text-gray-500'}`}>
+        {labels[estadoReal] || estadoReal}
       </span>
     );
   };
