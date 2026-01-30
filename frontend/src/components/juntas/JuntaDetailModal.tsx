@@ -397,28 +397,31 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
         );
 
       case 'dictamen':
-        const isDictamenIncompleto = junta.dictamen && !junta.dictamen.isCompleto;
-        const aptitud = isDictamenIncompleto ? 'INCOMPLETO' : junta.dictamen?.aptitudLaboral;
+        // Usar directamente la aptitud laboral del dictamen
+        const aptitud = junta.dictamen?.aptitudLaboral;
 
         return (
           <div className="space-y-6">
             {/* Main Result Banner */}
-            <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
+            <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${
+              aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
               aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
-                aptitud === 'INCOMPLETO' ? 'bg-orange-50 border-orange-200' :
-                  'bg-yellow-50 border-yellow-200'
-              }`}>
+              aptitud === 'APTO_CON_RESTRICCIONES' ? 'bg-yellow-50 border-yellow-200' :
+              'bg-gray-50 border-gray-200'
+            }`}>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
-              <h2 className={`text-3xl font-black tracking-tight ${aptitud === 'APTO' ? 'text-green-700' :
+              <h2 className={`text-3xl font-black tracking-tight ${
+                aptitud === 'APTO' ? 'text-green-700' :
                 aptitud === 'NO_APTO' ? 'text-red-700' :
-                  aptitud === 'INCOMPLETO' ? 'text-orange-700' :
-                    'text-yellow-700'
-                }`}>
+                aptitud === 'APTO_CON_RESTRICCIONES' ? 'text-yellow-700' :
+                'text-gray-700'
+              }`}>
                 {aptitud === 'APTO' ? 'APTO' :
                   aptitud === 'NO_APTO' ? 'NO APTO' :
-                    aptitud === 'INCOMPLETO' ? 'DICTAMEN INCOMPLETO' :
-                      aptitud === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
-                        aptitud || 'PENDIENTE'}
+                  aptitud === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
+                  aptitud === 'NO_APTO_TEMPORARIO' ? 'NO APTO TEMPORARIO' :
+                  aptitud === 'NO_APTO_DEFINITIVO' ? 'NO APTO DEFINITIVO' :
+                  aptitud || 'PENDIENTE'}
               </h2>
               {junta.dictamen?.fechaDictamen && (
                 <p className="text-xs text-gray-500 mt-2">
