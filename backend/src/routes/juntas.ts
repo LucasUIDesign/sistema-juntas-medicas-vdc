@@ -50,7 +50,7 @@ router.get(
           p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
           u.nombre as medicoNombre, u.apellido as medicoApellido,
           d.datosCompletos,
-          (SELECT COUNT(*) FROM DocumentoAdjunto WHERE juntaId = j.id) as documentosCount
+          (SELECT COUNT(DISTINCT categoria) FROM DocumentoAdjunto WHERE juntaId = j.id) as documentosCount
         FROM JuntaMedica j
         LEFT JOIN Paciente p ON j.pacienteId = p.id
         LEFT JOIN User u ON j.medicoId = u.id
