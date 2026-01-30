@@ -43,7 +43,7 @@ const EditJuntaModal = ({ junta, onClose, onSave }: EditJuntaModalProps) => {
   const [documentos, setDocumentos] = useState<DocumentoParaSubir[]>([]);
   const [adjuntosExistentes, setAdjuntosExistentes] = useState(junta.adjuntos || []);
 
-  const isMedicoSuperior = user?.role === 'MEDICO_SUPERIOR';
+  const isMedicoSuperior = user?.role === 'DIRECTOR_MEDICO';
 
   const initialValues = {
     fecha: new Date(junta.fecha),

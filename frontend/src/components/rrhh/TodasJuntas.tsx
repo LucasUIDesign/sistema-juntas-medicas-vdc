@@ -56,7 +56,7 @@ const TodasJuntas = () => {
   const loadMedicos = async () => {
     try {
       const data = await juntasService.getMedicos();
-      setMedicos(data);
+      setMedicos(data.map((m: any) => ({ ...m, especialidad: m.especialidad || 'No especificada' })));
     } catch (error) {
       console.error('Error loading medicos:', error);
     }

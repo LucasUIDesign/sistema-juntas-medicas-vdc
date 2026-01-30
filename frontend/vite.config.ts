@@ -12,6 +12,11 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      external: ['canvg', 'html2canvas', 'dompurify']
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

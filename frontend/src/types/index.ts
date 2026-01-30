@@ -9,7 +9,7 @@ export interface User {
 }
 
 // Junta Médica types
-export type EstadoJunta = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'DOCUMENTOS_PENDIENTES';
+export type EstadoJunta = 'PENDIENTE' | 'COMPLETADA' | 'APROBADA' | 'RECHAZADA' | 'DOCUMENTOS_PENDIENTES';
 
 // Documentos requeridos para una junta
 export const DOCUMENTOS_REQUERIDOS: CategoriaDocumento[] = [
@@ -68,6 +68,7 @@ export interface JuntaMedica {
   pacienteId: string;
   pacienteNombre: string;
   pacienteDni?: string; // DNI del paciente
+  numeroDocumento?: string; // Alias para pacienteDni
   medicoId: string;
   medicoNombre: string;
   detalles: string;
@@ -76,6 +77,8 @@ export interface JuntaMedica {
   adjuntos?: Adjunto[];
   documentosCount?: number; // Conteo de documentos adjuntos (usado en lista)
   dictamen?: DictamenMedicoResumen;
+  diagnosticoPrincipal?: string; // Diagnóstico principal (también en dictamen)
+  aptitudLaboral?: string; // Aptitud laboral (también en dictamen)
   estado: EstadoJunta;
   documentosFaltantes?: CategoriaDocumento[]; // Documentos que faltan entregar
   fechaLimiteDocumentos?: string; // Fecha límite para entregar documentos (72hs)
@@ -111,75 +114,72 @@ export interface DictamenMedicoResumen {
   fechaDictamen: string;
   isCompleto: boolean;
 
-  // Datos completos del dictamen (opcional, para vista detallada)
-  datosCompletos?: {
-    // Paso 1: Identificación
-    fechaNacimiento?: string;
-    sexo?: string;
-    estadoCivil?: string;
-    domicilio?: string;
-    telefono?: string;
-    email?: string;
-    obraSocial?: string;
-    // Paso 2: Datos Laborales
-    establecimiento?: string;
-    cargo?: string;
-    nivelEducativo?: string;
-    modalidad?: string;
-    situacionRevista?: string;
-    antiguedad?: string;
-    cargaHoraria?: string;
-    legajo?: string;
-    // Paso 3: Motivo Junta
-    motivoJunta?: string[];
-    fechaInicioLicencia?: string;
-    diagnosticosPrevios?: string;
-    // Paso 4: Antecedentes Médicos
-    patologiasPrevias?: string;
-    antecedentesQuirurgicos?: string;
-    alergias?: string;
-    habitos?: string;
-    antecedentesFamiliares?: string;
-    // Paso 5: Antecedentes Laborales
-    licenciasAnteriores?: string;
-    accidentesLaborales?: string;
-    factoresRiesgo?: string;
-    // Paso 6: Enfermedad Actual
-    sintomasPrincipales?: string;
-    evolucion?: string;
-    tratamientosActuales?: string;
-    interconsultas?: string;
-    // Paso 7: Examen Físico
-    presionArterial?: string;
-    frecuenciaCardiaca?: string;
-    frecuenciaRespiratoria?: string;
-    temperatura?: string;
-    peso?: string;
-    talla?: string;
-    imc?: string;
-    examenGeneral?: string;
-    // Paso 8: Estudios
-    laboratorio?: string;
-    imagenes?: string;
-    estudiosFuncionales?: string;
-    // Paso 9: Diagnóstico
-    codigoCIE10?: string;
-    naturalezaEnfermedad?: string;
-    // Paso 10: Capacidad Laboral
-    capacidadFuncional?: string;
-    factoresLimitantes?: string;
-    // Paso 11: Dictamen
-    restricciones?: string;
-    recomendaciones?: string;
-    tiempoRecuperacion?: string;
-    // Paso 12: Profesionales
-    medicoEvaluador1?: string;
-    matricula1?: string;
-    especialidad1?: string;
-    medicoEvaluador2?: string;
-    matricula2?: string;
-    especialidad2?: string;
-  };
+  // Paso 1: Identificación
+  fechaNacimiento?: string;
+  sexo?: string;
+  estadoCivil?: string;
+  domicilio?: string;
+  telefono?: string;
+  email?: string;
+  obraSocial?: string;
+  // Paso 2: Datos Laborales
+  establecimiento?: string;
+  cargo?: string;
+  nivelEducativo?: string;
+  modalidad?: string;
+  situacionRevista?: string;
+  antiguedad?: string;
+  cargaHoraria?: string;
+  legajo?: string;
+  // Paso 3: Motivo Junta
+  motivoJunta?: string[] | string;
+  fechaInicioLicencia?: string;
+  diagnosticosPrevios?: string;
+  // Paso 4: Antecedentes Médicos
+  patologiasPrevias?: string;
+  antecedentesQuirurgicos?: string;
+  alergias?: string;
+  habitos?: string;
+  antecedentesFamiliares?: string;
+  // Paso 5: Antecedentes Laborales
+  licenciasAnteriores?: string;
+  accidentesLaborales?: string;
+  factoresRiesgo?: string;
+  // Paso 6: Enfermedad Actual
+  sintomasPrincipales?: string;
+  evolucion?: string;
+  tratamientosActuales?: string;
+  interconsultas?: string;
+  // Paso 7: Examen Físico
+  presionArterial?: string;
+  frecuenciaCardiaca?: string;
+  frecuenciaRespiratoria?: string;
+  temperatura?: string;
+  peso?: string;
+  talla?: string;
+  imc?: string;
+  examenGeneral?: string;
+  // Paso 8: Estudios
+  laboratorio?: string;
+  imagenes?: string;
+  estudiosFuncionales?: string;
+  // Paso 9: Diagnóstico
+  codigoCIE10?: string;
+  naturalezaEnfermedad?: string;
+  // Paso 10: Capacidad Laboral
+  capacidadFuncional?: string;
+  factoresLimitantes?: string;
+  // Paso 11: Dictamen
+  restricciones?: string;
+  recomendaciones?: string;
+  tiempoRecuperacion?: string;
+  // Paso 12: Profesionales
+  medicoEvaluador1?: string;
+  matricula1?: string;
+  especialidad1?: string;
+  medicoEvaluador2?: string;
+  matricula2?: string;
+  especialidad2?: string;
 }
 
 export interface DocumentoParaSubir {
