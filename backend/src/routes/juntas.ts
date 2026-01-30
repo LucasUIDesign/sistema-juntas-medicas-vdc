@@ -584,8 +584,8 @@ router.post(
       });
 
       const docId = randomUUID();
-      // Generate internal URL for the document
-      const url = `/api/juntas/${id}/documentos/${docId}/download`;
+      // Generate internal URL for the document (sin /api porque se agrega en el frontend)
+      const url = `/juntas/${id}/documentos/${docId}/download`;
 
       if (existingDoc.rows.length > 0) {
         // Update existing document
