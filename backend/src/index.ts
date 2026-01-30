@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Backend v1.0.3 - Fix documentosCount with DISTINCT categoria
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
