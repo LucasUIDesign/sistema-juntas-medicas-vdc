@@ -45,6 +45,7 @@ const TABS_DICTAMEN = [
   { id: 'estudios', label: 'Estudios' },
   { id: 'diagnostico', label: 'Diagnóstico' },
   { id: 'dictamen', label: 'Dictamen' },
+  { id: 'profesionales', label: 'Profesionales' },
 ];
 
 const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetailModalProps) => {
@@ -442,6 +443,101 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
               <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
                 {renderSectionHeader('Pronóstico', <ClockIcon className="h-5 w-5" />)}
                 {renderField('Tiempo Estimado de Recuperación', datos?.tiempoRecuperacion)}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'profesionales':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
+              {renderSectionHeader('Médicos Evaluadores', <UserGroupIcon className="h-5 w-5" />)}
+              
+              {(() => {
+                // Intentar obtener médicos del nuevo formato (array)
+                const medicosArray = datos?.medicosEvaluadores;
+                
+                // Si existe el array y tiene médicos
+                if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+                  return (
+                    <div className="space-y-4">
+                      {medicosArray.map((medico: any, index: number) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center mb-3">
+                            <div className="bg-vdc-primary/10 p-2 rounded-full mr-3">
+                              <UserCircleIcon className="h-6 w-6 text-vdc-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {index === 0 ? 'Médico Evaluador Principal' : `Médico Evaluador ${index + 1}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-11">
+                            {renderField('Nombre Completo', medico.nombre)}
+                            {renderField('Matrícula', medico.matricula)}
+                            {renderField('Especialidad', medico.especialidad)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                
+                // Fallback: intentar formato antiguo (campos individuales)
+                const medico1 = datos?.medicoEvaluador1 || junta.dictamen?.medicoEvaluador1;
+                const medico2 = datos?.medicoEvaluador2 || junta.dictamen?.medicoEvaluador2;
+                
+                if (medico1 || medico2) {
+                  return (
+                    <div className="space-y-4">
+                      {medico1 && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center mb-3">
+                            <div className="bg-vdc-primary/10 p-2 rounded-full mr-3">
+                              <UserCircleIcon className="h-6 w-6 text-vdc-primary" />
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">Médico Evaluador Principal</p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-11">
+                            {renderField('Nombre Completo', medico1)}
+                            {renderField('Matrícula', datos?.matricula1 || junta.dictamen?.matricula1)}
+                            {renderField('Especialidad', datos?.especialidad1 || junta.dictamen?.especialidad1)}
+                          </div>
+                        </div>
+                      )}
+                      {medico2 && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center mb-3">
+                            <div className="bg-vdc-primary/10 p-2 rounded-full mr-3">
+                              <UserCircleIcon className="h-6 w-6 text-vdc-primary" />
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">Médico Evaluador Secundario</p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-11">
+                            {renderField('Nombre Completo', medico2)}
+                            {renderField('Matrícula', datos?.matricula2 || junta.dictamen?.matricula2)}
+                            {renderField('Especialidad', datos?.especialidad2 || junta.dictamen?.especialidad2)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                
+                // Si no hay datos de médicos
+                return (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <UserGroupIcon className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 font-medium">No se registraron médicos evaluadores</p>
+                    <p className="text-xs text-gray-400 mt-1">Esta información no fue completada en el dictamen.</p>
+                  </div>
+                );
+              })()}
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                {renderField('Fecha del Dictamen', datos?.fechaDictamen || junta.dictamen?.fechaDictamen, <CalendarIcon className="h-3 w-3" />)}
               </div>
             </div>
           </div>

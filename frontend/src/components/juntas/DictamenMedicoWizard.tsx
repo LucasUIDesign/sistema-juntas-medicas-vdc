@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Formik, Form, Field, FieldArray } from 'formik';
+import { toast } from 'react-toastify';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -261,6 +262,7 @@ interface DictamenMedicoWizardProps {
 
 const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false }: DictamenMedicoWizardProps) => {
   const [pasoActual, setPasoActual] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Filtrar pasos si hideProfesionales está activo
   const pasosVisibles = hideProfesionales ? PASOS.filter(p => p.id !== 12) : PASOS;
@@ -277,6 +279,45 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
     if (pasoActual > 1) {
       setPasoActual(pasoActual - 1);
     }
+  };
+
+  const handleSave = (values: DictamenMedicoData) => {
+    // Activar estado de guardado
+    setIsSaving(true);
+
+    // Log de campos vacíos si es necesario
+    const { llenos, total } = contarCamposLlenos(values);
+    if (llenos < total) {
+      const vacios: string[] = [];
+      const campos = Object.keys(values) as (keyof DictamenMedicoData)[];
+      for (const campo of campos) {
+        const valor = values[campo];
+        if (Array.isArray(valor)) {
+          if (valor.length === 0) vacios.push(campo);
+        } else if (!valor || valor.trim() === '') {
+          vacios.push(campo);
+        }
+      }
+      console.log('⚠️ CAMPOS VACÍOS AL GUARDAR:', vacios);
+      console.log(`📊 Completado: ${llenos}/${total} campos`);
+    }
+
+    // Simular un pequeño delay para mostrar el feedback visual
+    setTimeout(() => {
+      onComplete(values, isDictamenCompleto(values));
+      setIsSaving(false);
+      
+      // Mostrar mensaje de éxito
+      const porcentaje = Math.round((llenos / total) * 100);
+      toast.success(`✅ Dictamen guardado (${porcentaje}% completado)`, {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }, 300);
   };
 
 
@@ -899,31 +940,45 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                         <ChevronRightIcon className="w-4 h-4 ml-1" />
                       </button>
                     ) : (
-                      <button
+                      <motion.button
                         type="button"
-                        onClick={() => {
-                          const { llenos, total } = contarCamposLlenos(values);
-                          if (llenos < total) {
-                            const vacios: string[] = [];
-                            const campos = Object.keys(values) as (keyof DictamenMedicoData)[];
-                            for (const campo of campos) {
-                              const valor = values[campo];
-                              if (Array.isArray(valor)) {
-                                if (valor.length === 0) vacios.push(campo);
-                              } else if (!valor || valor.trim() === '') {
-                                vacios.push(campo);
-                              }
-                            }
-                            console.log('⚠️ CAMPOS VACÍOS AL GUARDAR:', vacios);
-                            console.log(`📊 Completado: ${llenos}/${total} campos`);
-                          }
-                          onComplete(values, isDictamenCompleto(values));
-                        }}
-                        className="flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-2 bg-vdc-success text-white rounded-lg text-sm font-medium hover:bg-vdc-success/90 transition-colors"
+                        onClick={() => handleSave(values)}
+                        disabled={isSaving}
+                        whileHover={!isSaving ? { scale: 1.05 } : {}}
+                        whileTap={!isSaving ? { scale: 0.95 } : {}}
+                        className={`flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isSaving
+                            ? 'bg-vdc-success/70 cursor-wait'
+                            : 'bg-vdc-success hover:bg-vdc-success/90 hover:shadow-lg'
+                        } text-white`}
                       >
-                        <CheckIcon className="w-4 h-4 mr-1" />
-                        Guardar
-                      </button>
+                        <motion.div
+                          className="flex items-center"
+                          animate={isSaving ? { opacity: [1, 0.5, 1] } : {}}
+                          transition={{ duration: 1, repeat: isSaving ? Infinity : 0 }}
+                        >
+                          {isSaving ? (
+                            <>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="mr-2"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              </motion.div>
+                              <span>Guardando...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckIcon className="w-4 h-4 mr-1" />
+                              <span>Guardar</span>
+                            </>
+                          )}
+                        </motion.div>
+                      </motion.button>
                     )}
                   </div>
                 </div>

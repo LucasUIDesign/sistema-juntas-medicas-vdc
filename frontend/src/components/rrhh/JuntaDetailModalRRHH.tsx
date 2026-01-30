@@ -12,6 +12,7 @@ import {
   ClockIcon,
   IdentificationIcon,
   ArrowDownTrayIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalRRHHProps {
@@ -164,6 +165,42 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
       doc.text(detallesLines.slice(0, 4), margin + 3, yFicha);
     }
 
+    // Médicos Evaluadores (si existen)
+    const medicosArray = junta.dictamen?.medicosEvaluadores;
+    if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+      // Agregar nueva página si es necesario
+      if (yFicha > 200) {
+        doc.addPage();
+        yFicha = 20;
+      } else {
+        yFicha += 20;
+      }
+
+      doc.setFontSize(11);
+      doc.setTextColor(30, 64, 175);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Medicos Evaluadores', margin, yFicha);
+      yFicha += 8;
+
+      medicosArray.forEach((medico: any, index: number) => {
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont('helvetica', 'bold');
+        doc.text(index === 0 ? 'Medico Principal:' : `Medico ${index + 1}:`, margin + 3, yFicha);
+        yFicha += 6;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.text(`Nombre: ${medico.nombre || '-'}`, margin + 5, yFicha);
+        yFicha += 5;
+        doc.text(`Matricula: ${medico.matricula || '-'}`, margin + 5, yFicha);
+        yFicha += 5;
+        doc.text(`Especialidad: ${medico.especialidad || '-'}`, margin + 5, yFicha);
+        yFicha += 8;
+      });
+    }
+
     // Footer
     const pageHeight = doc.internal.pageSize.getHeight();
     doc.setFontSize(8);
@@ -304,6 +341,104 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
                 </div>
               </div>
             )}
+
+            {/* Médicos Evaluadores */}
+            {(() => {
+              // Intentar obtener médicos del nuevo formato (array)
+              const medicosArray = junta.dictamen?.medicosEvaluadores;
+              
+              // Si existe el array y tiene médicos
+              if (Array.isArray(medicosArray) && medicosArray.length > 0) {
+                return (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700 flex items-center">
+                      <UserGroupIcon className="h-4 w-4 mr-2" />
+                      Médicos Evaluadores
+                    </p>
+                    <div className="space-y-3">
+                      {medicosArray.map((medico: any, index: number) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                            {index === 0 ? 'Médico Principal' : `Médico ${index + 1}`}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-xs text-gray-500">Nombre:</span>
+                              <p className="text-sm font-medium text-gray-900">{medico.nombre || '-'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Matrícula:</span>
+                              <p className="text-sm font-medium text-gray-900">{medico.matricula || '-'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Especialidad:</span>
+                              <p className="text-sm font-medium text-gray-900">{medico.especialidad || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Fallback: intentar formato antiguo (campos individuales)
+              const medico1 = junta.dictamen?.medicoEvaluador1;
+              const medico2 = junta.dictamen?.medicoEvaluador2;
+              
+              if (medico1 || medico2) {
+                return (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700 flex items-center">
+                      <UserGroupIcon className="h-4 w-4 mr-2" />
+                      Médicos Evaluadores
+                    </p>
+                    <div className="space-y-3">
+                      {medico1 && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Médico Principal</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-xs text-gray-500">Nombre:</span>
+                              <p className="text-sm font-medium text-gray-900">{medico1}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Matrícula:</span>
+                              <p className="text-sm font-medium text-gray-900">{junta.dictamen?.matricula1 || '-'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Especialidad:</span>
+                              <p className="text-sm font-medium text-gray-900">{junta.dictamen?.especialidad1 || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {medico2 && (
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Médico Secundario</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-xs text-gray-500">Nombre:</span>
+                              <p className="text-sm font-medium text-gray-900">{medico2}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Matrícula:</span>
+                              <p className="text-sm font-medium text-gray-900">{junta.dictamen?.matricula2 || '-'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500">Especialidad:</span>
+                              <p className="text-sm font-medium text-gray-900">{junta.dictamen?.especialidad2 || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              
+              return null;
+            })()}
 
             {/* Timestamps */}
             <div className="pt-4 border-t border-gray-200 grid grid-cols-2 gap-4 text-xs text-gray-500">
