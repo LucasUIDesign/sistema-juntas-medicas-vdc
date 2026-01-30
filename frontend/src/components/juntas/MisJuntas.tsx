@@ -146,18 +146,9 @@ const MisJuntas = () => {
   };
 
   const getEstadoBadge = (junta: JuntaMedica) => {
-    // Verificar si todos los documentos requeridos están cargados
-    // Si tenemos adjuntos (vista detalle), usar esa info; sino usar documentosCount (vista lista)
-    const documentosCargados = junta.adjuntos 
-      ? junta.adjuntos.filter(adj => DOCUMENTOS_REQUERIDOS.includes(adj.categoria as any)).length
-      : (junta.documentosCount || 0);
-    
-    const todosDocumentosCargados = documentosCargados === DOCUMENTOS_REQUERIDOS.length;
-
-    // Si el estado es COMPLETADA pero faltan documentos, mostrar como Incompleta
-    const estadoReal = junta.estado === 'COMPLETADA' && !todosDocumentosCargados 
-      ? 'INCOMPLETA' 
-      : junta.estado;
+    // Simplemente mostrar el estado tal como viene del backend
+    // Si el médico finalizó el dictamen, el estado es COMPLETADA
+    const estadoReal = junta.estado;
 
     const styles: Record<string, string> = {
       BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
