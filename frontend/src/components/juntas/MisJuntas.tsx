@@ -518,15 +518,16 @@ const MisJuntas = () => {
         {selectedJunta && !isLoadingDetail && (
           <JuntaDetailModal
             junta={selectedJunta}
-            onClose={() => setSelectedJunta(null)}
+            onClose={() => {
+              setSelectedJunta(null);
+              // Recargar la lista para obtener el documentosCount actualizado
+              loadJuntas();
+            }}
             onUpdate={(updatedJunta) => {
-              if (juntas) {
-                setJuntas({
-                  ...juntas,
-                  data: juntas.data.map(j => j.id === updatedJunta.id ? updatedJunta : j),
-                });
-              }
-              // No cerramos el modal automáticmante si es un update, pero aquí se maneja setSelectedJunta(null) en el modal close
+              // Actualizar la junta seleccionada en el modal
+              setSelectedJunta(updatedJunta);
+              // Recargar la lista para obtener el documentosCount actualizado
+              loadJuntas();
             }}
           />
         )}
