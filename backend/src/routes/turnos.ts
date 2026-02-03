@@ -19,6 +19,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { medicoId, pacienteId, fecha } = req.query;
+      const user = (req as any).user; // Usuario autenticado
 
       let sql = `
         SELECT 
@@ -35,7 +36,11 @@ router.get(
       `;
       const args: any[] = [];
 
-      if (medicoId) {
+      // Si el usuario es médico evaluador y no se especifica medicoId, filtrar por su ID
+      if (user.role === 'MEDICO_EVALUADOR' && !medicoId) {
+        sql += ' AND t.medicoId = ?';
+        args.push(user.sub);
+      } else if (medicoId) {
         sql += ' AND t.medicoId = ?';
         args.push(medicoId);
       }
@@ -50,7 +55,7 @@ router.get(
         args.push(fecha);
       }
 
-      sql += ' ORDER BY t.fecha DESC, t.hora DESC';
+      sql += ' ORDER BY t.fecha ASC, t.hora ASC';
 
       const result = await db.execute({ sql, args });
 

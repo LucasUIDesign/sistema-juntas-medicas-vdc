@@ -277,29 +277,30 @@ export const juntasService = {
    */
   async getJuntasAsignadas(): Promise<any[]> {
     try {
-      const response = await fetch(`${API_URL}/juntas?estado=PENDIENTE`, {
+      // Obtener turnos asignados al médico actual
+      const response = await fetch(`${API_URL}/turnos`, {
         headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
-        console.error('Error fetching juntas asignadas');
+        console.error('Error fetching turnos asignados');
         return [];
       }
 
-      const data = await response.json();
+      const turnos = await response.json();
       
       // Transformar al formato esperado por ProximasJuntas
-      return data.data.map((junta: any) => ({
-        id: junta.id,
-        fecha: junta.fecha,
-        hora: junta.hora || '09:00', // Hora por defecto si no está definida
-        pacienteNombre: junta.pacienteNombre,
-        pacienteDni: junta.pacienteDni,
-        lugar: 'Consultorio VDC',
+      return turnos.map((turno: any) => ({
+        id: turno.id,
+        fecha: turno.fecha,
+        hora: turno.hora,
+        pacienteNombre: turno.pacienteNombre,
+        pacienteDni: turno.pacienteDni,
+        lugar: turno.lugar || 'Consultorio VDC',
         profesionales: [], // Por ahora vacío, se puede agregar después
       }));
     } catch (error) {
-      console.error('Error fetching juntas asignadas:', error);
+      console.error('Error fetching turnos asignados:', error);
       return [];
     }
   },
