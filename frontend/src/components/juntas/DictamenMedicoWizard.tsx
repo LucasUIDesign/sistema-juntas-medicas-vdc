@@ -229,6 +229,22 @@ const CAMPOS_POR_PASO: Record<number, (keyof DictamenMedicoData)[]> = {
 
 const isPasoCompleto = (paso: number, values: DictamenMedicoData): boolean => {
   const campos = CAMPOS_POR_PASO[paso];
+  
+  // Lógica especial para el paso 12 (Profesionales)
+  if (paso === 12) {
+    const medicosArray = values.medicosEvaluadores;
+    if (!Array.isArray(medicosArray) || medicosArray.length === 0) {
+      return false;
+    }
+    // Verificar si al menos un médico tiene al menos un campo lleno
+    return medicosArray.some((medico: any) => 
+      (medico.nombre && medico.nombre.trim()) ||
+      (medico.matricula && medico.matricula.trim()) ||
+      (medico.especialidad && medico.especialidad.trim())
+    );
+  }
+  
+  // Lógica para otros pasos
   for (const campo of campos) {
     const valor = values[campo];
     if (Array.isArray(valor)) {
@@ -242,6 +258,22 @@ const isPasoCompleto = (paso: number, values: DictamenMedicoData): boolean => {
 
 const isPasoTodoLleno = (paso: number, values: DictamenMedicoData): boolean => {
   const campos = CAMPOS_POR_PASO[paso];
+  
+  // Lógica especial para el paso 12 (Profesionales)
+  if (paso === 12) {
+    const medicosArray = values.medicosEvaluadores;
+    if (!Array.isArray(medicosArray) || medicosArray.length === 0) {
+      return false;
+    }
+    // Verificar si TODOS los médicos tienen TODOS sus campos llenos
+    return medicosArray.every((medico: any) => 
+      medico.nombre && medico.nombre.trim() &&
+      medico.matricula && medico.matricula.trim() &&
+      medico.especialidad && medico.especialidad.trim()
+    );
+  }
+  
+  // Lógica para otros pasos
   for (const campo of campos) {
     const valor = values[campo];
     if (Array.isArray(valor)) {
