@@ -37,6 +37,7 @@ router.get(
       const args: any[] = [];
 
       // Si el usuario es médico evaluador y no se especifica medicoId, filtrar por su ID
+      // Si el usuario es admin, mostrar todos los turnos
       if (user.role === 'MEDICO_EVALUADOR' && !medicoId) {
         sql += ' AND t.medicoId = ?';
         args.push(user.sub);
@@ -44,6 +45,7 @@ router.get(
         sql += ' AND t.medicoId = ?';
         args.push(medicoId);
       }
+      // Si es admin u otro rol, no filtrar por médico (mostrar todos)
 
       if (pacienteId) {
         sql += ' AND t.pacienteId = ?';

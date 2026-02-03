@@ -126,12 +126,16 @@ const AsignarTurnos = () => {
     try {
       setIsLoadingTurnos(true);
       const token = getToken();
+      console.log('🔍 Cargando turnos desde API...');
       const response = await fetch(`${API_URL}/turnos`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       
+      console.log('📡 Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('📋 Turnos recibidos:', data);
         const turnosData: Turno[] = data.map((turno: any) => ({
           id: turno.id,
           fecha: new Date(turno.fecha),
@@ -144,10 +148,15 @@ const AsignarTurnos = () => {
           observaciones: turno.observaciones,
           estado: turno.estado,
         }));
+        console.log('✅ Turnos procesados:', turnosData);
         setTurnos(turnosData);
+      } else {
+        const error = await response.json();
+        console.error('❌ Error en response:', error);
+        toast.error('Error al cargar los turnos');
       }
     } catch (error) {
-      console.error('Error loading turnos:', error);
+      console.error('❌ Error loading turnos:', error);
       toast.error('Error al cargar los turnos');
     } finally {
       setIsLoadingTurnos(false);
