@@ -115,14 +115,14 @@ const TodasJuntas = () => {
       PENDIENTE: 'bg-yellow-100 text-yellow-800',
       APROBADA: 'bg-green-100 text-green-800',
       RECHAZADA: 'bg-red-100 text-red-800',
-      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800',
+      BORRADOR: 'bg-gray-100 text-gray-800',
     };
     
     const labels: Record<string, string> = {
-      PENDIENTE: 'Pendiente',
+      PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      BORRADOR: 'Borrador',
     };
 
     return (

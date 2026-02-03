@@ -147,56 +147,21 @@ const MisJuntas = () => {
 
   const getEstadoBadge = (junta: JuntaMedica) => {
     // Simplemente mostrar el estado tal como viene del backend
-    // Si el médico finalizó el dictamen, el estado es COMPLETADA
     const estadoReal = junta.estado;
 
     const styles: Record<string, string> = {
       BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
       PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      COMPLETADA: 'bg-blue-100 text-blue-800 border-blue-200',
-      INCOMPLETA: 'bg-orange-100 text-orange-800 border-orange-200',
       APROBADA: 'bg-green-100 text-green-800 border-green-200',
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
-      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
     };
 
     const labels: Record<string, string> = {
       BORRADOR: 'Borrador',
-      PENDIENTE: 'Pendiente',
-      COMPLETADA: 'Completada',
-      INCOMPLETA: 'Incompleta',
+      PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Faltan Docs.',
     };
-
-    // Lógica especial para documentos pendientes con timer
-    if (junta.estado === 'DOCUMENTOS_PENDIENTES' && junta.fechaLimiteDocumentos) {
-      const fechaLimite = new Date(junta.fechaLimiteDocumentos);
-      const ahora = new Date();
-      const horasRestantes = differenceInHours(fechaLimite, ahora);
-      const minutosRestantes = differenceInMinutes(fechaLimite, ahora) % 60;
-
-      const tiempoRestante = horasRestantes > 0
-        ? `${horasRestantes}h`
-        : minutosRestantes > 0
-          ? `${minutosRestantes}m`
-          : 'Vencido';
-
-      const isUrgente = horasRestantes < 12;
-
-      return (
-        <div className="flex flex-col items-start gap-1">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${styles[junta.estado]} flex items-center`}>
-            <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-            {labels[junta.estado]}
-          </span>
-          <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wide ${isUrgente ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
-            {tiempoRestante}
-          </span>
-        </div>
-      );
-    }
 
     return (
       <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${styles[estadoReal] || 'bg-gray-100 text-gray-500'}`}>
@@ -307,7 +272,6 @@ const MisJuntas = () => {
                     <option value="PENDIENTE">Pendientes de Revisión</option>
                     <option value="APROBADA">Aprobadas</option>
                     <option value="RECHAZADA">Rechazadas</option>
-                    <option value="DOCUMENTOS_PENDIENTES">Faltan Documentos</option>
                     <option value="BORRADOR">Borradores</option>
                   </select>
                 </div>

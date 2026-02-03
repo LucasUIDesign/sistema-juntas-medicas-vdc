@@ -32,11 +32,10 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
     // Función para obtener el texto del estado
     const getEstadoTexto = (estado: string) => {
       const labels: Record<string, string> = {
-        PENDIENTE: 'Pendiente',
+        PENDIENTE: 'Pendiente de Revisión',
         APROBADA: 'Aprobada',
         RECHAZADA: 'Rechazada',
-        COMPLETADA: 'Completada',
-        DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+        BORRADOR: 'Borrador',
       };
       return labels[estado] || estado;
     };
@@ -227,14 +226,14 @@ const JuntaDetailModalRRHH = ({ junta, onClose, showPdfButton = true }: JuntaDet
       PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       APROBADA: 'bg-green-100 text-green-800 border-green-200',
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
-      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
+      BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
     };
     
     const labels: Record<string, string> = {
-      PENDIENTE: 'Pendiente',
+      PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Docs. Pendientes',
+      BORRADOR: 'Borrador',
     };
 
     return (

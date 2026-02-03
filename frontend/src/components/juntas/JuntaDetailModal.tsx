@@ -69,18 +69,14 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
       PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       APROBADA: 'bg-green-100 text-green-800 border-green-200',
       RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
-      DOCUMENTOS_PENDIENTES: 'bg-orange-100 text-orange-800 border-orange-200',
       BORRADOR: 'bg-gray-100 text-gray-800 border-gray-200',
-      COMPLETADA: 'bg-blue-100 text-blue-800 border-blue-200'
     };
 
     const labels: Record<string, string> = {
       PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
       RECHAZADA: 'Rechazada',
-      DOCUMENTOS_PENDIENTES: 'Documentación Pendiente',
       BORRADOR: 'Borrador',
-      COMPLETADA: 'Completada'
     };
 
     return (

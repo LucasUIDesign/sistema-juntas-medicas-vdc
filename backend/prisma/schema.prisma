@@ -46,7 +46,7 @@ model JuntaMedica {
   id                  String             @id @default(uuid())
   pacienteId          String
   medicoId            String
-  estado              String             @default("BORRADOR") // BORRADOR, PENDIENTE, COMPLETADA, APROBADA, RECHAZADA
+  estado              String             @default("BORRADOR") // BORRADOR, PENDIENTE, APROBADA, RECHAZADA
   fecha               DateTime           @default(now())
   hora                String?            // Hora del turno (formato HH:mm)
   fechaDictamen       DateTime?

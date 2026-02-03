@@ -30,7 +30,7 @@ router.get(
     query('page').optional().isInt({ min: 1 }).toInt(),
     query('pageSize').optional().isInt({ min: 1, max: 100 }).toInt(),
     query('medicoId').optional().isString(),
-    query('estado').optional().isIn(['BORRADOR', 'PENDIENTE', 'APROBADA', 'RECHAZADA', 'COMPLETADA']),
+    query('estado').optional().isIn(['BORRADOR', 'PENDIENTE', 'APROBADA', 'RECHAZADA']),
   ],
   validateRequest,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -311,7 +311,7 @@ router.put(
   authMiddleware,
   [
     param('id').isString().notEmpty(),
-    body('estado').optional().isIn(['BORRADOR', 'PENDIENTE', 'APROBADA', 'RECHAZADA', 'COMPLETADA']),
+    body('estado').optional().isIn(['BORRADOR', 'PENDIENTE', 'APROBADA', 'RECHAZADA']),
     body('observaciones').optional().isString(),
   ],
   validateRequest,
@@ -478,10 +478,10 @@ router.post(
         updateJuntaArgs.push(dictamen.fechaDictamen);
       }
 
-      // If finalizar is true, change estado to COMPLETADA
+      // If finalizar is true, change estado to PENDIENTE
       if (finalizar) {
         updates.push('estado = ?');
-        updateJuntaArgs.push('COMPLETADA');
+        updateJuntaArgs.push('PENDIENTE');
       }
 
       if (updates.length > 0) {
