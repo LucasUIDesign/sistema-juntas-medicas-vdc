@@ -39,7 +39,7 @@ npx tsx scripts/clean-database.ts
 
 Después de ejecutar el script, tendrás un único usuario administrador:
 
-- **Email**: `admin@vdc.com`
+- **Username**: `admin`
 - **Password**: `Admin2025!`
 - **Rol**: `ADMIN`
 
@@ -98,7 +98,7 @@ Este script mostrará:
    • Usuario admin creado: 1
 
 🔑 Credenciales del administrador:
-   Email: admin@vdc.com
+   Username: admin
    Password: Admin2025!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -129,7 +129,7 @@ Después de limpiar la base de datos, puedes:
 ### 1. Iniciar sesión como Admin
 ```
 URL: http://localhost:5173
-Email: admin@vdc.com
+Username: admin
 Password: Admin2025!
 ```
 

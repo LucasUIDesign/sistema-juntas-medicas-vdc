@@ -44,10 +44,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login(username, password);
       
       setUser(response.user);
       setToken(response.token);

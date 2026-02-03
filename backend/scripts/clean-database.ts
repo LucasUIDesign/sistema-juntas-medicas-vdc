@@ -44,9 +44,9 @@ async function cleanDatabase() {
     const adminId = crypto.randomUUID();
 
     await db.execute({
-      sql: `INSERT INTO User (id, email, password, nombre, apellido, role, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      args: [adminId, 'admin@vdc.com', hashedPassword, 'Administrador', 'Sistema', 'ADMIN'],
+      sql: `INSERT INTO User (id, username, email, password, nombre, apellido, role, createdAt, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      args: [adminId, 'admin', 'admin@vdc.com', hashedPassword, 'Administrador', 'Sistema', 'ADMIN'],
     });
 
     console.log('   ✅ Usuario admin creado\n');
@@ -62,7 +62,7 @@ async function cleanDatabase() {
     console.log(`   • Usuarios eliminados: ${usersResult.rowsAffected}`);
     console.log(`   • Usuario admin creado: 1\n`);
     console.log('🔑 Credenciales del administrador:');
-    console.log('   Email: admin@vdc.com');
+    console.log('   Username: admin');
     console.log('   Password: Admin2025!');
     console.log('━'.repeat(60));
 
