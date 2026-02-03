@@ -224,7 +224,7 @@ const CAMPOS_POR_PASO: Record<number, (keyof DictamenMedicoData)[]> = {
   9: ['diagnosticoPrincipal', 'codigoCIE10', 'naturalezaEnfermedad'],
   10: ['capacidadFuncional', 'factoresLimitantes'],
   11: ['aptitudLaboral', 'restricciones', 'recomendaciones', 'tiempoRecuperacion'],
-  12: ['medicosEvaluadores', 'fechaDictamen'],
+  12: ['medicosEvaluadores'],
 };
 
 const isPasoCompleto = (paso: number, values: DictamenMedicoData): boolean => {
@@ -764,11 +764,6 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                   <PlusIcon className="h-5 w-5 mr-2" />
                   Agregar Médico Evaluador
                 </button>
-
-                <div className="pt-4 border-t border-gray-200">
-                  <label className={labelClass}>Fecha del Dictamen *</label>
-                  <Field name="fechaDictamen" type="date" className={inputClass} />
-                </div>
               </div>
             )}
           </FieldArray>
