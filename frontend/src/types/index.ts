@@ -9,7 +9,7 @@ export interface User {
 }
 
 // Junta Médica types
-export type EstadoJunta = 'PENDIENTE' | 'COMPLETADA' | 'APROBADA' | 'RECHAZADA' | 'DOCUMENTOS_PENDIENTES';
+export type EstadoJunta = 'BORRADOR' | 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
 
 // Documentos requeridos para una junta
 export const DOCUMENTOS_REQUERIDOS: CategoriaDocumento[] = [

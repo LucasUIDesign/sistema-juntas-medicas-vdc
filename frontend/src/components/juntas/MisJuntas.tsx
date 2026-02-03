@@ -88,9 +88,9 @@ const MisJuntas = () => {
         pageSize,
       };
 
-      // Si es Director Médico, solo mostrar juntas COMPLETADAS (listas para aprobar/rechazar)
+      // Si es Director Médico, solo mostrar juntas PENDIENTES (listas para aprobar/rechazar)
       if (isDirectorMedico) {
-        filters.estado = 'COMPLETADA';
+        filters.estado = 'PENDIENTE';
       } else if (selectedEstado) {
         filters.estado = selectedEstado as EstadoJunta;
       }
