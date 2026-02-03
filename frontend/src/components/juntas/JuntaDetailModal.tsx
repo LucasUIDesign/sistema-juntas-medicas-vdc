@@ -875,7 +875,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
 
               {/* Area de Director Médico */}
               {(isDirectorMedico || junta.detallesDirector) && (
-                <div className={`rounded-xl shadow-sm border border-gray-200 overflow-hidden ${isDirectorMedico && junta.estado === 'COMPLETADA' ? 'bg-blue-50/30' : 'bg-white'}`}>
+                <div className={`rounded-xl shadow-sm border border-gray-200 overflow-hidden ${isDirectorMedico && junta.estado === 'PENDIENTE' ? 'bg-blue-50/30' : 'bg-white'}`}>
                   <div className="p-6 border-b border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                       <ClipboardDocumentCheckIcon className="h-6 w-6 mr-2 text-vdc-primary" />
@@ -884,8 +884,8 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate }: JuntaDetai
                   </div>
 
                   <div className="p-6">
-                    {/* Modo Edicion (Solo Director y Completada) */}
-                    {isDirectorMedico && junta.estado === 'COMPLETADA' && (
+                    {/* Modo Edicion (Solo Director y Pendiente) */}
+                    {isDirectorMedico && junta.estado === 'PENDIENTE' && (
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Dictamen de Auditoría</label>

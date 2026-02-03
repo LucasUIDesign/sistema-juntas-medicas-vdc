@@ -70,7 +70,7 @@ const TodasJuntas = () => {
         pageSize,
         sortBy: sortField,
         sortOrder,
-        estado: 'COMPLETADA', // Solo mostrar juntas completadas (cargadas por médicos)
+        estado: 'PENDIENTE', // Mostrar juntas pendientes (cargadas por médicos, esperando aprobación)
       };
       
       if (searchTerm) filters.search = searchTerm;

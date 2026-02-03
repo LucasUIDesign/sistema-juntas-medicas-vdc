@@ -24,17 +24,26 @@ const ProximasJuntas = () => {
       const data = await juntasService.getJuntasAsignadas();
       console.log('Juntas asignadas recibidas:', data);
       
-      // Filtrar turnos de hoy y próximos (no solo del día actual)
+      // Filtrar turnos de hoy y próximos
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       
       const turnosFuturos = data.filter(junta => {
         const fechaJunta = new Date(junta.fecha);
         fechaJunta.setHours(0, 0, 0, 0);
-        return fechaJunta >= hoy;
+        const esFuturo = fechaJunta >= hoy;
+        console.log(`Turno ${junta.id}: fecha=${fechaJunta.toISOString()}, hoy=${hoy.toISOString()}, esFuturo=${esFuturo}`);
+        return esFuturo;
       });
       
-      console.log('Turnos futuros filtrados:', turnosFuturos);
+      // Ordenar por fecha ascendente (próximos primero)
+      turnosFuturos.sort((a, b) => {
+        const fechaA = new Date(a.fecha).getTime();
+        const fechaB = new Date(b.fecha).getTime();
+        return fechaA - fechaB;
+      });
+      
+      console.log('Turnos futuros filtrados y ordenados:', turnosFuturos);
       setJuntasAsignadas(turnosFuturos);
     } catch (error) {
       console.error('Error loading juntas asignadas:', error);

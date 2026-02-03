@@ -180,6 +180,11 @@ export interface DictamenMedicoResumen {
   medicoEvaluador2?: string;
   matricula2?: string;
   especialidad2?: string;
+  medicosEvaluadores?: Array<{
+    nombre: string;
+    matricula: string;
+    especialidad: string;
+  }>;
 }
 
 export interface DocumentoParaSubir {

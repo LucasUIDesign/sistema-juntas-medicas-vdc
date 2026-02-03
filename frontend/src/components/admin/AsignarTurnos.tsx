@@ -314,6 +314,11 @@ const AsignarTurnos = () => {
               minDate={fechaMinima}
               highlightDates={fechasConTurnos}
               calendarClassName="custom-calendar"
+              filterDate={(date) => {
+                const day = date.getDay();
+                // 0 = Domingo, 6 = Sábado - Deshabilitar fines de semana
+                return day !== 0 && day !== 6;
+              }}
             />
 
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
