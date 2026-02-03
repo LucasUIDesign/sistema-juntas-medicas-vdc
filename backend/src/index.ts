@@ -14,6 +14,7 @@ import pacientesRoutes from './routes/pacientes';
 import medicosRoutes from './routes/medicos';
 import uploadRoutes from './routes/upload';
 import usersRoutes from './routes/users';
+import turnosRoutes from './routes/turnos';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -439,6 +440,7 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/medicos', medicosRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/turnos', turnosRoutes);
 
 // Error handling
 app.use(errorHandler);

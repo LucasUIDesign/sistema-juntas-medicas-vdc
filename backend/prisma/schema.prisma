@@ -26,6 +26,7 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   juntas        JuntaMedica[] @relation("MedicoJuntas")
+  turnos        Turno[]       @relation("MedicoTurnos")
 }
 
 // Modelo de Paciente
@@ -40,6 +41,24 @@ model Paciente {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   juntas          JuntaMedica[] @relation("PacienteJuntas")
+  turnos          Turno[]       @relation("PacienteTurnos")
+}
+
+// Modelo de Turno (asignación de citas)
+model Turno {
+  id          String   @id @default(uuid())
+  pacienteId  String
+  medicoId    String
+  fecha       DateTime
+  hora        String   // Hora del turno (formato HH:mm)
+  lugar       String?  // Lugar de la cita
+  observaciones String?
+  estado      String   @default("PENDIENTE") // PENDIENTE, COMPLETADO, CANCELADO
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  paciente    Paciente @relation("PacienteTurnos", fields: [pacienteId], references: [id])
+  medico      User     @relation("MedicoTurnos", fields: [medicoId], references: [id])
 }
 
 // Modelo de Junta Médica
