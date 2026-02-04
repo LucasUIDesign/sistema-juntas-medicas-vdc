@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/layout/Sidebar';
 import Breadcrumbs from '../components/layout/Breadcrumbs';
 import AsignarTurnos from '../components/admin/AsignarTurnos';
-import TodasJuntas from '../components/rrhh/TodasJuntas';
+import TodasTurnosAsignados from '../components/admin/TodasTurnosAsignados';
 import GestionUsuarios from '../components/rrhh/GestionUsuarios';
 import PerfilAdmin from '../components/admin/PerfilAdmin';
 import GestionPacientes from '../components/admin/GestionPacientes';
@@ -91,7 +91,7 @@ const DashboardAdmin = () => {
           <Routes>
             <Route index element={<Navigate to="asignar-turnos" replace />} />
             <Route path="asignar-turnos" element={<AsignarTurnos />} />
-            <Route path="todas-juntas" element={<TodasJuntas />} />
+            <Route path="todas-juntas" element={<TodasTurnosAsignados />} />
             <Route path="pacientes" element={<GestionPacientes />} />
             <Route path="usuarios" element={<GestionUsuarios />} />
             <Route path="perfil" element={<PerfilAdmin />} />
