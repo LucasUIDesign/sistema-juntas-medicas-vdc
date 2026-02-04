@@ -88,10 +88,8 @@ const MisJuntas = () => {
         pageSize,
       };
 
-      // Si es Director Médico, solo mostrar juntas PENDIENTES (listas para aprobar/rechazar)
-      if (isDirectorMedico) {
-        filters.estado = 'PENDIENTE';
-      } else if (selectedEstado) {
+      // Aplicar filtro de estado si está seleccionado
+      if (selectedEstado) {
         filters.estado = selectedEstado as EstadoJunta;
       }
 
@@ -257,28 +255,26 @@ const MisJuntas = () => {
                 </div>
               </div>
 
-              {/* Estado - Solo visible para médicos evaluadores */}
-              {!isDirectorMedico && (
-                <div className="md:col-span-4">
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Filtrar por Estado
-                  </label>
-                  <select
-                    value={selectedEstado}
-                    onChange={(e) => setSelectedEstado(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary bg-white"
-                  >
-                    <option value="">Todos los estados</option>
-                    <option value="PENDIENTE">Pendientes de Revisión</option>
-                    <option value="APROBADA">Aprobadas</option>
-                    <option value="RECHAZADA">Rechazadas</option>
-                    <option value="BORRADOR">Borradores</option>
-                  </select>
-                </div>
-              )}
+              {/* Estado - Visible para todos */}
+              <div className="md:col-span-4">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Filtrar por Estado
+                </label>
+                <select
+                  value={selectedEstado}
+                  onChange={(e) => setSelectedEstado(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary bg-white"
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="PENDIENTE">Pendientes de Revisión</option>
+                  <option value="APROBADA">Aprobadas</option>
+                  <option value="RECHAZADA">Rechazadas</option>
+                  <option value="BORRADOR">Borradores</option>
+                </select>
+              </div>
 
               {/* Botones */}
-              <div className={`${isDirectorMedico ? 'md:col-span-7' : 'md:col-span-3'} flex gap-2`}>
+              <div className="md:col-span-3 flex gap-2">
                 <button
                   onClick={handleClearFilters}
                   className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex-1"
