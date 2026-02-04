@@ -36,9 +36,11 @@ router.get(
       `;
       const args: any[] = [];
 
-      // Si el usuario es médico evaluador y no se especifica medicoId, filtrar por su ID
-      // Si el usuario es admin, mostrar todos los turnos
-      if (user.role === 'MEDICO_EVALUADOR' && !medicoId) {
+      // Filtrar turnos según el rol del usuario
+      // - MEDICO_EVALUADOR: Solo ve sus propios turnos
+      // - DIRECTOR_MEDICO: Solo ve sus propios turnos (si tiene turnos asignados)
+      // - ADMIN: Ve todos los turnos
+      if ((user.role === 'MEDICO_EVALUADOR' || user.role === 'DIRECTOR_MEDICO') && !medicoId) {
         sql += ' AND t.medicoId = ?';
         args.push(user.sub);
       } else if (medicoId) {
