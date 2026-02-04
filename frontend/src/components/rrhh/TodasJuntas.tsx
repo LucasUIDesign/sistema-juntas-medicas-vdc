@@ -36,6 +36,7 @@ const TodasJuntas = () => {
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
   const [selectedMedicos, setSelectedMedicos] = useState<string[]>([]);
+  const [selectedEstado, setSelectedEstado] = useState<string>(''); // Filtro de estado
   const [showFilters, setShowFilters] = useState(false);
   
   // Sorting & Pagination
@@ -70,13 +71,13 @@ const TodasJuntas = () => {
         pageSize,
         sortBy: sortField,
         sortOrder,
-        estado: 'PENDIENTE', // Mostrar juntas pendientes (cargadas por médicos, esperando aprobación)
       };
       
       if (searchTerm) filters.search = searchTerm;
       if (fechaInicio) filters.fechaInicio = fechaInicio.toISOString();
       if (fechaFin) filters.fechaFin = fechaFin.toISOString();
       if (selectedMedicos.length === 1) filters.medicoId = selectedMedicos[0];
+      if (selectedEstado) filters.estado = selectedEstado as any; // Filtrar por estado si está seleccionado
       
       const data = await juntasService.getJuntas(filters);
       setJuntas(data);
@@ -97,6 +98,7 @@ const TodasJuntas = () => {
     setFechaInicio(null);
     setFechaFin(null);
     setSelectedMedicos([]);
+    setSelectedEstado(''); // Limpiar filtro de estado
     setPage(1);
     loadJuntas();
   };
@@ -403,7 +405,7 @@ const TodasJuntas = () => {
           </button>
 
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               {/* Buscar Paciente */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -465,6 +467,24 @@ const TodasJuntas = () => {
                       {medico.nombre}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              {/* Estado Select */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado
+                </label>
+                <select
+                  value={selectedEstado}
+                  onChange={(e) => setSelectedEstado(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="BORRADOR">Borrador</option>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="APROBADA">Aprobada</option>
+                  <option value="RECHAZADA">Rechazada</option>
                 </select>
               </div>
 
@@ -530,6 +550,13 @@ const TodasJuntas = () => {
                     >
                       Médico <SortIcon field="medicoNombre" />
                     </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleSort('estado')}
+                    >
+                      Estado <SortIcon field="estado" />
+                    </th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Detalles
                     </th>
@@ -556,6 +583,9 @@ const TodasJuntas = () => {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {junta.medicoNombre}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        {getEstadoBadge(junta.estado)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">
                         <span title={junta.detalles}>
