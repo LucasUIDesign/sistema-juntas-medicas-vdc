@@ -216,6 +216,9 @@ export const juntasService = {
       nombre: `${p.nombre} ${p.apellido}`.trim(),
       documento: p.numeroDocumento,
       empresa: '', // Not in DB yet
+      correo: p.correo || '',
+      telefono: p.telefono || '',
+      domicilio: p.domicilio || '',
     }));
   },
 

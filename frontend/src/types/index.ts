@@ -216,6 +216,9 @@ export interface Paciente {
   nombre: string;
   documento: string;
   empresa: string;
+  correo?: string;
+  telefono?: string;
+  domicilio?: string;
 }
 
 // Médico types

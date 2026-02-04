@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { juntasService } from '../../services/juntasService';
@@ -12,8 +12,6 @@ import {
   XMarkIcon,
   PaperClipIcon,
   ChevronDownIcon,
-  UserIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -167,101 +165,6 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
   const [currentJuntaId, setCurrentJuntaId] = useState<string | null>(null);
   const [documentos, setDocumentos] = useState<DocumentoParaSubir[]>([]);
   const [showDocumentos, setShowDocumentos] = useState(false);
-  
-  // Estados para búsqueda de pacientes
-  const [pacienteSearch, setPacienteSearch] = useState('');
-  const [pacienteSuggestions, setPacienteSuggestions] = useState<any[]>([]);
-  const [showPacienteSuggestions, setShowPacienteSuggestions] = useState(false);
-  const [selectedPaciente, setSelectedPaciente] = useState<any | null>(null);
-
-  // Buscar pacientes cuando el usuario escribe
-  useEffect(() => {
-    const searchPacientes = async () => {
-      if (pacienteSearch.length < 2) {
-        setPacienteSuggestions([]);
-        return;
-      }
-
-      try {
-        const pacientes = await juntasService.searchPacientes(pacienteSearch);
-        setPacienteSuggestions(pacientes || []);
-      } catch (error) {
-        console.error('Error searching pacientes:', error);
-      }
-    };
-
-    const debounce = setTimeout(searchPacientes, 300);
-    return () => clearTimeout(debounce);
-  }, [pacienteSearch]);
-
-  // Cuando se selecciona un paciente, autocompletar el dictamen
-  const handleSelectPaciente = (paciente: any) => {
-    setSelectedPaciente(paciente);
-    setPacienteSearch(paciente.nombreCompleto);
-    setShowPacienteSuggestions(false);
-    
-    // Autocompletar datos del dictamen
-    const datosAutocompletados: DictamenMedicoData = {
-      nombreCompleto: paciente.nombreCompleto,
-      dni: paciente.numeroDocumento,
-      email: paciente.correo || '',
-      telefono: paciente.telefono || '',
-      domicilio: paciente.domicilio || '',
-      // Resto de campos vacíos
-      fechaNacimiento: '',
-      sexo: '',
-      estadoCivil: '',
-      obraSocial: '',
-      establecimiento: '',
-      cargo: '',
-      nivelEducativo: '',
-      modalidad: '',
-      situacionRevista: '',
-      antiguedad: '',
-      cargaHoraria: '',
-      legajo: '',
-      motivoJunta: [],
-      fechaInicioLicencia: '',
-      diagnosticosPrevios: '',
-      patologiasPrevias: '',
-      antecedentesQuirurgicos: '',
-      alergias: '',
-      habitos: '',
-      antecedentesFamiliares: '',
-      licenciasAnteriores: '',
-      accidentesLaborales: '',
-      factoresRiesgo: '',
-      sintomasPrincipales: '',
-      evolucion: '',
-      tratamientosActuales: '',
-      interconsultas: '',
-      presionArterial: '',
-      frecuenciaCardiaca: '',
-      frecuenciaRespiratoria: '',
-      temperatura: '',
-      peso: '',
-      talla: '',
-      imc: '',
-      examenGeneral: '',
-      laboratorio: '',
-      imagenes: '',
-      estudiosFuncionales: '',
-      diagnosticoPrincipal: '',
-      codigoCIE10: '',
-      naturalezaEnfermedad: '',
-      capacidadFuncional: '',
-      factoresLimitantes: '',
-      aptitudLaboral: '',
-      restricciones: '',
-      recomendaciones: '',
-      tiempoRecuperacion: '',
-      medicosEvaluadores: [],
-      fechaDictamen: new Date().toISOString().split('T')[0],
-    };
-    
-    setDictamenData(datosAutocompletados);
-    toast.success(`Paciente ${paciente.nombreCompleto} seleccionado. Datos autocompletados.`);
-  };
 
   // Save dictamen data from wizard
   const handleDictamenChange = (data: DictamenMedicoData) => {
@@ -296,6 +199,7 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       
       if (!pacientes || pacientes.length === 0) {
         toast.error('El paciente no existe en el sistema. Por favor, solicite al administrador que cree el paciente primero.');
+        setIsSubmitting(false);
         return;
       }
       
@@ -398,91 +302,6 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
           Complete el cuestionario del dictamen médico para registrar la junta
         </p>
       </div>
-
-      {/* Búsqueda de Paciente */}
-      {!selectedPaciente && (
-        <div className="bg-blue-50 border border-blue-200 rounded-card p-4 mb-6">
-          <h3 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
-            <UserIcon className="h-5 w-5 mr-2" />
-            Buscar Paciente
-          </h3>
-          <p className="text-xs text-blue-700 mb-3">
-            Busque el paciente por nombre o DNI. Solo puede crear juntas para pacientes ya registrados por el administrador.
-          </p>
-          <div className="relative">
-            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={pacienteSearch}
-              onChange={(e) => {
-                setPacienteSearch(e.target.value);
-                setShowPacienteSuggestions(true);
-              }}
-              onFocus={() => setShowPacienteSuggestions(true)}
-              placeholder="Buscar por nombre o DNI..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-            />
-            
-            {/* Sugerencias de pacientes */}
-            {showPacienteSuggestions && pacienteSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {pacienteSuggestions.map((paciente) => (
-                  <button
-                    key={paciente.id}
-                    onClick={() => handleSelectPaciente(paciente)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
-                  >
-                    <div>
-                      <div className="font-medium text-gray-900">{paciente.nombreCompleto}</div>
-                      <div className="text-sm text-gray-500">DNI: {paciente.numeroDocumento}</div>
-                      {paciente.telefono && (
-                        <div className="text-xs text-gray-400">Tel: {paciente.telefono}</div>
-                      )}
-                    </div>
-                    <CheckCircleIcon className="w-5 h-5 text-vdc-primary" />
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {showPacienteSuggestions && pacienteSearch.length >= 2 && pacienteSuggestions.length === 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-                <p className="text-sm text-gray-500 text-center">
-                  No se encontró ningún paciente. Solicite al administrador que cree el paciente primero.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Paciente Seleccionado */}
-      {selectedPaciente && (
-        <div className="bg-green-50 border border-green-200 rounded-card p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-green-900 mb-1 flex items-center">
-                <CheckCircleIcon className="h-5 w-5 mr-2" />
-                Paciente Seleccionado
-              </h3>
-              <p className="text-sm text-green-700">
-                <strong>{selectedPaciente.nombreCompleto}</strong> - DNI: {selectedPaciente.numeroDocumento}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setSelectedPaciente(null);
-                setPacienteSearch('');
-                setDictamenData(null);
-              }}
-              className="text-green-700 hover:text-green-900"
-              title="Cambiar paciente"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Dictamen Form */}
       <div className="bg-white rounded-card shadow-card p-card">

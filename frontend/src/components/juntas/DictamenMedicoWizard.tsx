@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import { toast } from 'react-toastify';
+import { juntasService } from '../../services/juntasService';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -17,6 +18,7 @@ import {
   ExclamationCircleIcon,
   PlusIcon,
   TrashIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 // Tipos para el formulario
@@ -295,10 +297,87 @@ interface DictamenMedicoWizardProps {
 const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesionales = false }: DictamenMedicoWizardProps) => {
   const [pasoActual, setPasoActual] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Estado para búsqueda de pacientes
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Filtrar pasos si hideProfesionales está activo
   const pasosVisibles = hideProfesionales ? PASOS.filter(p => p.id !== 12) : PASOS;
   const totalPasos = pasosVisibles.length;
+
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Buscar pacientes con debounce
+  const handleSearchPacientes = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const results = await juntasService.searchPacientes(query);
+      setSearchResults(results);
+      setShowSuggestions(results.length > 0);
+    } catch (error) {
+      console.error('Error buscando pacientes:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Manejar cambio en el campo de búsqueda con debounce
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Limpiar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Crear nuevo timeout
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearchPacientes(value);
+    }, 300);
+  };
+
+  // Seleccionar paciente de las sugerencias
+  const handleSelectPaciente = (paciente: any, setFieldValue: (field: string, value: unknown) => void) => {
+    // Autocompletar campos
+    setFieldValue('nombreCompleto', paciente.nombre);
+    setFieldValue('dni', paciente.documento);
+    
+    // Si el paciente tiene más datos, autocompletarlos también
+    if (paciente.correo) setFieldValue('email', paciente.correo);
+    if (paciente.telefono) setFieldValue('telefono', paciente.telefono);
+    if (paciente.domicilio) setFieldValue('domicilio', paciente.domicilio);
+    
+    // Limpiar búsqueda
+    setSearchQuery(paciente.nombre);
+    setShowSuggestions(false);
+    setSearchResults([]);
+    
+    toast.success(`Paciente seleccionado: ${paciente.nombre}`);
+  };
 
   const avanzarPaso = () => {
     const maxPaso = hideProfesionales ? 11 : 12;
@@ -365,10 +444,85 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
       case 1:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
+            <div className="md:col-span-2" ref={searchContainerRef}>
               <label className={labelClassRequired}>Nombre Completo</label>
-              <Field name="nombreCompleto" className={inputClassRequired(values.nombreCompleto)} placeholder="Apellido y Nombre" />
+              <div className="relative">
+                <div className="relative">
+                  <Field
+                    name="nombreCompleto"
+                    className={inputClassRequired(values.nombreCompleto)}
+                    placeholder="Buscar paciente por nombre o apellido..."
+                    autoComplete="off"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const value = e.target.value;
+                      setFieldValue('nombreCompleto', value);
+                      handleSearchChange(value);
+                    }}
+                    onFocus={() => {
+                      if (searchResults.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    {isSearching ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </motion.div>
+                    ) : (
+                      <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Sugerencias de búsqueda */}
+                <AnimatePresence>
+                  {showSuggestions && searchResults.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    >
+                      {searchResults.map((paciente, index) => (
+                        <div
+                          key={paciente.id || index}
+                          onClick={() => handleSelectPaciente(paciente, setFieldValue)}
+                          className="px-4 py-3 hover:bg-vdc-primary/10 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">{paciente.nombre}</p>
+                              <div className="flex flex-wrap gap-3 mt-1">
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">DNI:</span> {paciente.documento}
+                                </p>
+                                {paciente.telefono && (
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">Tel:</span> {paciente.telefono}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <CheckIcon className="w-5 h-5 text-vdc-primary opacity-0 group-hover:opacity-100" />
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               {!values.nombreCompleto && <p className="text-xs text-red-500 mt-1">Campo requerido</p>}
+              <p className="text-xs text-gray-500 mt-1">
+                Escriba al menos 2 caracteres para buscar pacientes existentes
+              </p>
             </div>
             <div>
               <label className={labelClassRequired}>DNI</label>

@@ -20,6 +20,9 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - IMPORTANTE para Render y otros servicios de hosting
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
