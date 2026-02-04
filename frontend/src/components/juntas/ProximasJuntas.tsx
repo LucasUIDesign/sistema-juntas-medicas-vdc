@@ -44,7 +44,12 @@ const ProximasJuntas = () => {
       });
       
       console.log('Turnos futuros filtrados y ordenados:', turnosFuturos);
-      setJuntasAsignadas(turnosFuturos);
+      
+      // Solo mostrar el turno más próximo (el primero)
+      const proximoTurno = turnosFuturos.length > 0 ? [turnosFuturos[0]] : [];
+      console.log('Próximo turno a mostrar:', proximoTurno);
+      
+      setJuntasAsignadas(proximoTurno);
     } catch (error) {
       console.error('Error loading juntas asignadas:', error);
     } finally {
@@ -69,7 +74,7 @@ const ProximasJuntas = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
         <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center">
           <CalendarDaysIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-          Próximos Turnos
+          Próximo Turno
         </h3>
         <div className="text-center py-6">
           <CalendarDaysIcon className="h-10 w-10 mx-auto text-gray-300 mb-2" />
@@ -85,10 +90,7 @@ const ProximasJuntas = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
       <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
         <CalendarDaysIcon className="h-5 w-5 mr-2 text-vdc-primary" />
-        Próximos Turnos
-        <span className="ml-auto text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          {juntasAsignadas.length} turno{juntasAsignadas.length > 1 ? 's' : ''}
-        </span>
+        Próximo Turno
       </h3>
       
       {/* Mostrar fecha de cada turno */}
