@@ -210,9 +210,6 @@ const TodasTurnosAsignados = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Lugar
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
                   </th>
@@ -258,7 +255,6 @@ const TodasTurnosAsignados = () => {
                         {turno.lugar || 'No especificado'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getEstadoBadge(turno.estado)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleDeleteTurno(turno.id)}
