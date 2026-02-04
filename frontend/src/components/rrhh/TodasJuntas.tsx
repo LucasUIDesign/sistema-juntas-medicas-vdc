@@ -4,7 +4,7 @@ import { juntasService } from '../../services/juntasService';
 import { JuntaMedica, PaginatedResult, Medico, JuntaFilters } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModalRRHH from './JuntaDetailModalRRHH';
-import JuntaDetailModal from '../juntas/JuntaDetailModal';
+import JuntaDetailModalGerencial from '../gerencial/JuntaDetailModalGerencial';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -29,13 +29,13 @@ const TodasJuntas = () => {
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJunta, setSelectedJunta] = useState<JuntaMedica | null>(null);
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMedicos, setSelectedMedicos] = useState<string[]>([]);
   const [selectedEstado, setSelectedEstado] = useState<string>(''); // Filtro de estado
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Sorting & Pagination
   const [sortField, setSortField] = useState<SortField>('fecha');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -69,11 +69,11 @@ const TodasJuntas = () => {
         sortBy: sortField,
         sortOrder,
       };
-      
+
       if (searchTerm) filters.search = searchTerm;
       if (selectedMedicos.length === 1) filters.medicoId = selectedMedicos[0];
       if (selectedEstado) filters.estado = selectedEstado as any; // Filtrar por estado si está seleccionado
-      
+
       const data = await juntasService.getJuntas(filters);
       setJuntas(data);
     } catch (error) {
@@ -93,7 +93,7 @@ const TodasJuntas = () => {
     setSelectedMedicos([]);
     setSelectedEstado('');
     setPage(1);
-    
+
     // Cargar juntas sin filtros inmediatamente
     const loadAllJuntas = async () => {
       setIsLoading(true);
@@ -104,7 +104,7 @@ const TodasJuntas = () => {
           sortBy: sortField,
           sortOrder,
         };
-        
+
         const data = await juntasService.getJuntas(filters);
         setJuntas(data);
       } catch (error) {
@@ -113,7 +113,7 @@ const TodasJuntas = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadAllJuntas();
   };
 
@@ -133,7 +133,7 @@ const TodasJuntas = () => {
       RECHAZADA: 'bg-red-100 text-red-800',
       BORRADOR: 'bg-gray-100 text-gray-800',
     };
-    
+
     const labels: Record<string, string> = {
       PENDIENTE: 'Pendiente de Revisión',
       APROBADA: 'Aprobada',
@@ -174,7 +174,7 @@ const TodasJuntas = () => {
     const margin = 14;
     const contentWidth = pageWidth - (margin * 2);
     let yPosition = 20;
-    
+
     // Función para agregar nueva página si es necesario
     const checkPageBreak = (requiredSpace: number) => {
       if (yPosition + requiredSpace > pageHeight - 20) {
@@ -203,18 +203,18 @@ const TodasJuntas = () => {
       if (estado === 'RECHAZADA') return 'Rechazada por Director Médico';
       return 'Pendiente de aprobación';
     };
-    
+
     // Título principal
     doc.setFontSize(18);
     doc.setTextColor(30, 64, 175);
     doc.text('VDC Internacional', margin, yPosition);
     yPosition += 8;
-    
+
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
     doc.text('Nómina de Juntas Médicas', margin, yPosition);
     yPosition += 6;
-    
+
     // Fecha de generación
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
@@ -222,14 +222,14 @@ const TodasJuntas = () => {
     yPosition += 4;
     doc.text(`Total de registros: ${juntas.total}`, margin, yPosition);
     yPosition += 10;
-    
+
     // Filtros aplicados
     if (searchTerm || selectedMedicos.length > 0) {
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
       doc.text('Filtros aplicados:', margin, yPosition);
       yPosition += 5;
-      
+
       if (searchTerm) {
         doc.text(`• Búsqueda: ${searchTerm}`, margin + 2, yPosition);
         yPosition += 4;
@@ -241,33 +241,33 @@ const TodasJuntas = () => {
       }
       yPosition += 5;
     }
-    
+
     // Iterar sobre cada junta y crear una ficha
     juntas.data.forEach((junta, index) => {
       // Verificar si necesitamos una nueva página (estimando ~70mm por ficha)
       checkPageBreak(70);
-      
+
       // Dibujar borde de la ficha
       doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(0.5);
       const fichaHeight = 65;
       doc.rect(margin, yPosition, contentWidth, fichaHeight);
-      
+
       // Fondo del header de la ficha
       doc.setFillColor(245, 247, 250);
       doc.rect(margin, yPosition, contentWidth, 10, 'F');
-      
+
       // Número de ficha y estado
       doc.setFontSize(10);
       doc.setTextColor(30, 64, 175);
       doc.setFont('helvetica', 'bold');
       doc.text(`Junta Médica #${index + 1}`, margin + 3, yPosition + 6.5);
-      
+
       // Estado en el lado derecho
       const estadoTexto = getEstadoTexto(junta.estado);
       const estadoWidth = doc.getTextWidth(estadoTexto);
       doc.setFontSize(9);
-      
+
       // Color del estado
       if (junta.estado === 'APROBADA') {
         doc.setTextColor(22, 163, 74); // Verde
@@ -277,12 +277,12 @@ const TodasJuntas = () => {
         doc.setTextColor(234, 179, 8); // Amarillo
       }
       doc.text(estadoTexto, pageWidth - margin - estadoWidth - 3, yPosition + 6.5);
-      
+
       // Contenido de la ficha
       let yFicha = yPosition + 15;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      
+
       // Fecha de la Junta
       doc.setTextColor(100, 100, 100);
       doc.text('Fecha de la Junta:', margin + 3, yFicha);
@@ -290,7 +290,7 @@ const TodasJuntas = () => {
       doc.setFont('helvetica', 'bold');
       doc.text(format(new Date(junta.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es }), margin + 35, yFicha);
       yFicha += 7;
-      
+
       // Paciente
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
@@ -299,7 +299,7 @@ const TodasJuntas = () => {
       doc.setFont('helvetica', 'bold');
       doc.text(junta.pacienteNombre, margin + 35, yFicha);
       yFicha += 7;
-      
+
       // DNI
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
@@ -308,7 +308,7 @@ const TodasJuntas = () => {
       doc.setFont('helvetica', 'bold');
       doc.text(junta.pacienteDni || junta.dictamen?.dni || '-', margin + 35, yFicha);
       yFicha += 7;
-      
+
       // Médico Evaluador
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
@@ -317,12 +317,12 @@ const TodasJuntas = () => {
       doc.setFont('helvetica', 'bold');
       doc.text(junta.medicoNombre, margin + 35, yFicha);
       yFicha += 7;
-      
+
       // Aprobación
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
       doc.text('Aprobación:', margin + 3, yFicha);
-      
+
       const aprobacionTexto = getAprobacionTexto(junta.estado);
       if (junta.estado === 'APROBADA') {
         doc.setTextColor(22, 163, 74);
@@ -334,7 +334,7 @@ const TodasJuntas = () => {
       doc.setFont('helvetica', 'bold');
       doc.text(aprobacionTexto, margin + 35, yFicha);
       yFicha += 7;
-      
+
       // Detalles (si existen y hay espacio)
       if (junta.detalles && junta.detalles.trim()) {
         doc.setFont('helvetica', 'normal');
@@ -342,26 +342,26 @@ const TodasJuntas = () => {
         doc.text('Detalles:', margin + 3, yFicha);
         doc.setTextColor(60, 60, 60);
         doc.setFontSize(8);
-        
+
         // Truncar detalles si son muy largos
         const detallesMaxLength = 80;
-        const detallesTexto = junta.detalles.length > detallesMaxLength 
+        const detallesTexto = junta.detalles.length > detallesMaxLength
           ? junta.detalles.substring(0, detallesMaxLength) + '...'
           : junta.detalles;
-        
+
         const detallesLines = doc.splitTextToSize(detallesTexto, contentWidth - 40);
         doc.text(detallesLines.slice(0, 2), margin + 35, yFicha); // Máximo 2 líneas
       }
-      
+
       // Mover posición para la siguiente ficha
       yPosition += fichaHeight + 8;
     });
-    
+
     // Footer en la última página
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text('VDC Internacional - Sistema de Gestión de Juntas Médicas', margin, pageHeight - 10);
-    
+
     // Guardar PDF
     const fileName = `nomina-juntas-medicas-${format(new Date(), 'yyyy-MM-dd-HHmm')}.pdf`;
     doc.save(fileName);
@@ -620,10 +620,9 @@ const TodasJuntas = () => {
         {selectedJunta && (
           <>
             {user?.role === 'GERENCIAL' ? (
-              <JuntaDetailModal
+              <JuntaDetailModalGerencial
                 junta={selectedJunta}
                 onClose={() => setSelectedJunta(null)}
-                readOnly={true}
               />
             ) : (
               <JuntaDetailModalRRHH
