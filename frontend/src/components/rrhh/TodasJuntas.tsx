@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DatePicker from 'react-datepicker';
 import { juntasService } from '../../services/juntasService';
 import { JuntaMedica, PaginatedResult, Medico, JuntaFilters } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -19,7 +18,6 @@ import {
   FunnelIcon,
   ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
-import 'react-datepicker/dist/react-datepicker.css';
 
 type SortField = 'fecha' | 'pacienteNombre' | 'medicoNombre' | 'estado';
 type SortOrder = 'asc' | 'desc';
@@ -33,8 +31,6 @@ const TodasJuntas = () => {
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
-  const [fechaFin, setFechaFin] = useState<Date | null>(null);
   const [selectedMedicos, setSelectedMedicos] = useState<string[]>([]);
   const [selectedEstado, setSelectedEstado] = useState<string>(''); // Filtro de estado
   const [showFilters, setShowFilters] = useState(false);
@@ -74,8 +70,6 @@ const TodasJuntas = () => {
       };
       
       if (searchTerm) filters.search = searchTerm;
-      if (fechaInicio) filters.fechaInicio = fechaInicio.toISOString();
-      if (fechaFin) filters.fechaFin = fechaFin.toISOString();
       if (selectedMedicos.length === 1) filters.medicoId = selectedMedicos[0];
       if (selectedEstado) filters.estado = selectedEstado as any; // Filtrar por estado si está seleccionado
       
@@ -95,8 +89,6 @@ const TodasJuntas = () => {
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    setFechaInicio(null);
-    setFechaFin(null);
     setSelectedMedicos([]);
     setSelectedEstado(''); // Limpiar filtro de estado
     setPage(1);
@@ -210,7 +202,7 @@ const TodasJuntas = () => {
     yPosition += 10;
     
     // Filtros aplicados
-    if (searchTerm || fechaInicio || fechaFin || selectedMedicos.length > 0) {
+    if (searchTerm || selectedMedicos.length > 0) {
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
       doc.text('Filtros aplicados:', margin, yPosition);
@@ -218,14 +210,6 @@ const TodasJuntas = () => {
       
       if (searchTerm) {
         doc.text(`• Búsqueda: ${searchTerm}`, margin + 2, yPosition);
-        yPosition += 4;
-      }
-      if (fechaInicio) {
-        doc.text(`• Desde: ${format(fechaInicio, 'dd/MM/yyyy')}`, margin + 2, yPosition);
-        yPosition += 4;
-      }
-      if (fechaFin) {
-        doc.text(`• Hasta: ${format(fechaFin, 'dd/MM/yyyy')}`, margin + 2, yPosition);
         yPosition += 4;
       }
       if (selectedMedicos.length > 0) {
@@ -405,7 +389,7 @@ const TodasJuntas = () => {
           </button>
 
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Buscar Paciente */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -415,39 +399,13 @@ const TodasJuntas = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                   placeholder="Nombre o DNI..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                />
-              </div>
-
-              {/* Fecha Inicio */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha Desde
-                </label>
-                <DatePicker
-                  selected={fechaInicio}
-                  onChange={(date) => setFechaInicio(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Seleccionar..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  isClearable
-                />
-              </div>
-
-              {/* Fecha Fin */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha Hasta
-                </label>
-                <DatePicker
-                  selected={fechaFin}
-                  onChange={(date) => setFechaFin(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="Seleccionar..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                  isClearable
-                  minDate={fechaInicio || undefined}
                 />
               </div>
 
