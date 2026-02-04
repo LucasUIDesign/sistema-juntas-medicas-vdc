@@ -4,6 +4,7 @@ import { juntasService } from '../../services/juntasService';
 import { JuntaMedica, PaginatedResult, Medico, JuntaFilters } from '../../types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import JuntaDetailModalRRHH from './JuntaDetailModalRRHH';
+import JuntaDetailModal from '../juntas/JuntaDetailModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -617,11 +618,21 @@ const TodasJuntas = () => {
       {/* Detail Modal */}
       <AnimatePresence>
         {selectedJunta && (
-          <JuntaDetailModalRRHH
-            junta={selectedJunta}
-            onClose={() => setSelectedJunta(null)}
-            showPdfButton={user?.role === 'RRHH'}
-          />
+          <>
+            {user?.role === 'GERENCIAL' ? (
+              <JuntaDetailModal
+                junta={selectedJunta}
+                onClose={() => setSelectedJunta(null)}
+                readOnly={true}
+              />
+            ) : (
+              <JuntaDetailModalRRHH
+                junta={selectedJunta}
+                onClose={() => setSelectedJunta(null)}
+                showPdfButton={user?.role === 'RRHH'}
+              />
+            )}
+          </>
         )}
       </AnimatePresence>
     </motion.div>
