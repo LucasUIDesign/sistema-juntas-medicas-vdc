@@ -90,9 +90,30 @@ const TodasJuntas = () => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setSelectedMedicos([]);
-    setSelectedEstado(''); // Limpiar filtro de estado
+    setSelectedEstado('');
     setPage(1);
-    loadJuntas();
+    
+    // Cargar juntas sin filtros inmediatamente
+    const loadAllJuntas = async () => {
+      setIsLoading(true);
+      try {
+        const filters: JuntaFilters = {
+          page: 1,
+          pageSize,
+          sortBy: sortField,
+          sortOrder,
+        };
+        
+        const data = await juntasService.getJuntas(filters);
+        setJuntas(data);
+      } catch (error) {
+        console.error('Error loading juntas:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadAllJuntas();
   };
 
   const handleSort = (field: SortField) => {
@@ -389,26 +410,7 @@ const TodasJuntas = () => {
           </button>
 
           <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Buscar Paciente */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Buscar Paciente
-                </label>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    }
-                  }}
-                  placeholder="Nombre o DNI..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-card text-sm focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 focus:border-vdc-primary"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Médicos Select */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
