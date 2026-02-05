@@ -91,9 +91,10 @@ const JuntaDetailModalGerencial = ({ junta, onClose }: JuntaDetailModalGerencial
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
             const token = localStorage.getItem('vdc_token');
 
+            // La URL del documento viene sin /api, así que hay que agregarlo
             const downloadUrl = adjunto.url.startsWith('http')
                 ? adjunto.url
-                : `${API_URL}${adjunto.url}`;
+                : `${API_URL}/api${adjunto.url}`;
 
             console.log('[DOWNLOAD] URL:', downloadUrl);
 
@@ -384,15 +385,15 @@ const JuntaDetailModalGerencial = ({ junta, onClose }: JuntaDetailModalGerencial
                 return (
                     <div className="space-y-6">
                         <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
-                                aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
-                                    aptitud === 'APTO_CON_RESTRICCIONES' ? 'bg-yellow-50 border-yellow-200' :
-                                        'bg-gray-50 border-gray-200'
+                            aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
+                                aptitud === 'APTO_CON_RESTRICCIONES' ? 'bg-yellow-50 border-yellow-200' :
+                                    'bg-gray-50 border-gray-200'
                             }`}>
                             <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
                             <h2 className={`text-3xl font-black tracking-tight ${aptitud === 'APTO' ? 'text-green-700' :
-                                    aptitud === 'NO_APTO' ? 'text-red-700' :
-                                        aptitud === 'APTO_CON_RESTRICCIONES' ? 'text-yellow-700' :
-                                            'text-gray-700'
+                                aptitud === 'NO_APTO' ? 'text-red-700' :
+                                    aptitud === 'APTO_CON_RESTRICCIONES' ? 'text-yellow-700' :
+                                        'text-gray-700'
                                 }`}>
                                 {aptitud === 'APTO' ? 'APTO' :
                                     aptitud === 'NO_APTO' ? 'NO APTO' :

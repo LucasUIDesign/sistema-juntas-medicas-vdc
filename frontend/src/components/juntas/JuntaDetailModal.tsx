@@ -56,7 +56,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
 
   // Estado local para la junta (permite actualizaciones en tiempo real)
   const [junta, setJunta] = useState<JuntaMedica>(initialJunta);
-  
+
   // Mostrar dictamen expandido por defecto para directores, colapsado para otros para reducir ruido inicial
   const [showDictamen, setShowDictamen] = useState(true);
   const [activeTab, setActiveTab] = useState('identificacion');
@@ -402,25 +402,23 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
         return (
           <div className="space-y-6">
             {/* Main Result Banner */}
-            <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${
-              aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
-              aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
-              aptitud === 'APTO_CON_RESTRICCIONES' ? 'bg-yellow-50 border-yellow-200' :
-              'bg-gray-50 border-gray-200'
-            }`}>
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
-              <h2 className={`text-3xl font-black tracking-tight ${
-                aptitud === 'APTO' ? 'text-green-700' :
-                aptitud === 'NO_APTO' ? 'text-red-700' :
-                aptitud === 'APTO_CON_RESTRICCIONES' ? 'text-yellow-700' :
-                'text-gray-700'
+            <div className={`p-6 rounded-xl border-2 text-center shadow-sm ${aptitud === 'APTO' ? 'bg-green-50 border-green-200' :
+                aptitud === 'NO_APTO' ? 'bg-red-50 border-red-200' :
+                  aptitud === 'APTO_CON_RESTRICCIONES' ? 'bg-yellow-50 border-yellow-200' :
+                    'bg-gray-50 border-gray-200'
               }`}>
+              <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Conclusión Médica</p>
+              <h2 className={`text-3xl font-black tracking-tight ${aptitud === 'APTO' ? 'text-green-700' :
+                  aptitud === 'NO_APTO' ? 'text-red-700' :
+                    aptitud === 'APTO_CON_RESTRICCIONES' ? 'text-yellow-700' :
+                      'text-gray-700'
+                }`}>
                 {aptitud === 'APTO' ? 'APTO' :
                   aptitud === 'NO_APTO' ? 'NO APTO' :
-                  aptitud === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
-                  aptitud === 'NO_APTO_TEMPORARIO' ? 'NO APTO TEMPORARIO' :
-                  aptitud === 'NO_APTO_DEFINITIVO' ? 'NO APTO DEFINITIVO' :
-                  aptitud || 'PENDIENTE'}
+                    aptitud === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES' :
+                      aptitud === 'NO_APTO_TEMPORARIO' ? 'NO APTO TEMPORARIO' :
+                        aptitud === 'NO_APTO_DEFINITIVO' ? 'NO APTO DEFINITIVO' :
+                          aptitud || 'PENDIENTE'}
               </h2>
               {junta.dictamen?.fechaDictamen && (
                 <p className="text-xs text-gray-500 mt-2">
@@ -451,20 +449,20 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
               {renderSectionHeader('Médicos Evaluadores', <UserGroupIcon className="h-5 w-5" />)}
-              
+
               {(() => {
                 // Intentar obtener médicos del nuevo formato (array)
                 const medicosArray = datos?.medicosEvaluadores;
-                
+
                 // Filtrar médicos que tengan al menos un campo lleno
-                const medicosConDatos = Array.isArray(medicosArray) 
-                  ? medicosArray.filter((m: any) => 
-                      (m.nombre && m.nombre.trim()) || 
-                      (m.matricula && m.matricula.trim()) || 
-                      (m.especialidad && m.especialidad.trim())
-                    )
+                const medicosConDatos = Array.isArray(medicosArray)
+                  ? medicosArray.filter((m: any) =>
+                    (m.nombre && m.nombre.trim()) ||
+                    (m.matricula && m.matricula.trim()) ||
+                    (m.especialidad && m.especialidad.trim())
+                  )
                   : [];
-                
+
                 // Si existe el array y tiene médicos con datos
                 if (medicosConDatos.length > 0) {
                   return (
@@ -491,11 +489,11 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                     </div>
                   );
                 }
-                
+
                 // Fallback: intentar formato antiguo (campos individuales)
                 const medico1 = datos?.medicoEvaluador1 || junta.dictamen?.medicoEvaluador1;
                 const medico2 = datos?.medicoEvaluador2 || junta.dictamen?.medicoEvaluador2;
-                
+
                 if (medico1 || medico2) {
                   return (
                     <div className="space-y-4">
@@ -532,7 +530,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                     </div>
                   );
                 }
-                
+
                 // Si no hay datos de médicos
                 return (
                   <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
@@ -542,7 +540,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                   </div>
                 );
               })()}
-              
+
               <div className="mt-6 pt-4 border-t border-gray-200">
                 {renderField('Fecha del Dictamen', datos?.fechaDictamen || junta.dictamen?.fechaDictamen, <CalendarIcon className="h-3 w-3" />)}
               </div>
@@ -692,12 +690,12 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                           if (file) {
                             try {
                               toast.info(`Subiendo: ${file.name}...`);
-                              
+
                               // Subir el documento al backend
                               const result = await juntasService.uploadDocumento(junta.id, file, docRequerido);
-                              
+
                               toast.success(`Documento "${file.name}" guardado exitosamente`);
-                              
+
                               // Recargar los datos de la junta para mostrar el documento actualizado
                               const updatedJunta = await juntasService.getJuntaById(junta.id);
                               if (updatedJunta) {
@@ -758,39 +756,39 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                         try {
                                           console.log('[DOWNLOAD] Iniciando descarga:', adjunto.nombre);
                                           toast.info(`Descargando: ${adjunto.nombre}`);
-                                          
+
                                           // Construir URL del backend para descargar
                                           const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
                                           const token = localStorage.getItem('vdc_token');
-                                          
-                                          // La URL ya viene en el formato correcto desde el backend
-                                          const downloadUrl = adjunto.url.startsWith('http') 
-                                            ? adjunto.url 
-                                            : `${API_URL}${adjunto.url}`;
-                                          
+
+                                          // La URL del documento viene sin /api, así que hay que agregarlo
+                                          const downloadUrl = adjunto.url.startsWith('http')
+                                            ? adjunto.url
+                                            : `${API_URL}/api${adjunto.url}`;
+
                                           console.log('[DOWNLOAD] URL:', downloadUrl);
                                           console.log('[DOWNLOAD] Token presente:', !!token);
-                                          
+
                                           // Abrir en nueva pestaña con autenticación
                                           const response = await fetch(downloadUrl, {
                                             headers: {
                                               'Authorization': `Bearer ${token}`,
                                             },
                                           });
-                                          
+
                                           console.log('[DOWNLOAD] Response status:', response.status);
                                           console.log('[DOWNLOAD] Response ok:', response.ok);
-                                          
+
                                           if (!response.ok) {
                                             const errorText = await response.text();
                                             console.error('[DOWNLOAD] Error response:', errorText);
                                             throw new Error('Error al descargar el documento');
                                           }
-                                          
+
                                           // Crear blob y descargar
                                           const blob = await response.blob();
                                           console.log('[DOWNLOAD] Blob size:', blob.size, 'type:', blob.type);
-                                          
+
                                           const url = window.URL.createObjectURL(blob);
                                           const a = document.createElement('a');
                                           a.href = url;
@@ -799,7 +797,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                           a.click();
                                           window.URL.revokeObjectURL(url);
                                           document.body.removeChild(a);
-                                          
+
                                           console.log('[DOWNLOAD] Descarga completada');
                                           toast.success('Documento descargado');
                                         } catch (error) {
@@ -818,7 +816,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                   )}
                                 </>
                               )}
-                              
+
                               {/* Botón de Subir/Reemplazar (solo si NO es readOnly) */}
                               {!readOnly && (
                                 <>
