@@ -5,7 +5,10 @@ import {
   KeyIcon,
   CameraIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 
 interface ProfileData {
@@ -14,6 +17,7 @@ interface ProfileData {
   dni: string;
   telefono: string;
   email: string;
+  username: string;
   fotoUrl: string;
 }
 
@@ -37,6 +41,7 @@ const PerfilAdmin = () => {
     dni: '',
     telefono: '',
     email: '',
+    username: '',
     fotoUrl: '',
   });
 
@@ -45,6 +50,15 @@ const PerfilAdmin = () => {
     newPassword: '',
     confirmPassword: '',
   });
+
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -71,6 +85,7 @@ const PerfilAdmin = () => {
           dni: data.dni || '',
           telefono: data.telefono || '',
           email: data.email || '',
+          username: data.username || '',
           fotoUrl: data.fotoUrl || '',
         });
       }
@@ -83,6 +98,19 @@ const PerfilAdmin = () => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    // Validaciones del lado del cliente
+    if (profileData.dni && profileData.dni.length !== 8) {
+      setMessage({ type: 'error', text: 'El DNI debe contener exactamente 8 dígitos' });
+      setLoading(false);
+      return;
+    }
+
+    if (profileData.telefono && profileData.telefono.length !== 10) {
+      setMessage({ type: 'error', text: 'El teléfono debe contener exactamente 10 dígitos' });
+      setLoading(false);
+      return;
+    }
 
     try {
       const token = getToken();
@@ -97,6 +125,8 @@ const PerfilAdmin = () => {
           apellido: profileData.apellido,
           dni: profileData.dni,
           telefono: profileData.telefono,
+          username: profileData.username,
+          email: profileData.email,
           fotoUrl: profileData.fotoUrl,
         }),
       });
@@ -105,6 +135,7 @@ const PerfilAdmin = () => {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Perfil actualizado correctamente' });
+        setIsEditingProfile(false);
       } else {
         setMessage({ type: 'error', text: data.message || 'Error al actualizar el perfil' });
       }
@@ -148,6 +179,7 @@ const PerfilAdmin = () => {
       if (response.ok) {
         setMessage({ type: 'success', text: 'Contraseña actualizada correctamente' });
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setIsEditingPassword(false);
       } else {
         setMessage({ type: 'error', text: data.details?.currentPassword || data.message || 'Error al cambiar la contraseña' });
       }
@@ -247,6 +279,20 @@ const PerfilAdmin = () => {
 
           {activeTab === 'perfil' ? (
             <form onSubmit={handleProfileSubmit} className="space-y-6">
+              {/* Botón de Editar */}
+              {!isEditingProfile && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(true)}
+                    className="inline-flex items-center px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors"
+                  >
+                    <PencilIcon className="w-5 h-5 mr-2" />
+                    Editar Perfil
+                  </button>
+                </div>
+              )}
+
               {/* Foto de perfil */}
               <div className="flex items-center space-x-6">
                 <div className="relative">
@@ -261,15 +307,17 @@ const PerfilAdmin = () => {
                       <UserCircleIcon className="w-16 h-16 text-gray-400" />
                     </div>
                   )}
-                  <label className="absolute bottom-0 right-0 bg-vdc-primary text-white rounded-full p-2 cursor-pointer hover:bg-vdc-primary/90 transition-colors">
-                    <CameraIcon className="w-4 h-4" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePhotoChange}
-                    />
-                  </label>
+                  {isEditingProfile && (
+                    <label className="absolute bottom-0 right-0 bg-vdc-primary text-white rounded-full p-2 cursor-pointer hover:bg-vdc-primary/90 transition-colors">
+                      <CameraIcon className="w-4 h-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoChange}
+                      />
+                    </label>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-700">Foto de Perfil</h3>
@@ -280,14 +328,47 @@ const PerfilAdmin = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre de Usuario
+                  </label>
+                  <input
+                    type="text"
+                    value={profileData.username}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="Ingrese su nombre de usuario"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={profileData.email}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre
                   </label>
                   <input
                     type="text"
                     value={profileData.nombre}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, nombre: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                      setProfileData(prev => ({ ...prev, nombre: value }));
+                    }}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                     placeholder="Ingrese su nombre"
+                    title="Solo se permiten letras"
                   />
                 </div>
 
@@ -298,9 +379,14 @@ const PerfilAdmin = () => {
                   <input
                     type="text"
                     value={profileData.apellido}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, apellido: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                      setProfileData(prev => ({ ...prev, apellido: value }));
+                    }}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                     placeholder="Ingrese su apellido"
+                    title="Solo se permiten letras"
                   />
                 </div>
 
@@ -311,10 +397,17 @@ const PerfilAdmin = () => {
                   <input
                     type="text"
                     value={profileData.dni}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, dni: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-                    placeholder="Ingrese su DNI"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setProfileData(prev => ({ ...prev, dni: value }));
+                    }}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="12345678"
+                    maxLength={8}
+                    title="Debe contener exactamente 8 dígitos"
                   />
+                  {isEditingProfile && <p className="mt-1 text-xs text-gray-500">Debe contener exactamente 8 dígitos</p>}
                 </div>
 
                 <div>
@@ -324,93 +417,176 @@ const PerfilAdmin = () => {
                   <input
                     type="tel"
                     value={profileData.telefono}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, telefono: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-                    placeholder="Ingrese su teléfono"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setProfileData(prev => ({ ...prev, telefono: value }));
+                    }}
+                    disabled={!isEditingProfile}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="1234567890"
+                    maxLength={10}
+                    title="Debe contener exactamente 10 dígitos"
                   />
+                  {isEditingProfile && <p className="mt-1 text-xs text-gray-500">Debe contener exactamente 10 dígitos</p>}
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Correo Electrónico
-                  </label>
-                  <input
-                    type="email"
-                    value={profileData.email}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">El correo no se puede modificar</p>
-                </div>
               </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-              </div>
+              {isEditingProfile && (
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      fetchProfile(); // Recargar datos originales
+                    }}
+                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              )}
             </form>
           ) : (
             <form onSubmit={handlePasswordSubmit} className="space-y-6 max-w-md">
+              {/* Botón de Editar */}
+              {!isEditingPassword && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingPassword(true)}
+                    className="inline-flex items-center px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors"
+                  >
+                    <PencilIcon className="w-5 h-5 mr-2" />
+                    Cambiar Contraseña
+                  </button>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contraseña Actual
                 </label>
-                <input
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-                  placeholder="Ingrese su contraseña actual"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? "text" : "password"}
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    disabled={!isEditingPassword}
+                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="Ingrese su contraseña actual"
+                    required
+                  />
+                  {isEditingPassword && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPasswords.current ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nueva Contraseña
                 </label>
-                <input
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-                  placeholder="Ingrese la nueva contraseña"
-                  required
-                  minLength={8}
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números
-                </p>
+                <div className="relative">
+                  <input
+                    type={showPasswords.new ? "text" : "password"}
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    disabled={!isEditingPassword}
+                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="Ingrese la nueva contraseña"
+                    required
+                    minLength={8}
+                  />
+                  {isEditingPassword && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPasswords.new ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                {isEditingPassword && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirmar Nueva Contraseña
                 </label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
-                  placeholder="Confirme la nueva contraseña"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? "text" : "password"}
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    disabled={!isEditingPassword}
+                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    placeholder="Confirme la nueva contraseña"
+                    required
+                  />
+                  {isEditingPassword && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPasswords.confirm ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
-                </button>
-              </div>
+              {isEditingPassword && (
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingPassword(false);
+                      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                    }}
+                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
+                  </button>
+                </div>
+              )}
             </form>
           )}
         </div>

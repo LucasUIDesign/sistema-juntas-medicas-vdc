@@ -102,3 +102,33 @@ button, a {
 tr {
   transition: background-color 0.15s ease;
 }
+
+/* Custom calendar styles - Highlight today's date */
+.react-datepicker__day--today {
+  background-color: #E5E7EB !important;
+  border: 2px solid #9CA3AF !important;
+  font-weight: 600 !important;
+  border-radius: 0.375rem !important;
+}
+
+.react-datepicker__day--today:hover {
+  background-color: #D1D5DB !important;
+}
+
+/* Ensure selected date has different styling */
+.react-datepicker__day--selected {
+  background-color: #007BFF !important;
+  color: white !important;
+  border: 2px solid #007BFF !important;
+}
+
+.react-datepicker__day--selected:hover {
+  background-color: #0056b3 !important;
+}
+
+/* When today is also selected */
+.react-datepicker__day--today.react-datepicker__day--selected {
+  background-color: #007BFF !important;
+  border: 2px solid #007BFF !important;
+  color: white !important;
+}

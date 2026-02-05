@@ -8,6 +8,8 @@ import {
   UserPlusIcon,
   EyeIcon,
   EyeSlashIcon,
+  PencilSquareIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
@@ -33,6 +35,15 @@ const createUserSchema = Yup.object({
     .required('El rol es requerido'),
 });
 
+const editCredentialsSchema = Yup.object({
+  username: Yup.string()
+    .min(4, 'El nombre de usuario debe tener mínimo 4 caracteres')
+    .required('Nombre de usuario requerido'),
+  password: Yup.string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .optional(),
+});
+
 const ROLES = [
   { value: 'MEDICO_EVALUADOR', label: 'Médico Evaluador' },
   { value: 'DIRECTOR_MEDICO', label: 'Director Médico' },
@@ -46,6 +57,7 @@ interface User {
   nombre: string;
   apellido: string;
   email: string;
+  username?: string;
   role: string;
   activo: boolean;
 }
@@ -55,6 +67,9 @@ const GestionUsuarios = () => {
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordInModal, setShowPasswordInModal] = useState(false);
 
   // Load users on component mount
   useEffect(() => {
@@ -115,6 +130,52 @@ const GestionUsuarios = () => {
     } catch (error: any) {
       toast.error(error.message || 'Error al crear el usuario', { icon: '❌' });
     }
+  };
+
+  const handleEditCredentials = async (values: any, { setSubmitting }: any) => {
+    if (!selectedUser) return;
+
+    try {
+      const token = localStorage.getItem('vdc_token');
+      const updateData: any = {
+        username: values.username,
+      };
+
+      // Solo incluir contraseña si se proporcionó una nueva
+      if (values.password && values.password.trim() !== '') {
+        updateData.password = values.password;
+      }
+
+      const response = await fetch(`${API_URL}/users/${selectedUser.id}/credentials`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (response.ok) {
+        toast.success('Credenciales actualizadas correctamente', { icon: '✅' });
+        setShowEditModal(false);
+        setSelectedUser(null);
+        setShowPasswordInModal(false);
+        loadUsers();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || 'Error al actualizar las credenciales', { icon: '❌' });
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al actualizar las credenciales', { icon: '❌' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+    setShowPasswordInModal(false);
   };
 
   const getRoleBadge = (role: string) => {
@@ -247,6 +308,7 @@ const GestionUsuarios = () => {
                     id="username"
                     name="username"
                     type="text"
+                    autoComplete="off"
                     placeholder="juan_perez"
                     className={`w-full px-3 py-2 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
                       errors.username && touched.username
@@ -290,6 +352,7 @@ const GestionUsuarios = () => {
                       id="password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
                       placeholder="Mínimo 8 caracteres"
                       className={`w-full px-3 py-2 pr-10 border rounded-card text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
                         errors.password && touched.password
@@ -381,6 +444,9 @@ const GestionUsuarios = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Rol
                   </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -408,6 +474,16 @@ const GestionUsuarios = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getRoleBadge(user.role)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-vdc-primary hover:text-vdc-primary/80 hover:bg-vdc-primary/10 rounded-lg transition-colors"
+                        title="Editar credenciales"
+                      >
+                        <PencilSquareIcon className="h-4 w-4 mr-1" aria-hidden="true" />
+                        Editar
+                      </button>
+                    </td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -420,6 +496,147 @@ const GestionUsuarios = () => {
           <p className="text-gray-500">
             {isLoading ? 'Cargando usuarios...' : 'No hay usuarios registrados aún'}
           </p>
+        </div>
+      )}
+
+      {/* Edit Credentials Modal */}
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+              onClick={() => {
+                setShowEditModal(false);
+                setSelectedUser(null);
+                setShowPasswordInModal(false);
+              }}
+            ></div>
+
+            {/* Modal panel */}
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Editar Credenciales
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setSelectedUser(null);
+                      setShowPasswordInModal(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-500 transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Usuario:</span> {selectedUser.nombre} {selectedUser.apellido}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Email:</span> {selectedUser.email}
+                  </p>
+                </div>
+
+                <Formik
+                  initialValues={{
+                    username: selectedUser.username || '',
+                    password: '',
+                  }}
+                  validationSchema={editCredentialsSchema}
+                  onSubmit={handleEditCredentials}
+                >
+                  {({ errors, touched, isSubmitting }) => (
+                    <Form className="space-y-4">
+                      {/* Nombre de Usuario */}
+                      <div>
+                        <label htmlFor="edit-username" className="block text-sm font-medium text-gray-700 mb-1">
+                          Nombre de Usuario
+                        </label>
+                        <Field
+                          id="edit-username"
+                          name="username"
+                          type="text"
+                          placeholder="Nombre de usuario"
+                          className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
+                            errors.username && touched.username
+                              ? 'border-red-500'
+                              : 'border-gray-300'
+                          }`}
+                        />
+                        <ErrorMessage name="username">
+                          {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
+                        </ErrorMessage>
+                      </div>
+
+                      {/* Nueva Contraseña */}
+                      <div>
+                        <label htmlFor="edit-password" className="block text-sm font-medium text-gray-700 mb-1">
+                          Nueva Contraseña
+                        </label>
+                        <div className="relative">
+                          <Field
+                            id="edit-password"
+                            name="password"
+                            type={showPasswordInModal ? 'text' : 'password'}
+                            placeholder="Dejar vacío para no cambiar"
+                            className={`w-full px-3 py-2 pr-10 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-vdc-primary/20 ${
+                              errors.password && touched.password
+                                ? 'border-red-500'
+                                : 'border-gray-300'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordInModal(!showPasswordInModal)}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+                            aria-label={showPasswordInModal ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          >
+                            {showPasswordInModal ? (
+                              <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                            ) : (
+                              <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                            )}
+                          </button>
+                        </div>
+                        <ErrorMessage name="password">
+                          {(msg) => <p className="mt-1 text-xs text-red-500">{msg}</p>}
+                        </ErrorMessage>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Dejar vacío si no desea cambiar la contraseña
+                        </p>
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="flex gap-3 pt-4">
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="flex-1 px-4 py-2 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-colors disabled:opacity-70 font-medium"
+                        >
+                          {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowEditModal(false);
+                            setSelectedUser(null);
+                            setShowPasswordInModal(false);
+                          }}
+                          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </Form>
+                  )}
+                </Formik>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </motion.div>

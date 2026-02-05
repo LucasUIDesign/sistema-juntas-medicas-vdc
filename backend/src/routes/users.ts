@@ -70,8 +70,8 @@ router.post(
   '/',
   authMiddleware,
   [
-    body('nombre').trim().notEmpty().withMessage('Nombre requerido'),
-    body('apellido').trim().notEmpty().withMessage('Apellido requerido'),
+    body('nombre').trim().notEmpty().withMessage('Nombre requerido').matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/).withMessage('El nombre solo puede contener letras'),
+    body('apellido').trim().notEmpty().withMessage('Apellido requerido').matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/).withMessage('El apellido solo puede contener letras'),
     body('username').trim().notEmpty().withMessage('Nombre de usuario requerido').isLength({ min: 4 }).withMessage('Nombre de usuario debe tener mínimo 4 caracteres'),
     body('email').isEmail().withMessage('Email inválido').normalizeEmail(),
     body('role').notEmpty().withMessage('Rol requerido'),
@@ -163,6 +163,7 @@ router.get('/profile', authMiddleware, async (req: Request, res: Response, next:
     res.json({
       id: user.id,
       email: user.email,
+      username: user.username,
       nombre: user.nombre,
       apellido: user.apellido,
       dni: user.dni,
@@ -181,11 +182,12 @@ router.put(
   '/profile',
   authMiddleware,
   [
-    body('nombre').optional().trim().notEmpty().withMessage('Nombre no puede estar vacío'),
-    body('apellido').optional().trim().notEmpty().withMessage('Apellido no puede estar vacío'),
+    body('nombre').optional().trim().notEmpty().withMessage('Nombre no puede estar vacío').matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/).withMessage('El nombre solo puede contener letras'),
+    body('apellido').optional().trim().notEmpty().withMessage('Apellido no puede estar vacío').matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/).withMessage('El apellido solo puede contener letras'),
+    body('username').optional().trim().notEmpty().withMessage('Nombre de usuario no puede estar vacío').isLength({ min: 4 }).withMessage('Nombre de usuario debe tener mínimo 4 caracteres'),
     body('email').optional().isEmail().withMessage('Email inválido'),
-    body('dni').optional().trim(),
-    body('telefono').optional().trim(),
+    body('dni').optional().trim().isLength({ min: 8, max: 8 }).withMessage('El DNI debe tener exactamente 8 dígitos').matches(/^\d{8}$/).withMessage('El DNI solo puede contener dígitos'),
+    body('telefono').optional().trim().isLength({ min: 10, max: 10 }).withMessage('El teléfono debe tener exactamente 10 dígitos').matches(/^\d{10}$/).withMessage('El teléfono solo puede contener dígitos'),
     body('fotoUrl').optional().trim(),
   ],
   async (req: Request, res: Response, next: NextFunction) => {
@@ -200,7 +202,19 @@ router.put(
       }
 
       const userId = (req as any).user.sub;
-      const { nombre, apellido, email, dni, telefono, fotoUrl } = req.body;
+      const { nombre, apellido, username, email, dni, telefono, fotoUrl } = req.body;
+
+      // Check if username already exists (if username is being updated)
+      if (username !== undefined) {
+        const existingUser = await db.execute({
+          sql: 'SELECT id FROM User WHERE username = ? AND id != ?',
+          args: [username, userId],
+        });
+
+        if (existingUser.rows.length > 0) {
+          throw new ValidationError({ username: 'Este nombre de usuario ya está en uso' });
+        }
+      }
 
       // Check if email already exists and validate domain (if email is being updated)
       if (email !== undefined) {
@@ -224,6 +238,7 @@ router.put(
       const updateData: Record<string, any> = {};
       if (nombre !== undefined) updateData.nombre = nombre;
       if (apellido !== undefined) updateData.apellido = apellido;
+      if (username !== undefined) updateData.username = username;
       if (email !== undefined) updateData.email = email;
       if (dni !== undefined) updateData.dni = dni;
       if (telefono !== undefined) updateData.telefono = telefono;
@@ -236,6 +251,7 @@ router.put(
         user: {
           id: user.id,
           email: user.email,
+          username: user.username,
           nombre: user.nombre,
           apellido: user.apellido,
           dni: user.dni,
@@ -300,6 +316,91 @@ router.put(
       });
 
       res.json({ message: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// PUT /api/users/:id/credentials - Actualizar credenciales de un usuario (admin only)
+router.put(
+  '/:id/credentials',
+  authMiddleware,
+  [
+    body('username').optional().trim().notEmpty().withMessage('Nombre de usuario no puede estar vacío').isLength({ min: 4 }).withMessage('Nombre de usuario debe tener mínimo 4 caracteres'),
+    body('password').optional().isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres'),
+  ],
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        const errorMap: Record<string, string> = {};
+        errors.array().forEach((err: any) => {
+          errorMap[err.path] = err.msg;
+        });
+        throw new ValidationError(errorMap);
+      }
+
+      const userRole = (req as any).user.role;
+
+      // Only admins can update user credentials
+      if (userRole !== 'ADMIN') {
+        return res.status(403).json({ error: 'No tienes permiso para editar credenciales de usuarios' });
+      }
+
+      const { id } = req.params;
+      const { username, password } = req.body;
+
+      // Verificar que el usuario existe
+      const existingUser = await db.execute({
+        sql: 'SELECT id FROM User WHERE id = ?',
+        args: [id],
+      });
+
+      if (existingUser.rows.length === 0) {
+        throw new NotFoundError('Usuario no encontrado');
+      }
+
+      // Check if username already exists (if username is being updated)
+      if (username !== undefined) {
+        const duplicateUsername = await db.execute({
+          sql: 'SELECT id FROM User WHERE username = ? AND id != ?',
+          args: [username, id],
+        });
+
+        if (duplicateUsername.rows.length > 0) {
+          throw new ValidationError({ username: 'Este nombre de usuario ya está en uso' });
+        }
+      }
+
+      // Build update query
+      const updates: string[] = [];
+      const args: any[] = [];
+
+      if (username !== undefined) {
+        updates.push('username = ?');
+        args.push(username);
+      }
+
+      if (password !== undefined && password.trim() !== '') {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updates.push('password = ?');
+        args.push(hashedPassword);
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No hay datos para actualizar' });
+      }
+
+      updates.push('updatedAt = datetime(\'now\')');
+      args.push(id);
+
+      await db.execute({
+        sql: `UPDATE User SET ${updates.join(', ')} WHERE id = ?`,
+        args,
+      });
+
+      res.json({ message: 'Credenciales actualizadas correctamente' });
     } catch (error) {
       next(error);
     }

@@ -12,6 +12,7 @@ import {
   PencilIcon,
   CheckIcon,
   XMarkIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 
 const PerfilMedico = () => {
@@ -19,9 +20,7 @@ const PerfilMedico = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Estado para foto de perfil
-  const [profilePhoto, setProfilePhoto] = useState<string>(
-    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face'
-  );
+  const [profilePhoto, setProfilePhoto] = useState<string>('');
 
   // Estado para modo edición
   const [isEditing, setIsEditing] = useState(false);
@@ -37,6 +36,9 @@ const PerfilMedico = () => {
   });
 
   const [tempData, setTempData] = useState(editableData);
+
+  // Estado para errores por campo
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Cargar datos del perfil al montar el componente
   useEffect(() => {
@@ -112,15 +114,53 @@ const PerfilMedico = () => {
 
   const handleSave = async () => {
     setIsLoading(true);
+    setFieldErrors({}); // Limpiar errores previos
+    
     try {
       if (!token) {
         toast.error('No se encontró token de autenticación');
         return;
       }
 
-      // Validar campos requeridos
-      if (!tempData.nombre || !tempData.apellido || !tempData.email) {
-        toast.error('Nombre, apellido y email son obligatorios');
+      // Validaciones del lado del cliente
+      const errors: Record<string, string> = {};
+
+      // Validar nombre (solo letras)
+      if (!tempData.nombre.trim()) {
+        errors.nombre = 'El nombre es obligatorio';
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(tempData.nombre)) {
+        errors.nombre = 'El nombre solo puede contener letras';
+      }
+
+      // Validar apellido (solo letras)
+      if (!tempData.apellido.trim()) {
+        errors.apellido = 'El apellido es obligatorio';
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(tempData.apellido)) {
+        errors.apellido = 'El apellido solo puede contener letras';
+      }
+
+      // Validar email
+      if (!tempData.email.trim()) {
+        errors.email = 'El correo electrónico es obligatorio';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tempData.email)) {
+        errors.email = 'El correo electrónico no es válido';
+      }
+
+      // Validar DNI (8 dígitos)
+      if (tempData.dni && !/^\d{8}$/.test(tempData.dni)) {
+        errors.dni = 'El DNI debe tener exactamente 8 dígitos';
+      }
+
+      // Validar teléfono (10 dígitos)
+      if (tempData.telefono && !/^\d{10}$/.test(tempData.telefono)) {
+        errors.telefono = 'El teléfono debe tener exactamente 10 dígitos';
+      }
+
+      // Si hay errores, mostrarlos y no continuar
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        toast.error('Por favor corrige los errores en el formulario');
+        setIsLoading(false);
         return;
       }
 
@@ -135,11 +175,19 @@ const PerfilMedico = () => {
 
       setEditableData(tempData);
       setIsEditing(false);
+      setFieldErrors({});
       toast.success('Perfil actualizado correctamente');
     } catch (error: any) {
       console.error('Error al actualizar perfil:', error);
-      const errorMessage = error.message || 'Error al guardar los cambios';
-      toast.error(errorMessage);
+      
+      // Si el backend devuelve errores específicos por campo
+      if (error.details && typeof error.details === 'object') {
+        setFieldErrors(error.details);
+        toast.error('Por favor corrige los errores en el formulario');
+      } else {
+        const errorMessage = error.message || 'Error al guardar los cambios';
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +196,7 @@ const PerfilMedico = () => {
   const handleCancel = () => {
     setTempData(editableData);
     setIsEditing(false);
+    setFieldErrors({}); // Limpiar errores al cancelar
   };
 
   return (
@@ -207,12 +256,16 @@ const PerfilMedico = () => {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left">
             {/* Photo */}
             <div className="relative group">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-md">
-                <img
-                  src={profilePhoto}
-                  alt="Foto de perfil"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-200 flex items-center justify-center">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt="Foto de perfil"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <UserCircleIcon className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
+                )}
               </div>
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -277,130 +330,213 @@ const PerfilMedico = () => {
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Nombre */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              <div className={`flex flex-col gap-1`}>
+                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isEditing 
+                    ? fieldErrors.nombre 
+                      ? 'bg-red-50 border border-red-300' 
+                      : 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50'
                 }`}>
-                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">Nombre</p>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={tempData.nombre}
-                      onChange={(e) => setTempData({ ...tempData, nombre: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu nombre"
-                      required
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700 truncate">{editableData.nombre}</p>
-                  )}
+                  <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${
+                    fieldErrors.nombre ? 'text-red-500' : isEditing ? 'text-vdc-primary' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">Nombre *</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={tempData.nombre}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                          setTempData({ ...tempData, nombre: value });
+                          if (fieldErrors.nombre) {
+                            setFieldErrors({ ...fieldErrors, nombre: '' });
+                          }
+                        }}
+                        className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                        placeholder="Ingresa tu nombre"
+                        required
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700 truncate">{editableData.nombre}</p>
+                    )}
+                  </div>
                 </div>
+                {isEditing && fieldErrors.nombre && (
+                  <p className="text-xs text-red-600 px-3">{fieldErrors.nombre}</p>
+                )}
               </div>
 
               {/* Apellido */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              <div className={`flex flex-col gap-1`}>
+                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isEditing 
+                    ? fieldErrors.apellido 
+                      ? 'bg-red-50 border border-red-300' 
+                      : 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50'
                 }`}>
-                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">Apellido</p>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={tempData.apellido}
-                      onChange={(e) => setTempData({ ...tempData, apellido: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu apellido"
-                      required
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700 truncate">{editableData.apellido}</p>
-                  )}
+                  <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${
+                    fieldErrors.apellido ? 'text-red-500' : isEditing ? 'text-vdc-primary' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">Apellido *</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={tempData.apellido}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                          setTempData({ ...tempData, apellido: value });
+                          if (fieldErrors.apellido) {
+                            setFieldErrors({ ...fieldErrors, apellido: '' });
+                          }
+                        }}
+                        className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                        placeholder="Ingresa tu apellido"
+                        required
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700 truncate">{editableData.apellido}</p>
+                    )}
+                  </div>
                 </div>
+                {isEditing && fieldErrors.apellido && (
+                  <p className="text-xs text-red-600 px-3">{fieldErrors.apellido}</p>
+                )}
               </div>
 
               {/* Email */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              <div className={`flex flex-col gap-1`}>
+                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isEditing 
+                    ? fieldErrors.email 
+                      ? 'bg-red-50 border border-red-300' 
+                      : 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50'
                 }`}>
-                <EnvelopeIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">Correo Electrónico</p>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={tempData.email}
-                      onChange={(e) => setTempData({ ...tempData, email: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu correo"
-                      required
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700 truncate">{editableData.email}</p>
-                  )}
+                  <EnvelopeIcon className={`w-5 h-5 flex-shrink-0 ${
+                    fieldErrors.email ? 'text-red-500' : isEditing ? 'text-vdc-primary' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">Correo Electrónico *</p>
+                    {isEditing ? (
+                      <input
+                        type="email"
+                        value={tempData.email}
+                        onChange={(e) => {
+                          setTempData({ ...tempData, email: e.target.value });
+                          if (fieldErrors.email) {
+                            setFieldErrors({ ...fieldErrors, email: '' });
+                          }
+                        }}
+                        className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                        placeholder="Ingresa tu correo"
+                        required
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700 truncate">{editableData.email}</p>
+                    )}
+                  </div>
                 </div>
+                {isEditing && fieldErrors.email && (
+                  <p className="text-xs text-red-600 px-3">{fieldErrors.email}</p>
+                )}
               </div>
 
               {/* DNI */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              <div className={`flex flex-col gap-1`}>
+                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isEditing 
+                    ? fieldErrors.dni 
+                      ? 'bg-red-50 border border-red-300' 
+                      : 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50'
                 }`}>
-                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">DNI</p>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={tempData.dni}
-                      onChange={(e) => setTempData({ ...tempData, dni: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu DNI"
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700 truncate">{editableData.dni || 'No especificado'}</p>
-                  )}
+                  <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${
+                    fieldErrors.dni ? 'text-red-500' : isEditing ? 'text-vdc-primary' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">DNI</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={tempData.dni}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                          setTempData({ ...tempData, dni: value });
+                          if (fieldErrors.dni) {
+                            setFieldErrors({ ...fieldErrors, dni: '' });
+                          }
+                        }}
+                        className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                        placeholder="12345678"
+                        maxLength={8}
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700 truncate">{editableData.dni || 'No especificado'}</p>
+                    )}
+                  </div>
                 </div>
+                {isEditing && fieldErrors.dni && (
+                  <p className="text-xs text-red-600 px-3">{fieldErrors.dni}</p>
+                )}
+                {isEditing && !fieldErrors.dni && (
+                  <p className="text-xs text-gray-500 px-3">Debe contener exactamente 8 dígitos</p>
+                )}
               </div>
 
               {/* Teléfono */}
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+              <div className={`flex flex-col gap-1`}>
+                <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isEditing 
+                    ? fieldErrors.telefono 
+                      ? 'bg-red-50 border border-red-300' 
+                      : 'bg-blue-50 border border-blue-200' 
+                    : 'bg-gray-50'
                 }`}>
-                <PhoneIcon className={`w-5 h-5 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1">
-                  <p className="text-xs text-gray-400">Teléfono</p>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      value={tempData.telefono}
-                      onChange={(e) => setTempData({ ...tempData, telefono: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu teléfono"
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700">{editableData.telefono || 'No especificado'}</p>
-                  )}
+                  <PhoneIcon className={`w-5 h-5 ${
+                    fieldErrors.telefono ? 'text-red-500' : isEditing ? 'text-vdc-primary' : 'text-gray-400'
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-400">Teléfono</p>
+                    {isEditing ? (
+                      <input
+                        type="tel"
+                        value={tempData.telefono}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setTempData({ ...tempData, telefono: value });
+                          if (fieldErrors.telefono) {
+                            setFieldErrors({ ...fieldErrors, telefono: '' });
+                          }
+                        }}
+                        className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                        placeholder="1234567890"
+                        maxLength={10}
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-700">{editableData.telefono || 'No especificado'}</p>
+                    )}
+                  </div>
                 </div>
+                {isEditing && fieldErrors.telefono && (
+                  <p className="text-xs text-red-600 px-3">{fieldErrors.telefono}</p>
+                )}
+                {isEditing && !fieldErrors.telefono && (
+                  <p className="text-xs text-gray-500 px-3">Debe contener exactamente 10 dígitos</p>
+                )}
               </div>
             </div>
-            {isEditing && (
-              <p className="text-xs text-amber-600 mt-3 flex items-start gap-1">
-                <span className="font-semibold">⚠️</span>
-                <span>Los campos marcados con * son obligatorios. El correo electrónico será validado.</span>
-              </p>
-            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="bg-gray-50 border-t border-gray-200 px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-            <p className="text-xs text-gray-400">
-              Última actualización: {new Date().toLocaleDateString('es-ES')}
-            </p>
-            <button
-              onClick={() => window.open('mailto:admin@vdc-internacional.com', '_blank')}
-              className="text-xs text-vdc-primary hover:underline"
-            >
-              Contactar Soporte
-            </button>
-          </div>
+          <p className="text-xs text-gray-400 text-center sm:text-left">
+            Última actualización: {new Date().toLocaleDateString('es-ES')}
+          </p>
         </div>
       </div>
     </motion.div>

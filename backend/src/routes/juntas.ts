@@ -84,8 +84,9 @@ router.get(
       const start = (pageNum - 1) * pageSizeNum;
       const paginatedData = result.rows.slice(start, start + pageSizeNum);
 
-      res.json({
-        data: paginatedData.map((row: any) => {
+      // Obtener documentos para cada junta
+      const juntasConDocumentos = await Promise.all(
+        paginatedData.map(async (row: any) => {
           let dictamenObj = null;
           if (row.datosCompletos) {
             try {
@@ -94,6 +95,12 @@ router.get(
               console.error('Error parsing dictamen JSON', e);
             }
           }
+
+          // Obtener documentos de esta junta
+          const docsResult = await db.execute({
+            sql: 'SELECT id, nombre, tipo, url, size, categoria, createdAt FROM DocumentoAdjunto WHERE juntaId = ?',
+            args: [row.id],
+          });
 
           return {
             id: row.id,
@@ -109,11 +116,16 @@ router.get(
             aptitudLaboral: row.aptitudLaboral,
             diagnosticoPrincipal: row.diagnosticoPrincipal,
             dictamen: dictamenObj,
-            documentosCount: row.documentosCount || 0,
+            documentos: docsResult.rows,
+            documentosCount: docsResult.rows.length,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
           };
-        }),
+        })
+      );
+
+      res.json({
+        data: juntasConDocumentos,
         total,
         page: pageNum,
         pageSize: pageSizeNum,

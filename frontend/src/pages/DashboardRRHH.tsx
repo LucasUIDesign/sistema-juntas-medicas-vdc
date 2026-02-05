@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/layout/Sidebar';
 import Breadcrumbs from '../components/layout/Breadcrumbs';
 import TodasJuntas from '../components/rrhh/TodasJuntas';
+import PerfilMedico from '../components/medico/PerfilMedico';
 import { 
-  ClipboardDocumentListIcon, 
+  ClipboardDocumentListIcon,
+  UserCircleIcon,
   Bars3Icon 
 } from '@heroicons/react/24/outline';
 
@@ -14,6 +16,11 @@ const sidebarLinks = [
     name: 'Todas las Juntas',
     href: '/dashboard/rrhh/todas-juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+  },
+  {
+    name: 'Mi Perfil',
+    href: '/dashboard/rrhh/perfil',
+    icon: <UserCircleIcon className="h-5 w-5" />,
   },
 ];
 
@@ -63,6 +70,7 @@ const DashboardRRHH = () => {
           <Routes>
             <Route index element={<Navigate to="todas-juntas" replace />} />
             <Route path="todas-juntas" element={<TodasJuntas />} />
+            <Route path="perfil" element={<PerfilMedico />} />
           </Routes>
         </div>
       </div>

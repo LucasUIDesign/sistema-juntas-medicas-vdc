@@ -77,7 +77,28 @@ export const juntasService = {
       headers: getAuthHeaders(),
     });
 
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    
+    // Map 'documentos' from backend to 'adjuntos' in frontend for each junta
+    if (data.data && Array.isArray(data.data)) {
+      data.data = data.data.map((junta: any) => {
+        if (junta.documentos) {
+          junta.adjuntos = junta.documentos.map((doc: any) => ({
+            id: doc.id,
+            nombre: doc.nombre,
+            tipo: doc.tipo,
+            url: doc.url,
+            size: doc.size || 0,
+            categoria: doc.categoria,
+            uploadedAt: doc.createdAt,
+          }));
+          delete junta.documentos;
+        }
+        return junta;
+      });
+    }
+    
+    return data;
   },
 
   /**

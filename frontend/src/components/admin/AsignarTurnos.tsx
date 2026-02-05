@@ -60,7 +60,7 @@ const AsignarTurnos = () => {
   const fechaMinima = addDays(new Date(), 3);
   
   const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(fechaMinima);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isLoadingTurnos, setIsLoadingTurnos] = useState(true);
   
@@ -95,8 +95,13 @@ const AsignarTurnos = () => {
   // Horarios disponibles para el día seleccionado
   const horariosLibres = HORARIOS_DISPONIBLES.filter(h => !horariosOcupados.includes(h));
 
-  // Fechas con turnos (para marcar en el calendario)
-  const fechasConTurnos = turnos.map(t => t.fecha);
+  // Fechas con turnos (para marcar en el calendario) - excluir fines de semana
+  const fechasConTurnos = turnos
+    .map(t => t.fecha)
+    .filter(fecha => {
+      const day = fecha.getDay();
+      return day !== 0 && day !== 6; // Excluir domingos (0) y sábados (6)
+    });
 
   // Cargar médicos evaluadores
   useEffect(() => {

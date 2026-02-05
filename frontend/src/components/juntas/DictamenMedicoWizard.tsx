@@ -303,7 +303,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<number | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Filtrar pasos si hideProfesionales está activo

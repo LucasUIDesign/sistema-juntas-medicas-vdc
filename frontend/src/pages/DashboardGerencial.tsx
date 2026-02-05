@@ -7,11 +7,13 @@ import TodasJuntas from '../components/rrhh/TodasJuntas';
 import GestionPacientes from '../components/admin/GestionPacientes';
 import VerUsuarios from '../components/gerencial/VerUsuarios';
 import PerfilAdmin from '../components/admin/PerfilAdmin';
+import TodasTurnosAsignadosGerencial from '../components/gerencial/TodasTurnosAsignadosGerencial';
 import {
   ClipboardDocumentListIcon,
   UserGroupIcon,
   UsersIcon,
   UserCircleIcon,
+  CalendarDaysIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
 
@@ -20,6 +22,11 @@ const sidebarLinks = [
     name: 'Todas las Juntas',
     href: '/dashboard/gerencial/juntas',
     icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+  },
+  {
+    name: 'Turnos Asignados',
+    href: '/dashboard/gerencial/turnos',
+    icon: <CalendarDaysIcon className="h-5 w-5" />,
   },
   {
     name: 'Pacientes',
@@ -79,6 +86,7 @@ const DashboardGerencial = () => {
             <Routes>
               <Route index element={<Navigate to="juntas" replace />} />
               <Route path="juntas" element={<TodasJuntas />} />
+              <Route path="turnos" element={<TodasTurnosAsignadosGerencial />} />
               <Route path="pacientes" element={<GestionPacientes />} />
               <Route path="usuarios" element={<VerUsuarios />} />
               <Route path="perfil" element={<PerfilAdmin />} />
