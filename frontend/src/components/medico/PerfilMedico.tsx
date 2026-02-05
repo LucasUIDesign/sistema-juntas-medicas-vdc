@@ -11,7 +11,6 @@ import {
   BuildingOffice2Icon,
   AcademicCapIcon,
   PhoneIcon,
-  MapPinIcon,
   CameraIcon,
   PencilIcon,
   CheckIcon,
@@ -21,26 +20,28 @@ import {
 const PerfilMedico = () => {
   const { user, token } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Estado para foto de perfil
   const [profilePhoto, setProfilePhoto] = useState<string>(
     'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face'
   );
-  
+
   // Estado para modo edición
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Campos editables
+
+  // Campos editables (nombre, apellido, email, DNI, teléfono)
   const [editableData, setEditableData] = useState({
+    nombre: '',
+    apellido: '',
     email: '',
+    dni: '',
     telefono: '',
-    direccion: '',
   });
-  
+
   const [tempData, setTempData] = useState(editableData);
 
-  // Datos del sistema (no editables)
+  // Datos del sistema (no editables - solo informativos)
   const systemData = {
     especialidad: 'Medicina Ocupacional',
     colegiatura: 'CMP-12345',
@@ -55,16 +56,18 @@ const PerfilMedico = () => {
         if (!token) return;
 
         const profile = await userService.getProfile(token);
-        
+
         const loadedData = {
+          nombre: profile.nombre || '',
+          apellido: profile.apellido || '',
           email: profile.email || '',
+          dni: profile.dni || '',
           telefono: profile.telefono || '',
-          direccion: '', // La dirección no está en el backend aún
         };
-        
+
         setEditableData(loadedData);
         setTempData(loadedData);
-        
+
         if (profile.fotoUrl) {
           setProfilePhoto(profile.fotoUrl);
         }
@@ -94,12 +97,12 @@ const PerfilMedico = () => {
         toast.error('La imagen no debe superar 5MB');
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = async (e) => {
         const photoUrl = e.target?.result as string;
         setProfilePhoto(photoUrl);
-        
+
         // Guardar foto en el backend
         try {
           if (!token) {
@@ -126,18 +129,28 @@ const PerfilMedico = () => {
         return;
       }
 
+      // Validar campos requeridos
+      if (!tempData.nombre || !tempData.apellido || !tempData.email) {
+        toast.error('Nombre, apellido y email son obligatorios');
+        return;
+      }
+
       // Actualizar perfil en el backend
       await userService.updateProfile(token, {
-        email: tempData.email || undefined,
+        nombre: tempData.nombre,
+        apellido: tempData.apellido,
+        email: tempData.email,
+        dni: tempData.dni || undefined,
         telefono: tempData.telefono || undefined,
       });
 
       setEditableData(tempData);
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al actualizar perfil:', error);
-      toast.error('Error al guardar los cambios');
+      const errorMessage = error.message || 'Error al guardar los cambios';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -227,10 +240,12 @@ const PerfilMedico = () => {
                 className="hidden"
               />
             </div>
-            
+
             {/* Basic Info */}
             <div className="flex-1">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{user?.nombre}</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {editableData.nombre} {editableData.apellido}
+              </h3>
               <p className="text-gray-500 text-sm">{systemData.especialidad}</p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mt-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-vdc-primary/10 text-vdc-primary">
@@ -261,7 +276,7 @@ const PerfilMedico = () => {
                   <p className="text-sm text-gray-700">{systemData.colegiatura}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <AcademicCapIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
@@ -269,7 +284,7 @@ const PerfilMedico = () => {
                   <p className="text-sm text-gray-700">{systemData.especialidad}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <BuildingOffice2Icon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
@@ -277,7 +292,7 @@ const PerfilMedico = () => {
                   <p className="text-sm text-gray-700">{systemData.departamento}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <CalendarDaysIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
@@ -285,7 +300,7 @@ const PerfilMedico = () => {
                   <p className="text-sm text-gray-700">{systemData.fechaIngreso}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <IdentificationIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div className="min-w-0">
@@ -302,13 +317,55 @@ const PerfilMedico = () => {
           {/* Información Personal (Editable) */}
           <div>
             <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-              Información de Contacto
+              Información Personal
               {isEditing && <span className="text-vdc-primary ml-2">(Editando)</span>}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
-              }`}>
+              {/* Nombre */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                }`}>
+                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Nombre</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={tempData.nombre}
+                      onChange={(e) => setTempData({ ...tempData, nombre: e.target.value })}
+                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                      placeholder="Ingresa tu nombre"
+                      required
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-700 truncate">{editableData.nombre}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Apellido */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                }`}>
+                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Apellido</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={tempData.apellido}
+                      onChange={(e) => setTempData({ ...tempData, apellido: e.target.value })}
+                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                      placeholder="Ingresa tu apellido"
+                      required
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-700 truncate">{editableData.apellido}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                }`}>
                 <EnvelopeIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-400">Correo Electrónico</p>
@@ -319,16 +376,37 @@ const PerfilMedico = () => {
                       onChange={(e) => setTempData({ ...tempData, email: e.target.value })}
                       className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
                       placeholder="Ingresa tu correo"
+                      required
                     />
                   ) : (
                     <p className="text-sm text-gray-700 truncate">{editableData.email}</p>
                   )}
                 </div>
               </div>
-              
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
-              }`}>
+
+              {/* DNI */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                }`}>
+                <IdentificationIcon className={`w-5 h-5 flex-shrink-0 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">DNI</p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={tempData.dni}
+                      onChange={(e) => setTempData({ ...tempData, dni: e.target.value })}
+                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                      placeholder="Ingresa tu DNI"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-700 truncate">{editableData.dni || 'No especificado'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                }`}>
                 <PhoneIcon className={`w-5 h-5 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
                 <div className="flex-1">
                   <p className="text-xs text-gray-400">Teléfono</p>
@@ -341,31 +419,17 @@ const PerfilMedico = () => {
                       placeholder="Ingresa tu teléfono"
                     />
                   ) : (
-                    <p className="text-sm text-gray-700">{editableData.telefono}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                isEditing ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
-              }`}>
-                <MapPinIcon className={`w-5 h-5 ${isEditing ? 'text-vdc-primary' : 'text-gray-400'}`} />
-                <div className="flex-1">
-                  <p className="text-xs text-gray-400">Dirección</p>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={tempData.direccion}
-                      onChange={(e) => setTempData({ ...tempData, direccion: e.target.value })}
-                      className="w-full text-sm text-gray-700 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                      placeholder="Ingresa tu dirección"
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-700">{editableData.direccion}</p>
+                    <p className="text-sm text-gray-700">{editableData.telefono || 'No especificado'}</p>
                   )}
                 </div>
               </div>
             </div>
+            {isEditing && (
+              <p className="text-xs text-amber-600 mt-3 flex items-start gap-1">
+                <span className="font-semibold">⚠️</span>
+                <span>Los campos marcados con * son obligatorios. El correo electrónico será validado.</span>
+              </p>
+            )}
           </div>
         </div>
 
