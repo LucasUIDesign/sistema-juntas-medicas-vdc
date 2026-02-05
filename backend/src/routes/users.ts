@@ -97,6 +97,9 @@ router.post(
 
       const { nombre, apellido, username, email, role, password } = req.body;
       const id = randomUUID();
+      
+      // Normalizar username a lowercase para consistencia con login
+      const normalizedUsername = username.toLowerCase().trim();
 
       // Validar que el email tenga un dominio real
       const emailValidation = await validateEmailDomain(email);
@@ -107,7 +110,7 @@ router.post(
       // Check if username already exists
       const existingUser = await db.execute({
         sql: 'SELECT id FROM User WHERE username = ?',
-        args: [username],
+        args: [normalizedUsername],
       });
 
       if (existingUser.rows.length > 0) {
@@ -129,7 +132,7 @@ router.post(
       await db.execute({
         sql: `INSERT INTO User (id, nombre, apellido, username, email, password, role, createdAt, updatedAt)
               VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-        args: [id, nombre, apellido, username, email, hashedPassword, role],
+        args: [id, nombre, apellido, normalizedUsername, email, hashedPassword, role],
       });
 
       res.status(201).json({
@@ -138,7 +141,7 @@ router.post(
           id,
           nombre,
           apellido,
-          username,
+          username: normalizedUsername,
           email,
           role,
         },
@@ -203,12 +206,15 @@ router.put(
 
       const userId = (req as any).user.sub;
       const { nombre, apellido, username, email, dni, telefono, fotoUrl } = req.body;
+      
+      // Normalizar username a lowercase si se proporciona
+      const normalizedUsername = username ? username.toLowerCase().trim() : undefined;
 
       // Check if username already exists (if username is being updated)
-      if (username !== undefined) {
+      if (normalizedUsername !== undefined) {
         const existingUser = await db.execute({
           sql: 'SELECT id FROM User WHERE username = ? AND id != ?',
-          args: [username, userId],
+          args: [normalizedUsername, userId],
         });
 
         if (existingUser.rows.length > 0) {
@@ -238,7 +244,7 @@ router.put(
       const updateData: Record<string, any> = {};
       if (nombre !== undefined) updateData.nombre = nombre;
       if (apellido !== undefined) updateData.apellido = apellido;
-      if (username !== undefined) updateData.username = username;
+      if (normalizedUsername !== undefined) updateData.username = normalizedUsername;
       if (email !== undefined) updateData.email = email;
       if (dni !== undefined) updateData.dni = dni;
       if (telefono !== undefined) updateData.telefono = telefono;
@@ -350,6 +356,9 @@ router.put(
 
       const { id } = req.params;
       const { username, password } = req.body;
+      
+      // Normalizar username a lowercase si se proporciona
+      const normalizedUsername = username ? username.toLowerCase().trim() : undefined;
 
       // Verificar que el usuario existe
       const existingUser = await db.execute({
@@ -362,10 +371,10 @@ router.put(
       }
 
       // Check if username already exists (if username is being updated)
-      if (username !== undefined) {
+      if (normalizedUsername !== undefined) {
         const duplicateUsername = await db.execute({
           sql: 'SELECT id FROM User WHERE username = ? AND id != ?',
-          args: [username, id],
+          args: [normalizedUsername, id],
         });
 
         if (duplicateUsername.rows.length > 0) {
@@ -377,9 +386,9 @@ router.put(
       const updates: string[] = [];
       const args: any[] = [];
 
-      if (username !== undefined) {
+      if (normalizedUsername !== undefined) {
         updates.push('username = ?');
-        args.push(username);
+        args.push(normalizedUsername);
       }
 
       if (password !== undefined && password.trim() !== '') {
