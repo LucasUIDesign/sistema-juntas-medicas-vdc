@@ -63,7 +63,7 @@ const PerfilMedico = () => {
           setProfilePhoto(profile.fotoUrl);
         }
       } catch (error) {
-        console.error('Error al cargar perfil:', error);
+        // console.error('Error al cargar perfil:', error);
       }
     };
 
@@ -104,7 +104,7 @@ const PerfilMedico = () => {
           await userService.updateProfile(token, { fotoUrl: photoUrl });
           toast.success('Foto actualizada correctamente');
         } catch (error) {
-          console.error('Error al actualizar foto:', error);
+          // console.error('Error al actualizar foto:', error);
           toast.error('Error al guardar la foto');
         }
       };
@@ -178,7 +178,7 @@ const PerfilMedico = () => {
       setFieldErrors({});
       toast.success('Perfil actualizado correctamente');
     } catch (error: any) {
-      console.error('Error al actualizar perfil:', error);
+      // console.error('Error al actualizar perfil:', error);
       
       // Si el backend devuelve errores específicos por campo
       if (error.details && typeof error.details === 'object') {

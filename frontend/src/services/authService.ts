@@ -95,7 +95,7 @@ export const authService = {
       }
     } catch (error) {
       // Don't reveal if email exists or not
-      console.log('Password reset requested for:', email);
+      // console.log('Password reset requested for:', email);
     }
   },
 

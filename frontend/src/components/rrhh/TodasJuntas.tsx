@@ -56,7 +56,7 @@ const TodasJuntas = () => {
       const data = await juntasService.getMedicos();
       setMedicos(data.map((m: any) => ({ ...m, especialidad: m.especialidad || 'No especificada' })));
     } catch (error) {
-      console.error('Error loading medicos:', error);
+      // console.error('Error loading medicos:', error);
     }
   };
 
@@ -77,7 +77,7 @@ const TodasJuntas = () => {
       const data = await juntasService.getJuntas(filters);
       setJuntas(data);
     } catch (error) {
-      console.error('Error loading juntas:', error);
+      // console.error('Error loading juntas:', error);
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +108,7 @@ const TodasJuntas = () => {
         const data = await juntasService.getJuntas(filters);
         setJuntas(data);
       } catch (error) {
-        console.error('Error loading juntas:', error);
+        // console.error('Error loading juntas:', error);
       } finally {
         setIsLoading(false);
       }

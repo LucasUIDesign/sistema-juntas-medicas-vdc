@@ -162,7 +162,7 @@ export const contarCamposLlenos = (data: DictamenMedicoData): { llenos: number; 
 
   // Debug: mostrar campos vacíos en consola
   if (vacios.length > 0 && vacios.length < 15) {
-    console.log('Campos vacíos:', vacios);
+    // console.log('Campos vacíos:', vacios);
   }
 
   return { llenos, total };
@@ -338,7 +338,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
       setSearchResults(results);
       setShowSuggestions(results.length > 0);
     } catch (error) {
-      console.error('Error buscando pacientes:', error);
+      // console.error('Error buscando pacientes:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -409,8 +409,8 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
           vacios.push(campo);
         }
       }
-      console.log('⚠️ CAMPOS VACÍOS AL GUARDAR:', vacios);
-      console.log(`📊 Completado: ${llenos}/${total} campos`);
+      // console.log('⚠️ CAMPOS VACÍOS AL GUARDAR:', vacios);
+      // console.log(`📊 Completado: ${llenos}/${total} campos`);
     }
 
     // Simular un pequeño delay para mostrar el feedback visual

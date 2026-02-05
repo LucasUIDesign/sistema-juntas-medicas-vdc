@@ -28,17 +28,22 @@ async function cleanDatabase() {
     const juntasResult = await db.execute('DELETE FROM JuntaMedica');
     console.log(`   ✅ ${juntasResult.rowsAffected} juntas eliminadas\n`);
 
-    // 4. Eliminar todos los pacientes
+    // 4. Eliminar todos los turnos
+    console.log('📅 Eliminando turnos...');
+    const turnosResult = await db.execute('DELETE FROM Turno');
+    console.log(`   ✅ ${turnosResult.rowsAffected} turnos eliminados\n`);
+
+    // 5. Eliminar todos los pacientes
     console.log('👤 Eliminando pacientes...');
     const pacientesResult = await db.execute('DELETE FROM Paciente');
     console.log(`   ✅ ${pacientesResult.rowsAffected} pacientes eliminados\n`);
 
-    // 5. Eliminar todos los usuarios
+    // 6. Eliminar todos los usuarios
     console.log('👥 Eliminando usuarios...');
     const usersResult = await db.execute('DELETE FROM User');
     console.log(`   ✅ ${usersResult.rowsAffected} usuarios eliminados\n`);
 
-    // 6. Crear usuario admin
+    // 7. Crear usuario admin
     console.log('👨‍💼 Creando usuario administrador...');
     const hashedPassword = await bcrypt.hash('Admin2025!', 10);
     const adminId = crypto.randomUUID();
@@ -58,6 +63,7 @@ async function cleanDatabase() {
     console.log(`   • Documentos eliminados: ${docsResult.rowsAffected}`);
     console.log(`   • Dictámenes eliminados: ${dictamenesResult.rowsAffected}`);
     console.log(`   • Juntas eliminadas: ${juntasResult.rowsAffected}`);
+    console.log(`   • Turnos eliminados: ${turnosResult.rowsAffected}`);
     console.log(`   • Pacientes eliminados: ${pacientesResult.rowsAffected}`);
     console.log(`   • Usuarios eliminados: ${usersResult.rowsAffected}`);
     console.log(`   • Usuario admin creado: 1\n`);

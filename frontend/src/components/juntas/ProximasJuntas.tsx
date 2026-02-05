@@ -22,7 +22,7 @@ const ProximasJuntas = () => {
   const loadJuntasAsignadas = async () => {
     try {
       const data = await juntasService.getJuntasAsignadas();
-      console.log('Juntas asignadas recibidas:', data);
+      // console.log('Juntas asignadas recibidas:', data);
       
       // Filtrar turnos de hoy y próximos
       const hoy = new Date();
@@ -32,7 +32,7 @@ const ProximasJuntas = () => {
         const fechaJunta = new Date(junta.fecha);
         fechaJunta.setHours(0, 0, 0, 0);
         const esFuturo = fechaJunta >= hoy;
-        console.log(`Turno ${junta.id}: fecha=${fechaJunta.toISOString()}, hoy=${hoy.toISOString()}, esFuturo=${esFuturo}`);
+        // console.log(`Turno ${junta.id}: fecha=${fechaJunta.toISOString()}, hoy=${hoy.toISOString()}, esFuturo=${esFuturo}`);
         return esFuturo;
       });
       
@@ -43,15 +43,15 @@ const ProximasJuntas = () => {
         return fechaA - fechaB;
       });
       
-      console.log('Turnos futuros filtrados y ordenados:', turnosFuturos);
+      // console.log('Turnos futuros filtrados y ordenados:', turnosFuturos);
       
       // Solo mostrar el turno más próximo (el primero)
       const proximoTurno = turnosFuturos.length > 0 ? [turnosFuturos[0]] : [];
-      console.log('Próximo turno a mostrar:', proximoTurno);
+      // console.log('Próximo turno a mostrar:', proximoTurno);
       
       setJuntasAsignadas(proximoTurno);
     } catch (error) {
-      console.error('Error loading juntas asignadas:', error);
+      // console.error('Error loading juntas asignadas:', error);
     } finally {
       setIsLoading(false);
     }

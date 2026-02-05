@@ -707,7 +707,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                 }
                               }
                             } catch (error) {
-                              console.error('Error subiendo documento:', error);
+                              // console.error('Error subiendo documento:', error);
                               toast.error('Error al guardar el documento');
                             }
                           }
@@ -754,7 +754,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                       type="button"
                                       onClick={async () => {
                                         try {
-                                          console.log('[DOWNLOAD] Iniciando descarga:', adjunto.nombre);
+                                          // console.log('[DOWNLOAD] Iniciando descarga:', adjunto.nombre);
                                           toast.info(`Descargando: ${adjunto.nombre}`);
 
                                           // Construir URL del backend para descargar
@@ -766,8 +766,8 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                             ? adjunto.url
                                             : `${API_URL}/api${adjunto.url}`;
 
-                                          console.log('[DOWNLOAD] URL:', downloadUrl);
-                                          console.log('[DOWNLOAD] Token presente:', !!token);
+                                          // console.log('[DOWNLOAD] URL:', downloadUrl);
+                                          // console.log('[DOWNLOAD] Token presente:', !!token);
 
                                           // Abrir en nueva pestaña con autenticación
                                           const response = await fetch(downloadUrl, {
@@ -776,18 +776,18 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                             },
                                           });
 
-                                          console.log('[DOWNLOAD] Response status:', response.status);
-                                          console.log('[DOWNLOAD] Response ok:', response.ok);
+                                          // console.log('[DOWNLOAD] Response status:', response.status);
+                                          // console.log('[DOWNLOAD] Response ok:', response.ok);
 
                                           if (!response.ok) {
                                             const errorText = await response.text();
-                                            console.error('[DOWNLOAD] Error response:', errorText);
+                                            // console.error('[DOWNLOAD] Error response:', errorText);
                                             throw new Error('Error al descargar el documento');
                                           }
 
                                           // Crear blob y descargar
                                           const blob = await response.blob();
-                                          console.log('[DOWNLOAD] Blob size:', blob.size, 'type:', blob.type);
+                                          // console.log('[DOWNLOAD] Blob size:', blob.size, 'type:', blob.type);
 
                                           const url = window.URL.createObjectURL(blob);
                                           const a = document.createElement('a');
@@ -798,10 +798,10 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                           window.URL.revokeObjectURL(url);
                                           document.body.removeChild(a);
 
-                                          console.log('[DOWNLOAD] Descarga completada');
+                                          // console.log('[DOWNLOAD] Descarga completada');
                                           toast.success('Documento descargado');
                                         } catch (error) {
-                                          console.error('[DOWNLOAD] Error descargando documento:', error);
+                                          // console.error('[DOWNLOAD] Error descargando documento:', error);
                                           toast.error('Error al descargar el documento');
                                         }
                                       }}

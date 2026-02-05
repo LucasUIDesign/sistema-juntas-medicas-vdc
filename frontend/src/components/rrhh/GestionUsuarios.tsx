@@ -91,7 +91,7 @@ const GestionUsuarios = () => {
         setUsers(data || []);
       }
     } catch (error) {
-      console.error('Error loading users:', error);
+      // console.error('Error loading users:', error);
     } finally {
       setIsLoading(false);
     }

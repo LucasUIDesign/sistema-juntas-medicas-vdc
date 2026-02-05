@@ -189,13 +189,13 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
 
     setIsSubmitting(true);
     try {
-      console.log('=== INICIANDO PROCESO DE FINALIZACIÓN ===');
-      console.log('Datos del dictamen:', dictamenData);
+      // console.log('=== INICIANDO PROCESO DE FINALIZACIÓN ===');
+      // console.log('Datos del dictamen:', dictamenData);
       
       // Buscar paciente existente por DNI
-      console.log('Buscando paciente por DNI:', dictamenData.dni);
+      // console.log('Buscando paciente por DNI:', dictamenData.dni);
       const pacientes = await juntasService.searchPacientes(dictamenData.dni);
-      console.log('Pacientes encontrados:', pacientes);
+      // console.log('Pacientes encontrados:', pacientes);
       
       if (!pacientes || pacientes.length === 0) {
         toast.error('El paciente no existe en el sistema. Por favor, solicite al administrador que cree el paciente primero.');
@@ -204,29 +204,29 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
       }
       
       const paciente = pacientes[0];
-      console.log('Usando paciente existente:', paciente);
+      // console.log('Usando paciente existente:', paciente);
 
       // Create junta
-      console.log('Creando junta para paciente:', paciente.id);
+      // console.log('Creando junta para paciente:', paciente.id);
       const junta = await juntasService.createJunta({
         pacienteId: paciente.id,
         observaciones: '',
       });
-      console.log('Junta creada exitosamente:', junta);
+      // console.log('Junta creada exitosamente:', junta);
 
       setCurrentJuntaId(junta.id);
 
       // Save dictamen and finalize
-      console.log('Guardando dictamen y finalizando junta...');
+      // console.log('Guardando dictamen y finalizando junta...');
       await juntasService.saveDictamen(junta.id, {
         dictamen: dictamenData,
         finalizar: true,
       });
-      console.log('Dictamen guardado y junta finalizada');
+      // console.log('Dictamen guardado y junta finalizada');
 
       // Upload documents if any
       if (documentos.length > 0) {
-        console.log(`Subiendo ${documentos.length} documento(s)...`);
+        // console.log(`Subiendo ${documentos.length} documento(s)...`);
         let uploadedCount = 0;
         let failedCount = 0;
 
@@ -234,10 +234,10 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
           try {
             await juntasService.uploadDocumento(junta.id, doc.file, doc.categoria);
             uploadedCount++;
-            console.log(`✅ Documento subido: ${doc.file.name}`);
+            // console.log(`✅ Documento subido: ${doc.file.name}`);
           } catch (error) {
             failedCount++;
-            console.error(`❌ Error subiendo ${doc.file.name}:`, error);
+            // console.error(`❌ Error subiendo ${doc.file.name}:`, error);
           }
         }
 
@@ -260,11 +260,11 @@ const JuntaForm = ({ onJuntaCreated }: JuntaFormProps) => {
         onJuntaCreated();
       }
     } catch (error: any) {
-      console.error('=== ERROR AL FINALIZAR JUNTA ===');
-      console.error('Error completo:', error);
-      console.error('Mensaje:', error.message);
-      console.error('Stack:', error.stack);
-      console.error('Response:', error.response);
+      // console.error('=== ERROR AL FINALIZAR JUNTA ===');
+      // console.error('Error completo:', error);
+      // console.error('Mensaje:', error.message);
+      // console.error('Stack:', error.stack);
+      // console.error('Response:', error.response);
       toast.error(error.message || 'Error al finalizar la junta. Revise la consola del navegador para más detalles.');
     } finally {
       setIsSubmitting(false);

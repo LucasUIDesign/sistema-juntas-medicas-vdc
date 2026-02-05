@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        // console.error('Error initializing auth:', error);
         localStorage.removeItem('vdc_token');
         localStorage.removeItem('vdc_user');
       } finally {

@@ -17,7 +17,7 @@ const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
 
-    console.error('API Error Response:', errorData);
+    // console.error('API Error Response:', errorData);
 
     // Check for validation errors object (backend usa 'details')
     if (errorData.details) {
@@ -139,7 +139,7 @@ export const juntasService = {
       
       return data;
     } catch (error) {
-      console.error('Error fetching junta:', error);
+      // console.error('Error fetching junta:', error);
       return null;
     }
   },
@@ -281,7 +281,7 @@ export const juntasService = {
       });
 
       if (!response.ok) {
-        console.error('Error fetching medicos');
+        // console.error('Error fetching medicos');
         return [];
       }
 
@@ -291,7 +291,7 @@ export const juntasService = {
         nombre: `${m.nombre || ''} ${m.apellido || ''}`.trim() || m.email,
       }));
     } catch (error) {
-      console.error('Error fetching medicos:', error);
+      // console.error('Error fetching medicos:', error);
       return [];
     }
   },
@@ -307,7 +307,7 @@ export const juntasService = {
       });
 
       if (!response.ok) {
-        console.error('Error fetching turnos asignados');
+        // console.error('Error fetching turnos asignados');
         return [];
       }
 
@@ -324,7 +324,7 @@ export const juntasService = {
         profesionales: [], // Por ahora vacío, se puede agregar después
       }));
     } catch (error) {
-      console.error('Error fetching turnos asignados:', error);
+      // console.error('Error fetching turnos asignados:', error);
       return [];
     }
   },
@@ -361,7 +361,7 @@ export const juntasService = {
 
       return handleResponse(response);
     } catch (error) {
-      console.error('Error uploading documento:', error);
+      // console.error('Error uploading documento:', error);
       throw error;
     }
   },

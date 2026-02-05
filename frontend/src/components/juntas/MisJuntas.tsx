@@ -56,7 +56,7 @@ const MisJuntas = () => {
         setSelectedJunta(junta); // Fallback a los datos que ya tenemos
       }
     } catch (error) {
-      console.error('Error loading junta details:', error);
+      // console.error('Error loading junta details:', error);
       setSelectedJunta(junta); // Fallback a los datos que ya tenemos
     } finally {
       setIsLoadingDetail(false);
@@ -116,7 +116,7 @@ const MisJuntas = () => {
 
       setJuntas(mappedData);
     } catch (error) {
-      console.error('Error loading juntas:', error);
+      // console.error('Error loading juntas:', error);
     } finally {
       setIsLoading(false);
     }
