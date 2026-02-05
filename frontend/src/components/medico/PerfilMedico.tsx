@@ -7,9 +7,6 @@ import {
   EnvelopeIcon,
   IdentificationIcon,
   ShieldCheckIcon,
-  CalendarDaysIcon,
-  BuildingOffice2Icon,
-  AcademicCapIcon,
   PhoneIcon,
   CameraIcon,
   PencilIcon,
@@ -40,14 +37,6 @@ const PerfilMedico = () => {
   });
 
   const [tempData, setTempData] = useState(editableData);
-
-  // Datos del sistema (no editables - solo informativos)
-  const systemData = {
-    especialidad: 'Medicina Ocupacional',
-    colegiatura: 'CMP-12345',
-    fechaIngreso: '15 de Marzo, 2023',
-    departamento: 'Salud Ocupacional',
-  };
 
   // Cargar datos del perfil al montar el componente
   useEffect(() => {
@@ -246,7 +235,7 @@ const PerfilMedico = () => {
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                 {editableData.nombre} {editableData.apellido}
               </h3>
-              <p className="text-gray-500 text-sm">{systemData.especialidad}</p>
+              <p className="text-gray-500 text-sm">{user?.email}</p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 mt-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-vdc-primary/10 text-vdc-primary">
                   <ShieldCheckIcon className="w-3.5 h-3.5" />
@@ -263,54 +252,20 @@ const PerfilMedico = () => {
 
         {/* Content */}
         <div className="p-4 sm:p-6">
-          {/* Información del Sistema (No editable) */}
+          {/* ID de Usuario (Solo Lectura) */}
           <div className="mb-8">
             <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
               Información del Sistema
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <IdentificationIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400">Colegiatura</p>
-                  <p className="text-sm text-gray-700">{systemData.colegiatura}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <AcademicCapIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400">Especialidad</p>
-                  <p className="text-sm text-gray-700">{systemData.especialidad}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <BuildingOffice2Icon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400">Departamento</p>
-                  <p className="text-sm text-gray-700">{systemData.departamento}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <CalendarDaysIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400">Fecha de Ingreso</p>
-                  <p className="text-sm text-gray-700">{systemData.fechaIngreso}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <IdentificationIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400">ID de Usuario</p>
-                  <p className="text-sm text-gray-700 font-mono truncate">{user?.id}</p>
-                </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <IdentificationIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400">ID de Usuario</p>
+                <p className="text-sm text-gray-700 font-mono truncate">{user?.id}</p>
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-3">
-              * Esta información es gestionada por el administrador del sistema
+              * El ID de usuario es único y no puede ser modificado
             </p>
           </div>
 
@@ -437,7 +392,7 @@ const PerfilMedico = () => {
         <div className="bg-gray-50 border-t border-gray-200 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
             <p className="text-xs text-gray-400">
-              Para cambios en información del sistema, contacta al administrador
+              Última actualización: {new Date().toLocaleDateString('es-ES')}
             </p>
             <button
               onClick={() => window.open('mailto:admin@vdc-internacional.com', '_blank')}
