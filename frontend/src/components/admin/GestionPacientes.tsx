@@ -391,7 +391,7 @@ const GestionPacientes = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Correo Electrónico
+                    Correo Electrónico <span className="text-gray-400 text-xs">(opcional)</span>
                   </label>
                   <input
                     type="email"
@@ -403,7 +403,7 @@ const GestionPacientes = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono
+                    Teléfono <span className="text-gray-400 text-xs">(opcional)</span>
                   </label>
                   <input
                     type="tel"
@@ -415,7 +415,7 @@ const GestionPacientes = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domicilio
+                    Domicilio <span className="text-gray-400 text-xs">(opcional)</span>
                   </label>
                   <input
                     type="text"
