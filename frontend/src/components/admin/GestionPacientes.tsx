@@ -394,10 +394,11 @@ const GestionPacientes = () => {
                     Correo Electrónico <span className="text-gray-400 text-xs">(opcional)</span>
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     value={formData.correo}
                     onChange={(e) => setFormData(prev => ({ ...prev, correo: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
+                    placeholder="ejemplo@correo.com"
                   />
                 </div>
 
@@ -406,10 +407,11 @@ const GestionPacientes = () => {
                     Teléfono <span className="text-gray-400 text-xs">(opcional)</span>
                   </label>
                   <input
-                    type="tel"
+                    type="text"
                     value={formData.telefono}
                     onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
+                    placeholder="Ej: 11-1234-5678"
                   />
                 </div>
 
@@ -422,6 +424,7 @@ const GestionPacientes = () => {
                     value={formData.domicilio}
                     onChange={(e) => setFormData(prev => ({ ...prev, domicilio: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vdc-primary focus:border-transparent"
+                    placeholder="Calle, número, ciudad"
                   />
                 </div>
 
