@@ -599,12 +599,21 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
 
             <div className="flex items-center space-x-2">
               {/* Botón Descargar Constancia PDF - Solo para Director Médico */}
-              {isDirectorMedico && junta.dictamen && (
+              {isDirectorMedico && (
                 <button
                   onClick={() => {
+                    // Verificar que la junta tenga dictamen
+                    if (!junta.dictamen) {
+                      toast.warning('Esta junta no tiene un dictamen completado aún');
+                      return;
+                    }
+
                     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
                     const token = localStorage.getItem('vdc_token');
                     const url = `${API_URL}/api/juntas/${junta.id}/constancia/pdf`;
+                    
+                    console.log('[CONSTANCIA] Abriendo constancia para junta:', junta.id);
+                    console.log('[CONSTANCIA] URL:', url);
                     
                     // Abrir en nueva ventana con token en header (usando fetch y blob)
                     fetch(url, {
@@ -612,21 +621,35 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                         'Authorization': `Bearer ${token}`,
                       },
                     })
-                    .then(response => response.text())
+                    .then(response => {
+                      console.log('[CONSTANCIA] Response status:', response.status);
+                      if (!response.ok) {
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                      }
+                      return response.text();
+                    })
                     .then(html => {
+                      console.log('[CONSTANCIA] HTML recibido, abriendo ventana...');
                       const newWindow = window.open('', '_blank');
                       if (newWindow) {
                         newWindow.document.write(html);
                         newWindow.document.close();
+                      } else {
+                        toast.error('No se pudo abrir la ventana. Verifica que no esté bloqueada por el navegador.');
                       }
                     })
                     .catch(error => {
-                      console.error('Error opening constancia:', error);
-                      toast.error('Error al abrir la constancia');
+                      console.error('[CONSTANCIA] Error:', error);
+                      toast.error('Error al abrir la constancia: ' + error.message);
                     });
                   }}
-                  className="p-2 text-vdc-primary hover:text-vdc-primary/80 hover:bg-vdc-primary/10 rounded-full transition-colors"
-                  title="Imprimir Constancia"
+                  disabled={!junta.dictamen}
+                  className={`p-2 rounded-full transition-colors ${
+                    junta.dictamen 
+                      ? 'text-vdc-primary hover:text-vdc-primary/80 hover:bg-vdc-primary/10 cursor-pointer' 
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                  title={junta.dictamen ? "Descargar Constancia PDF" : "Esta junta no tiene dictamen completado"}
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
