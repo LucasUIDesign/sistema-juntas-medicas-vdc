@@ -5,7 +5,7 @@ import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 import { db } from '../lib/prisma';
 import { randomUUID } from 'crypto';
 import { emailService } from '../services/emailService';
-import { generateConstanciaPDF } from '../services/constanciaPdfService';
+import { generateConstanciaHTML } from '../services/constanciaPdfService';
 
 const router = Router();
 
@@ -170,11 +170,7 @@ router.get(
       }
 
       const junta = juntaResult.rows[0] as any;
-      console.log('[CONSTANCIA PDF] Datos de junta obtenidos:', {
-        id: junta.id,
-        paciente: `${junta.pacienteNombre} ${junta.pacienteApellido}`,
-        dni: junta.numeroDocumento
-      });
+      console.log('[CONSTANCIA PDF] Datos de junta obtenidos');
 
       // Parse dictamen data for additional info
       let dictamenData: any = {};
@@ -196,21 +192,14 @@ router.get(
         resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
       };
 
-      console.log('[CONSTANCIA PDF] Datos preparados:', constanciaData);
+      console.log('[CONSTANCIA PDF] Generando HTML...');
+      const html = generateConstanciaHTML(constanciaData);
 
-      // Generate PDF
-      console.log('[CONSTANCIA PDF] Generando PDF...');
-      const pdfStream = await generateConstanciaPDF(constanciaData);
-      console.log('[CONSTANCIA PDF] PDF generado exitosamente');
-
-      // Set response headers
-      const filename = `Constancia_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-      // Pipe PDF to response
-      pdfStream.pipe(res);
-      console.log('[CONSTANCIA PDF] PDF enviado al cliente');
+      // Set response headers for HTML
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+      
+      console.log('[CONSTANCIA PDF] HTML enviado al cliente');
     } catch (error) {
       console.error('[CONSTANCIA PDF] Error:', error);
       next(error);
