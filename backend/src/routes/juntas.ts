@@ -187,7 +187,7 @@ router.get(
         provincia: 'Resistencia',
         fecha: new Date(junta.fecha).toLocaleDateString('es-AR'),
         empleado: `${junta.pacienteApellido || ''}, ${junta.pacienteNombre || ''}`.trim(),
-        reparticion: dictamenData.establecimiento || 'No especificado',
+        reparticion: dictamenData.establecimiento || '',
         dni: junta.numeroDocumento || '',
         resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
       };

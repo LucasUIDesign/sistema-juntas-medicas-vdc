@@ -71,13 +71,18 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
       padding: 15px;
       border: 2px solid #333;
     }
+    .signatures-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 80px;
+    }
     .signature {
       text-align: center;
-      margin-top: 80px;
+      flex: 1;
     }
     .signature-line {
       border-top: 1px solid #333;
-      width: 300px;
+      width: 200px;
       margin: 0 auto 10px auto;
     }
     .footer {
@@ -133,14 +138,15 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
     presentado a quien lo requiera.
   </div>
 
-  <div class="result">
-    RESULTADO: ${data.resultado}
-  </div>
-
-  <div class="signature">
-    <div class="signature-line"></div>
-    <div>Firma y Sello</div>
-    <div>Director Médico</div>
+  <div class="signatures-container">
+    <div class="signature">
+      <div class="signature-line"></div>
+      <div>Firma Médico</div>
+    </div>
+    <div class="signature">
+      <div class="signature-line"></div>
+      <div>Firma Paciente</div>
+    </div>
   </div>
 
   <div class="footer">
