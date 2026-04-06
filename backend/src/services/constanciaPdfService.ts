@@ -21,65 +21,43 @@ export async function generateConstanciaPDF(data: ConstanciaData): Promise<PassT
       const stream = new PassThrough();
       doc.pipe(stream);
 
-      // Logo y encabezado (simulado con texto)
+      // Logo y encabezado
       doc.fontSize(10)
-         .font('Helvetica')
          .text('VDC', 72, 80)
          .text('INTERNACIONAL SRL', 72, 95);
 
       // Título principal
       doc.moveDown(2);
       doc.fontSize(14)
-         .font('Helvetica-Bold')
-         .text('ACTA DE REALIZACIÓN DE JUNTA MÉDICA', { align: 'center' });
+         .text('ACTA DE REALIZACION DE JUNTA MEDICA', { align: 'center' });
 
       doc.moveDown(2);
 
       // Provincia y fecha
-      const yProvincia = doc.y;
-      doc.fontSize(10).font('Helvetica');
-      
-      // Provincia de Resistencia
-      doc.text('Provincia de Resistencia,', 72, yProvincia);
-      
-      // Línea para provincia (simulada con espacios)
-      const provinciaX = 72 + doc.widthOfString('Provincia de Resistencia, ');
-      doc.text('_'.repeat(20), provinciaX, yProvincia);
-      
-      // Fecha
-      const fechaX = provinciaX + 150;
-      doc.text(`, ${data.fecha}`, fechaX, yProvincia);
+      doc.fontSize(10);
+      doc.text(`Provincia de ${data.provincia}, ${data.fecha}`, { align: 'left' });
 
       doc.moveDown(3);
 
-      // Empleado y Repartición
-      const yEmpleado = doc.y;
-      doc.text('Empleado:', 72, yEmpleado);
-      doc.text('_'.repeat(60), 150, yEmpleado);
-      doc.text(data.empleado, 150, yEmpleado);
+      // Empleado
+      doc.text(`Empleado: ${data.empleado}`);
 
       doc.moveDown(1.5);
 
-      const yReparticion = doc.y;
-      doc.text('Repartición:', 72, yReparticion);
-      doc.text('_'.repeat(60), 150, yReparticion);
-      doc.text(data.reparticion, 150, yReparticion);
+      // Repartición
+      doc.text(`Reparticion: ${data.reparticion}`);
 
       doc.moveDown(2);
 
       // DNI
-      const yDni = doc.y;
-      doc.text('DNI Nº', 72, yDni);
-      doc.text('_'.repeat(20), 120, yDni);
-      doc.text(data.dni, 120, yDni);
+      doc.text(`DNI N° ${data.dni}`);
 
       doc.moveDown(4);
 
       // Texto legal
-      const textoLegal = `Por la presente se deja constancia que en conformidad a lo establecido en las leyes y reglamentaciones, Ley de Contrato de Trabajo 20.477, (Decreto 1338/96- Res-559/09 de la SRT), se ha efectuado la correspondiente constatación del estado de salud del empleado de referencia, mediante evaluación médica. El dictamen con el resultado de la misma, será presentado a quien lo requiera.`;
+      const textoLegal = `Por la presente se deja constancia que en conformidad a lo establecido en las leyes y reglamentaciones, Ley de Contrato de Trabajo 20.477, (Decreto 1338/96- Res-559/09 de la SRT), se ha efectuado la correspondiente constatacion del estado de salud del empleado de referencia, mediante evaluacion medica. El dictamen con el resultado de la misma, sera presentado a quien lo requiera.`;
 
       doc.fontSize(10)
-         .font('Helvetica')
          .text(textoLegal, {
            align: 'justify',
            lineGap: 5
@@ -89,22 +67,19 @@ export async function generateConstanciaPDF(data: ConstanciaData): Promise<PassT
 
       // Resultado del dictamen
       doc.fontSize(12)
-         .font('Helvetica-Bold')
          .text(`RESULTADO: ${data.resultado}`, { align: 'center' });
 
       doc.moveDown(4);
 
       // Firma
       doc.fontSize(10)
-         .font('Helvetica')
-         .text('_'.repeat(40), { align: 'center' });
+         .text('________________________________________', { align: 'center' });
       doc.moveDown(0.5);
       doc.text('Firma y Sello', { align: 'center' });
-      doc.text('Director Médico', { align: 'center' });
+      doc.text('Director Medico', { align: 'center' });
 
       // Footer
       doc.fontSize(8)
-         .font('Helvetica')
          .text(
            `Documento generado el ${new Date().toLocaleDateString('es-AR')}`,
            72,
