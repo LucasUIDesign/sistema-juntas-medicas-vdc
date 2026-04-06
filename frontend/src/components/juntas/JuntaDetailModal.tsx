@@ -608,7 +608,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                       return;
                     }
 
-                    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
+                    const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
                     const token = localStorage.getItem('vdc_token');
                     const url = `${API_URL}/juntas/${junta.id}/constancia/pdf`;
                     
@@ -819,7 +819,7 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                                           toast.info(`Descargando: ${adjunto.nombre}`);
 
                                           // Construir URL del backend para descargar
-                                          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                          const API_URL = import.meta.env.VITE_API_URL || '';
                                           const token = localStorage.getItem('vdc_token');
 
                                           // La URL del documento viene sin /api, así que hay que agregarlo

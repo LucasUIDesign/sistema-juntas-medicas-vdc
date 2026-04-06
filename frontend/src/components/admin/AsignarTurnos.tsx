@@ -53,7 +53,7 @@ const HORARIOS_DISPONIBLES = [
   '15:30', '16:00', '16:30', '17:00', '17:30',
 ];
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 const AsignarTurnos = () => {
   // Fecha mínima: 72 horas (3 días) de anticipación para notificación

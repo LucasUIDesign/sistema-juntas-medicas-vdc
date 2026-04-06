@@ -1,7 +1,7 @@
 import { JuntaMedica, JuntaFilters, PaginatedResult, Paciente } from '../types';
 import { DictamenMedicoData } from '../components/juntas/DictamenMedicoWizard';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {

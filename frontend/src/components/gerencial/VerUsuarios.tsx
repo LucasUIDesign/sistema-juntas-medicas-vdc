@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { UsersIcon } from '@heroicons/react/24/outline';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 interface User {
   id: string;
