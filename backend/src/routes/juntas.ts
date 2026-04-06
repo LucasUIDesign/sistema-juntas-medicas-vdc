@@ -5,6 +5,7 @@ import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 import { db } from '../lib/prisma';
 import { randomUUID } from 'crypto';
 import { emailService } from '../services/emailService';
+import { generateConstanciaPDF } from '../services/constanciaPdfService';
 
 const router = Router();
 
@@ -763,5 +764,87 @@ router.delete(
     }
   }
 );
+
+// GET /api/juntas/:id/constancia/pdf - Download constancia as PDF
+router.get(
+  '/:id/constancia/pdf',
+  authMiddleware,
+  [param('id').isString()],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      // Get junta data
+      const juntaResult = await db.execute({
+        sql: `
+          SELECT
+            j.id, j.fecha, j.aptitudLaboral,
+            p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
+            d.datosCompletos
+          FROM JuntaMedica j
+          LEFT JOIN Paciente p ON j.pacienteId = p.id
+          LEFT JOIN Dictamen d ON j.id = d.juntaId
+          WHERE j.id = ?
+        `,
+        args: [id],
+      });
+
+      if (juntaResult.rows.length === 0) {
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      const junta = juntaResult.rows[0] as any;
+
+      // Parse dictamen data for additional info
+      let dictamenData: any = {};
+      if (junta.datosCompletos) {
+        try {
+          dictamenData = JSON.parse(junta.datosCompletos);
+        } catch (error) {
+          console.error('Error parsing dictamen data:', error);
+        }
+      }
+
+      // Prepare constancia data
+      const constanciaData = {
+        provincia: 'Resistencia',
+        fecha: new Date(junta.fecha).toLocaleDateString('es-AR'),
+        empleado: `${junta.pacienteApellido || ''}, ${junta.pacienteNombre || ''}`.trim(),
+        reparticion: dictamenData.establecimiento || 'No especificado',
+        dni: junta.numeroDocumento || '',
+        resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
+      };
+
+      // Generate PDF
+      const pdfStream = await generateConstanciaPDF(constanciaData);
+
+      // Set response headers
+      const filename = `Constancia_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      // Pipe PDF to response
+      pdfStream.pipe(res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Helper function to format aptitud laboral
+function getResultadoText(aptitud: string | undefined): string {
+  if (!aptitud) return 'PENDIENTE';
+  
+  const map: Record<string, string> = {
+    'APTO': 'APTO',
+    'NO_APTO': 'NO APTO',
+    'APTO_CON_RESTRICCIONES': 'APTO CON RESTRICCIONES',
+    'NO_APTO_TEMPORARIO': 'NO APTO TEMPORARIO',
+    'NO_APTO_DEFINITIVO': 'NO APTO DEFINITIVO',
+  };
+  
+  return map[aptitud] || aptitud;
+}
 
 export default router;
