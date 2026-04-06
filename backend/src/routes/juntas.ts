@@ -138,6 +138,86 @@ router.get(
   }
 );
 
+// GET /api/juntas/:id/constancia/pdf - Download constancia as PDF (DEBE IR ANTES DE /:id)
+router.get(
+  '/:id/constancia/pdf',
+  authMiddleware,
+  [param('id').isString()],
+  validateRequest,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      console.log('[CONSTANCIA PDF] Iniciando generación para junta:', id);
+
+      // Get junta data
+      const juntaResult = await db.execute({
+        sql: `
+          SELECT
+            j.id, j.fecha, j.aptitudLaboral,
+            p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
+            d.datosCompletos
+          FROM JuntaMedica j
+          LEFT JOIN Paciente p ON j.pacienteId = p.id
+          LEFT JOIN Dictamen d ON j.id = d.juntaId
+          WHERE j.id = ?
+        `,
+        args: [id],
+      });
+
+      if (juntaResult.rows.length === 0) {
+        console.error('[CONSTANCIA PDF] Junta no encontrada:', id);
+        throw new NotFoundError('Junta no encontrada');
+      }
+
+      const junta = juntaResult.rows[0] as any;
+      console.log('[CONSTANCIA PDF] Datos de junta obtenidos:', {
+        id: junta.id,
+        paciente: `${junta.pacienteNombre} ${junta.pacienteApellido}`,
+        dni: junta.numeroDocumento
+      });
+
+      // Parse dictamen data for additional info
+      let dictamenData: any = {};
+      if (junta.datosCompletos) {
+        try {
+          dictamenData = JSON.parse(junta.datosCompletos);
+        } catch (error) {
+          console.error('[CONSTANCIA PDF] Error parsing dictamen data:', error);
+        }
+      }
+
+      // Prepare constancia data
+      const constanciaData = {
+        provincia: 'Resistencia',
+        fecha: new Date(junta.fecha).toLocaleDateString('es-AR'),
+        empleado: `${junta.pacienteApellido || ''}, ${junta.pacienteNombre || ''}`.trim(),
+        reparticion: dictamenData.establecimiento || 'No especificado',
+        dni: junta.numeroDocumento || '',
+        resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
+      };
+
+      console.log('[CONSTANCIA PDF] Datos preparados:', constanciaData);
+
+      // Generate PDF
+      console.log('[CONSTANCIA PDF] Generando PDF...');
+      const pdfStream = await generateConstanciaPDF(constanciaData);
+      console.log('[CONSTANCIA PDF] PDF generado exitosamente');
+
+      // Set response headers
+      const filename = `Constancia_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      // Pipe PDF to response
+      pdfStream.pipe(res);
+      console.log('[CONSTANCIA PDF] PDF enviado al cliente');
+    } catch (error) {
+      console.error('[CONSTANCIA PDF] Error:', error);
+      next(error);
+    }
+  }
+);
+
 // GET /api/juntas/:id - Get single junta with dictamen
 router.get(
   '/:id',
@@ -760,86 +840,6 @@ router.delete(
 
       res.status(204).send();
     } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// GET /api/juntas/:id/constancia/pdf - Download constancia as PDF
-router.get(
-  '/:id/constancia/pdf',
-  authMiddleware,
-  [param('id').isString()],
-  validateRequest,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-      console.log('[CONSTANCIA PDF] Iniciando generación para junta:', id);
-
-      // Get junta data
-      const juntaResult = await db.execute({
-        sql: `
-          SELECT
-            j.id, j.fecha, j.aptitudLaboral,
-            p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
-            d.datosCompletos
-          FROM JuntaMedica j
-          LEFT JOIN Paciente p ON j.pacienteId = p.id
-          LEFT JOIN Dictamen d ON j.id = d.juntaId
-          WHERE j.id = ?
-        `,
-        args: [id],
-      });
-
-      if (juntaResult.rows.length === 0) {
-        console.error('[CONSTANCIA PDF] Junta no encontrada:', id);
-        throw new NotFoundError('Junta no encontrada');
-      }
-
-      const junta = juntaResult.rows[0] as any;
-      console.log('[CONSTANCIA PDF] Datos de junta obtenidos:', {
-        id: junta.id,
-        paciente: `${junta.pacienteNombre} ${junta.pacienteApellido}`,
-        dni: junta.numeroDocumento
-      });
-
-      // Parse dictamen data for additional info
-      let dictamenData: any = {};
-      if (junta.datosCompletos) {
-        try {
-          dictamenData = JSON.parse(junta.datosCompletos);
-        } catch (error) {
-          console.error('[CONSTANCIA PDF] Error parsing dictamen data:', error);
-        }
-      }
-
-      // Prepare constancia data
-      const constanciaData = {
-        provincia: 'Resistencia',
-        fecha: new Date(junta.fecha).toLocaleDateString('es-AR'),
-        empleado: `${junta.pacienteApellido || ''}, ${junta.pacienteNombre || ''}`.trim(),
-        reparticion: dictamenData.establecimiento || 'No especificado',
-        dni: junta.numeroDocumento || '',
-        resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
-      };
-
-      console.log('[CONSTANCIA PDF] Datos preparados:', constanciaData);
-
-      // Generate PDF
-      console.log('[CONSTANCIA PDF] Generando PDF...');
-      const pdfStream = await generateConstanciaPDF(constanciaData);
-      console.log('[CONSTANCIA PDF] PDF generado exitosamente');
-
-      // Set response headers
-      const filename = `Constancia_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-      // Pipe PDF to response
-      pdfStream.pipe(res);
-      console.log('[CONSTANCIA PDF] PDF enviado al cliente');
-    } catch (error) {
-      console.error('[CONSTANCIA PDF] Error:', error);
       next(error);
     }
   }
