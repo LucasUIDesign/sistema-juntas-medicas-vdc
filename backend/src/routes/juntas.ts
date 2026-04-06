@@ -5,7 +5,6 @@ import { ValidationError, NotFoundError } from '../middleware/errorHandler';
 import { db } from '../lib/prisma';
 import { randomUUID } from 'crypto';
 import { emailService } from '../services/emailService';
-import { generateDictamenPDF } from '../services/pdfService';
 
 const router = Router();
 
@@ -759,85 +758,6 @@ router.delete(
       await db.execute({ sql: 'DELETE FROM JuntaMedica WHERE id = ?', args: [id] });
 
       res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// GET /api/juntas/:id/dictamen/pdf - Download dictamen as PDF
-router.get(
-  '/:id/dictamen/pdf',
-  authMiddleware,
-  [param('id').isString()],
-  validateRequest,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-
-      // Get junta with dictamen
-      const juntaResult = await db.execute({
-        sql: `
-          SELECT
-            j.id, j.fecha, j.estado, j.diagnosticoPrincipal,
-            p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
-            u.nombre as medicoNombre, u.apellido as medicoApellido,
-            d.datosCompletos
-          FROM JuntaMedica j
-          LEFT JOIN Paciente p ON j.pacienteId = p.id
-          LEFT JOIN User u ON j.medicoId = u.id
-          LEFT JOIN Dictamen d ON j.id = d.juntaId
-          WHERE j.id = ?
-        `,
-        args: [id],
-      });
-
-      if (juntaResult.rows.length === 0) {
-        throw new NotFoundError('Junta no encontrada');
-      }
-
-      const junta = juntaResult.rows[0] as any;
-
-      // Parse dictamen data
-      let dictamenData: any = {};
-      if (junta.datosCompletos) {
-        try {
-          dictamenData = JSON.parse(junta.datosCompletos);
-        } catch (error) {
-          console.error('Error parsing dictamen data:', error);
-        }
-      }
-
-      // Prepare junta info
-      const juntaInfo = {
-        id: junta.id,
-        fecha: junta.fecha,
-        estado: junta.estado,
-        numeroDocumento: junta.numeroDocumento,
-        medicoNombre: `${junta.medicoNombre || ''} ${junta.medicoApellido || ''}`.trim(),
-      };
-
-      // Add basic patient info if not in dictamen
-      if (!dictamenData.nombrePaciente) {
-        dictamenData.nombrePaciente = `${junta.pacienteNombre || ''} ${junta.pacienteApellido || ''}`.trim();
-      }
-      if (!dictamenData.dni) {
-        dictamenData.dni = junta.numeroDocumento;
-      }
-      if (!dictamenData.diagnosticoPrincipal) {
-        dictamenData.diagnosticoPrincipal = junta.diagnosticoPrincipal;
-      }
-
-      // Generate PDF
-      const pdfStream = await generateDictamenPDF(juntaInfo, dictamenData);
-
-      // Set response headers
-      const filename = `Dictamen_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-      // Pipe PDF to response
-      pdfStream.pipe(res);
     } catch (error) {
       next(error);
     }
