@@ -774,6 +774,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
+      console.log('[CONSTANCIA PDF] Iniciando generación para junta:', id);
 
       // Get junta data
       const juntaResult = await db.execute({
@@ -791,10 +792,16 @@ router.get(
       });
 
       if (juntaResult.rows.length === 0) {
+        console.error('[CONSTANCIA PDF] Junta no encontrada:', id);
         throw new NotFoundError('Junta no encontrada');
       }
 
       const junta = juntaResult.rows[0] as any;
+      console.log('[CONSTANCIA PDF] Datos de junta obtenidos:', {
+        id: junta.id,
+        paciente: `${junta.pacienteNombre} ${junta.pacienteApellido}`,
+        dni: junta.numeroDocumento
+      });
 
       // Parse dictamen data for additional info
       let dictamenData: any = {};
@@ -802,7 +809,7 @@ router.get(
         try {
           dictamenData = JSON.parse(junta.datosCompletos);
         } catch (error) {
-          console.error('Error parsing dictamen data:', error);
+          console.error('[CONSTANCIA PDF] Error parsing dictamen data:', error);
         }
       }
 
@@ -816,8 +823,12 @@ router.get(
         resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
       };
 
+      console.log('[CONSTANCIA PDF] Datos preparados:', constanciaData);
+
       // Generate PDF
+      console.log('[CONSTANCIA PDF] Generando PDF...');
       const pdfStream = await generateConstanciaPDF(constanciaData);
+      console.log('[CONSTANCIA PDF] PDF generado exitosamente');
 
       // Set response headers
       const filename = `Constancia_${junta.pacienteApellido}_${junta.numeroDocumento}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -826,7 +837,9 @@ router.get(
 
       // Pipe PDF to response
       pdfStream.pipe(res);
+      console.log('[CONSTANCIA PDF] PDF enviado al cliente');
     } catch (error) {
+      console.error('[CONSTANCIA PDF] Error:', error);
       next(error);
     }
   }

@@ -13,13 +13,29 @@ interface ConstanciaData {
 export async function generateConstanciaPDF(data: ConstanciaData): Promise<PassThrough> {
   return new Promise((resolve, reject) => {
     try {
+      console.log('[PDF Service] Iniciando generación de PDF con datos:', data);
+      
       const doc = new PDFDocument({
         size: 'A4',
         margins: { top: 100, bottom: 100, left: 72, right: 72 },
       });
 
       const stream = new PassThrough();
+      
+      // Handle errors
+      doc.on('error', (err) => {
+        console.error('[PDF Service] Error en documento PDF:', err);
+        reject(err);
+      });
+
+      stream.on('error', (err) => {
+        console.error('[PDF Service] Error en stream:', err);
+        reject(err);
+      });
+
       doc.pipe(stream);
+
+      console.log('[PDF Service] Documento PDF creado, agregando contenido...');
 
       // Logo y encabezado
       doc.fontSize(10)
@@ -87,9 +103,13 @@ export async function generateConstanciaPDF(data: ConstanciaData): Promise<PassT
            { align: 'center' }
          );
 
+      console.log('[PDF Service] Contenido agregado, finalizando documento...');
       doc.end();
+      
+      console.log('[PDF Service] PDF generado exitosamente');
       resolve(stream);
     } catch (error) {
+      console.error('[PDF Service] Error generando PDF:', error);
       reject(error);
     }
   });
