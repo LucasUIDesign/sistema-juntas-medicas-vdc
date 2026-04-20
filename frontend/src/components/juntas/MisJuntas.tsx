@@ -19,7 +19,8 @@ import {
   FunnelIcon,
   PaperClipIcon,
   CheckBadgeIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 
 type SortField = 'fecha' | 'pacienteNombre' | 'estado';
@@ -41,6 +42,7 @@ const MisJuntas = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedEstado, setSelectedEstado] = useState<string>('');
   const [searchPaciente, setSearchPaciente] = useState<string>('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const isDirectorMedico = user?.role === 'DIRECTOR_MEDICO';
 
@@ -214,15 +216,49 @@ const MisJuntas = () => {
       className="max-w-7xl mx-auto"
     >
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {isDirectorMedico ? 'Gestión de Juntas Médicas' : 'Mis Juntas Médicas'}
-        </h2>
-        <p className="text-gray-500 mt-1">
-          {isDirectorMedico
-            ? 'Supervisión y auditoría de todas las evaluaciones médicas realizadas.'
-            : 'Historial completo de tus evaluaciones y dictámenes generados.'}
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {isDirectorMedico ? 'Gestión de Juntas Médicas' : 'Mis Juntas Médicas'}
+          </h2>
+          <p className="text-gray-500 mt-1">
+            {isDirectorMedico
+              ? 'Supervisión y auditoría de todas las evaluaciones médicas realizadas.'
+              : 'Historial completo de tus evaluaciones y dictámenes generados.'}
+          </p>
+        </div>
+        {isDirectorMedico && (
+          <button
+            onClick={async () => {
+              setIsExporting(true);
+              try {
+                await juntasService.exportJuntasExcel();
+              } catch (error) {
+                console.error('Error exporting Excel:', error);
+                alert('Error al exportar. Intente nuevamente.');
+              } finally {
+                setIsExporting(false);
+              }
+            }}
+            disabled={isExporting}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {isExporting ? (
+              <>
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Exportando...
+              </>
+            ) : (
+              <>
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                Descargar Excel
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Filtros */}

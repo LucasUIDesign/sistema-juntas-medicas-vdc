@@ -6,6 +6,7 @@ import { db } from '../lib/prisma';
 import { randomUUID } from 'crypto';
 import { emailService } from '../services/emailService';
 import { generateConstanciaHTML } from '../services/constanciaPdfService';
+import ExcelJS from 'exceljs';
 
 const router = Router();
 
@@ -133,6 +134,141 @@ router.get(
         totalPages: Math.ceil(total / pageSizeNum),
       });
     } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /api/juntas/export/excel - Export all juntas as Excel (Director Médico, RRHH, ADMIN)
+router.get(
+  '/export/excel',
+  authMiddleware,
+  roleMiddleware(['DIRECTOR_MEDICO', 'RRHH', 'ADMIN']),
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      // Get all juntas with patient info and dictamen
+      const result = await db.execute({
+        sql: `
+          SELECT
+            j.id, j.fecha, j.estado, j.aptitudLaboral,
+            p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
+            d.datosCompletos
+          FROM JuntaMedica j
+          LEFT JOIN Paciente p ON j.pacienteId = p.id
+          LEFT JOIN Dictamen d ON j.id = d.juntaId
+          ORDER BY j.fecha DESC
+        `,
+        args: [],
+      });
+
+      // Create workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'VDC Internacional - Sistema de Juntas Médicas';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Juntas Médicas', {
+        properties: { defaultRowHeight: 20 },
+      });
+
+      // Define columns
+      worksheet.columns = [
+        { header: 'Nº', key: 'num', width: 6 },
+        { header: 'Fecha', key: 'fecha', width: 14 },
+        { header: 'Paciente', key: 'paciente', width: 35 },
+        { header: 'DNI', key: 'dni', width: 15 },
+        { header: 'Condición', key: 'condicion', width: 28 },
+        { header: 'Estado', key: 'estado', width: 20 },
+      ];
+
+      // Style header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1F4E79' },
+      };
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+      headerRow.height = 28;
+
+      // Add data rows
+      result.rows.forEach((row: any, index: number) => {
+        // Parse aptitud from dictamen if not in junta directly
+        let aptitud = row.aptitudLaboral;
+        if (!aptitud && row.datosCompletos) {
+          try {
+            const dictamen = JSON.parse(row.datosCompletos);
+            aptitud = dictamen.aptitudLaboral;
+          } catch (e) {
+            // ignore parse error
+          }
+        }
+
+        const condicionText = getResultadoText(aptitud);
+        const fechaFormatted = row.fecha
+          ? new Date(row.fecha).toLocaleDateString('es-AR')
+          : '-';
+
+        const estadoLabels: Record<string, string> = {
+          BORRADOR: 'Borrador',
+          PENDIENTE: 'Pendiente',
+          APROBADA: 'Aprobada',
+          RECHAZADA: 'Rechazada',
+        };
+
+        const dataRow = worksheet.addRow({
+          num: index + 1,
+          fecha: fechaFormatted,
+          paciente: `${row.pacienteApellido || ''}, ${row.pacienteNombre || ''}`.trim().replace(/^,\s*/, '').replace(/,\s*$/, ''),
+          dni: row.numeroDocumento || '-',
+          condicion: condicionText,
+          estado: estadoLabels[row.estado] || row.estado || '-',
+        });
+
+        // Alternate row colors
+        if (index % 2 === 0) {
+          dataRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF2F7FB' },
+          };
+        }
+
+        // Color code the condición cell
+        const condicionCell = dataRow.getCell('condicion');
+        if (aptitud === 'APTO') {
+          condicionCell.font = { bold: true, color: { argb: 'FF15803D' } };
+        } else if (aptitud === 'NO_APTO' || aptitud === 'NO_APTO_DEFINITIVO') {
+          condicionCell.font = { bold: true, color: { argb: 'FFDC2626' } };
+        } else if (aptitud === 'APTO_CON_RESTRICCIONES' || aptitud === 'NO_APTO_TEMPORARIO') {
+          condicionCell.font = { bold: true, color: { argb: 'FFCA8A04' } };
+        }
+
+        dataRow.alignment = { vertical: 'middle' };
+      });
+
+      // Add borders to all cells
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFD0D5DD' } },
+            left: { style: 'thin', color: { argb: 'FFD0D5DD' } },
+            bottom: { style: 'thin', color: { argb: 'FFD0D5DD' } },
+            right: { style: 'thin', color: { argb: 'FFD0D5DD' } },
+          };
+        });
+      });
+
+      // Set response headers
+      const filename = `juntas_medicas_${new Date().toISOString().split('T')[0]}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+      // Write to response
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error('[EXCEL EXPORT] Error:', error);
       next(error);
     }
   }

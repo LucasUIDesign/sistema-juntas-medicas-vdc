@@ -365,5 +365,32 @@ export const juntasService = {
       throw error;
     }
   },
+
+  /**
+   * Export all juntas as Excel file (Director Médico, RRHH, ADMIN)
+   */
+  async exportJuntasExcel(): Promise<void> {
+    const token = localStorage.getItem('vdc_token');
+    const response = await fetch(`${API_URL}/juntas/export/excel`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al exportar las juntas médicas');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().split('T')[0];
+    a.download = `juntas_medicas_${today}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
