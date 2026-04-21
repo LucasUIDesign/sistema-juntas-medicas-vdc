@@ -27,6 +27,7 @@ import {
   ExclamationTriangleIcon,
   ArrowUpTrayIcon,
   UserGroupIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 
 interface JuntaDetailModalProps {
@@ -64,6 +65,169 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const datos = junta.dictamen; // Backend ya parsea datosCompletos y lo devuelve como 'dictamen'
+
+  // Generar y descargar PDF del dictamen
+  const handleDescargarDictamenPDF = () => {
+    const aptitudValue = junta.dictamen?.aptitudLaboral;
+    const aptitudText = aptitudValue === 'APTO' ? 'APTO'
+      : aptitudValue === 'NO_APTO' ? 'NO APTO'
+        : aptitudValue === 'APTO_CON_RESTRICCIONES' ? 'APTO CON RESTRICCIONES'
+          : aptitudValue === 'NO_APTO_TEMPORARIO' ? 'NO APTO TEMPORARIO'
+            : aptitudValue === 'NO_APTO_DEFINITIVO' ? 'NO APTO DEFINITIVO'
+              : aptitudValue || 'PENDIENTE';
+
+    const aptitudColor = aptitudValue === 'APTO' ? '#15803d'
+      : aptitudValue === 'NO_APTO' || aptitudValue === 'NO_APTO_DEFINITIVO' ? '#dc2626'
+        : aptitudValue === 'APTO_CON_RESTRICCIONES' || aptitudValue === 'NO_APTO_TEMPORARIO' ? '#ca8a04'
+          : '#374151';
+
+    const aptitudBg = aptitudValue === 'APTO' ? '#f0fdf4'
+      : aptitudValue === 'NO_APTO' || aptitudValue === 'NO_APTO_DEFINITIVO' ? '#fef2f2'
+        : aptitudValue === 'APTO_CON_RESTRICCIONES' || aptitudValue === 'NO_APTO_TEMPORARIO' ? '#fefce8'
+          : '#f9fafb';
+
+    const aptitudBorder = aptitudValue === 'APTO' ? '#bbf7d0'
+      : aptitudValue === 'NO_APTO' || aptitudValue === 'NO_APTO_DEFINITIVO' ? '#fecaca'
+        : aptitudValue === 'APTO_CON_RESTRICCIONES' || aptitudValue === 'NO_APTO_TEMPORARIO' ? '#fef08a'
+          : '#e5e7eb';
+
+    const fechaDictamen = junta.dictamen?.fechaDictamen
+      ? format(new Date(junta.dictamen.fechaDictamen), "d 'de' MMMM, yyyy", { locale: es })
+      : '-';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dictamen Médico - ${junta.pacienteNombre}</title>
+  <style>
+    @page { size: A4; margin: 2cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1f2937; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 30px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1e40af; padding-bottom: 15px; margin-bottom: 30px; }
+    .header-left { }
+    .header-left .logo { font-size: 18px; font-weight: bold; color: #1e40af; }
+    .header-left .subtitle { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .header-right { text-align: right; font-size: 11px; color: #6b7280; }
+    .title { text-align: center; font-size: 20px; font-weight: bold; color: #1f2937; text-transform: uppercase; letter-spacing: 2px; margin: 25px 0; }
+    .patient-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin-bottom: 25px; }
+    .patient-info .row { display: flex; gap: 30px; flex-wrap: wrap; }
+    .patient-info .field { flex: 1; min-width: 200px; }
+    .patient-info .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 600; }
+    .patient-info .value { font-size: 14px; font-weight: 600; color: #1f2937; margin-top: 2px; }
+    .conclusion-box { text-align: center; padding: 25px; border-radius: 12px; margin: 25px 0; border: 2px solid ${aptitudBorder}; background: ${aptitudBg}; }
+    .conclusion-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #6b7280; margin-bottom: 8px; }
+    .conclusion-value { font-size: 32px; font-weight: 900; color: ${aptitudColor}; letter-spacing: 1px; }
+    .conclusion-date { font-size: 11px; color: #6b7280; margin-top: 8px; }
+    .section { margin: 20px 0; }
+    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1e40af; border-bottom: 2px solid #dbeafe; padding-bottom: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; display: inline-block; width: 4px; height: 16px; background: #1e40af; border-radius: 2px; }
+    .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-item { }
+    .field-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 600; }
+    .field-item .value { font-size: 13px; color: #1f2937; margin-top: 4px; white-space: pre-wrap; }
+    .field-item .empty { color: #9ca3af; font-style: italic; }
+    .full-width { grid-column: 1 / -1; }
+    .footer { text-align: center; font-size: 9px; color: #9ca3af; margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+    .signatures { display: flex; justify-content: space-around; margin-top: 60px; }
+    .signature { text-align: center; }
+    .signature-line { border-top: 1px solid #374151; width: 180px; margin: 0 auto 8px; }
+    .signature-text { font-size: 11px; color: #6b7280; }
+    @media print { body { padding: 0; } .no-print { display: none !important; } }
+    .print-btn { position: fixed; top: 20px; right: 20px; background: #1e40af; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(30,64,175,0.3); transition: all 0.2s; }
+    .print-btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,64,175,0.4); }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">VDC INTERNACIONAL SRL</div>
+      <div class="subtitle">Sistema de Juntas Médicas</div>
+    </div>
+    <div class="header-right">
+      Documento generado el ${new Date().toLocaleDateString('es-AR')}
+    </div>
+  </div>
+
+  <div class="title">Dictamen Médico</div>
+
+  <div class="patient-info">
+    <div class="row">
+      <div class="field">
+        <div class="label">Paciente</div>
+        <div class="value">${junta.pacienteNombre || '-'}</div>
+      </div>
+      <div class="field">
+        <div class="label">DNI</div>
+        <div class="value">${junta.dictamen?.dni || junta.numeroDocumento || '-'}</div>
+      </div>
+      <div class="field">
+        <div class="label">Médico Evaluador</div>
+        <div class="value">Dr. ${junta.medicoNombre || '-'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conclusion-box">
+    <div class="conclusion-label">Conclusión Médica</div>
+    <div class="conclusion-value">${aptitudText}</div>
+    <div class="conclusion-date">Fecha del Dictamen: ${fechaDictamen}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Indicaciones</div>
+    <div class="field-group">
+      <div class="field-item">
+        <div class="label">Restricciones</div>
+        <div class="value ${!datos?.restricciones ? 'empty' : ''}">${datos?.restricciones || 'Sin restricciones'}</div>
+      </div>
+      <div class="field-item">
+        <div class="label">Recomendaciones</div>
+        <div class="value ${!datos?.recomendaciones ? 'empty' : ''}">${datos?.recomendaciones || 'Sin recomendaciones'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Pronóstico</div>
+    <div class="field-group">
+      <div class="field-item full-width">
+        <div class="label">Tiempo Estimado de Recuperación</div>
+        <div class="value ${!datos?.tiempoRecuperacion ? 'empty' : ''}">${datos?.tiempoRecuperacion || 'No especificado'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signatures">
+    <div class="signature">
+      <div class="signature-line"></div>
+      <div class="signature-text">Firma Médico Evaluador</div>
+    </div>
+    <div class="signature">
+      <div class="signature-line"></div>
+      <div class="signature-text">Firma Director Médico</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VDC Internacional SRL - Sistema de Gestión de Juntas Médicas<br>
+    Este documento es una representación digital del dictamen médico.
+  </div>
+</body>
+</html>
+    `.trim();
+
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(html);
+      newWindow.document.close();
+    } else {
+      toast.error('No se pudo abrir la ventana. Verifica que no esté bloqueada por el navegador.');
+    }
+  };
 
   const getEstadoBadge = (estado: JuntaMedica['estado']) => {
     const styles: Record<string, string> = {
@@ -441,6 +605,19 @@ const JuntaDetailModal = ({ junta: initialJunta, onClose, onUpdate, readOnly = f
                 {renderField('Tiempo Estimado de Recuperación', datos?.tiempoRecuperacion)}
               </div>
             </div>
+
+            {/* Botón Descargar Dictamen PDF */}
+            {isDirectorMedico && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleDescargarDictamenPDF}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-vdc-primary text-white rounded-lg hover:bg-vdc-primary/90 transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Descargar Dictamen PDF
+                </button>
+              </div>
+            )}
           </div>
         );
 
