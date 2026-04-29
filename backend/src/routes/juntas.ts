@@ -289,8 +289,9 @@ router.get(
       const juntaResult = await db.execute({
         sql: `
           SELECT
-            j.id, j.fecha, j.aptitudLaboral,
+            j.id, j.fecha, j.hora, j.aptitudLaboral,
             p.nombre as pacienteNombre, p.apellido as pacienteApellido, p.numeroDocumento,
+            p.domicilio as pacienteDomicilio,
             d.datosCompletos
           FROM JuntaMedica j
           LEFT JOIN Paciente p ON j.pacienteId = p.id
@@ -318,7 +319,13 @@ router.get(
         }
       }
 
-      // Prepare constancia data
+      // Build motivo de consulta text
+      let motivoConsulta = 'SE EVALUA A AGENTE, CERTIFICADO MEDICO EXPEDIDO POR DR/A.';
+      if (dictamenData.motivoJunta && Array.isArray(dictamenData.motivoJunta) && dictamenData.motivoJunta.length > 0) {
+        motivoConsulta = dictamenData.motivoJunta.join(', ');
+      }
+
+      // Prepare constancia data with all new fields
       const constanciaData = {
         provincia: 'Resistencia',
         fecha: new Date(junta.fecha).toLocaleDateString('es-AR'),
@@ -326,6 +333,22 @@ router.get(
         reparticion: dictamenData.establecimiento || '',
         dni: junta.numeroDocumento || '',
         resultado: getResultadoText(junta.aptitudLaboral || dictamenData.aptitudLaboral),
+        // Nuevos campos
+        domicilio: dictamenData.domicilio || junta.pacienteDomicilio || '',
+        fechaNacimiento: dictamenData.fechaNacimiento
+          ? new Date(dictamenData.fechaNacimiento).toLocaleDateString('es-AR')
+          : '',
+        hora: junta.hora || '',
+        medicosEvaluadores: dictamenData.medicosEvaluadores || [],
+        lugarAtencion: dictamenData.establecimiento || '',
+        motivoConsulta: motivoConsulta,
+        medicoTratante: '',
+        medicoTratanteMatricula: '',
+        justifica: '',
+        justificaDesde: dictamenData.fechaInicioLicencia
+          ? new Date(dictamenData.fechaInicioLicencia).toLocaleDateString('es-AR')
+          : '',
+        justificaHasta: '',
       };
 
       console.log('[CONSTANCIA PDF] Generando HTML...');
