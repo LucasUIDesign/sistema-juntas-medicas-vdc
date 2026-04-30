@@ -340,7 +340,7 @@ router.get(
           : '',
         hora: junta.hora || '',
         medicosEvaluadores: dictamenData.medicosEvaluadores || [],
-        lugarAtencion: dictamenData.establecimiento || '',
+        lugarAtencion: '',
         motivoConsulta: motivoConsulta,
         medicoTratante: '',
         medicoTratanteMatricula: '',

@@ -36,7 +36,7 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
 
   const firma2Name = med2?.nombre || '';
   const firma2MP = med2?.matricula ? `MP ${med2.matricula}` : '';
-  const firma2Esp = med2?.especialidad || 'MEDICO PSIQUIATRA';
+  const firma2Esp = 'MEDICO PSIQUIATRA';
 
   return `
 <!DOCTYPE html>
