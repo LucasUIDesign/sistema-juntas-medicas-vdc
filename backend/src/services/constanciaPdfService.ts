@@ -17,6 +17,7 @@ interface ConstanciaData {
   justifica: string; // 'SI' | 'NO' | ''
   justificaDesde: string;
   justificaHasta: string;
+  fundamentacion: string;
 }
 
 export function generateConstanciaHTML(data: ConstanciaData): string {
@@ -35,6 +36,7 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
 
   const firma2Name = med2?.nombre || '';
   const firma2MP = med2?.matricula ? `MP ${med2.matricula}` : '';
+  const firma2Esp = med2?.especialidad || 'MEDICO PSIQUIATRA';
 
   return `
 <!DOCTYPE html>
@@ -315,13 +317,9 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
     <span class="checkbox ${data.justifica === 'NO' ? 'checked' : ''}">&nbsp;</span>
   </div>
 
-  <!-- Fundamentación con líneas para rellenar -->
+  <!-- Fundamentación -->
   <div class="section-label">Fundamentación:</div>
-  <div class="blank-line"></div>
-  <div class="blank-line"></div>
-  <div class="blank-line"></div>
-  <div class="blank-line"></div>
-  <div class="blank-line"></div>
+  <div style="font-size: 12px; line-height: 1.7; text-align: justify; margin-top: 4px; min-height: 110px; border-bottom: 1px solid #000; padding-bottom: 4px;">${data.fundamentacion || ''}</div>
 
   <!-- Texto legal -->
   <div class="legal-text">
@@ -344,6 +342,7 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
       <div class="signature-line"></div>
       <div class="signature-name">${firma2Name}</div>
       <div class="signature-mp">${firma2MP}</div>
+      <div class="signature-title">${firma2Esp}</div>
     </div>
   </div>
 

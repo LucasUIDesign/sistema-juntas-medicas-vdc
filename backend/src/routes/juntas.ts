@@ -349,6 +349,7 @@ router.get(
           ? new Date(dictamenData.fechaInicioLicencia).toLocaleDateString('es-AR')
           : '',
         justificaHasta: '',
+        fundamentacion: dictamenData.recomendaciones || '',
       };
 
       console.log('[CONSTANCIA PDF] Generando HTML...');
