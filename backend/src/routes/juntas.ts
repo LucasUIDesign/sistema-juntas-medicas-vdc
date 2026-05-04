@@ -349,7 +349,7 @@ router.get(
           ? new Date(dictamenData.fechaInicioLicencia).toLocaleDateString('es-AR')
           : '',
         justificaHasta: '',
-        fundamentacion: dictamenData.recomendaciones || '',
+        fundamentacion: buildFundamentacion(dictamenData, junta.aptitudLaboral),
       };
 
       console.log('[CONSTANCIA PDF] Generando HTML...');
@@ -1007,6 +1007,39 @@ function getResultadoText(aptitud: string | undefined): string {
   };
   
   return map[aptitud] || aptitud;
+}
+
+// Helper function to build fundamentación text from dictamen data
+function buildFundamentacion(dictamenData: any, aptitudJunta: string | undefined): string {
+  const parts: string[] = [];
+
+  // 1. Conclusión médica (aptitud laboral)
+  const aptitud = dictamenData.aptitudLaboral || aptitudJunta;
+  if (aptitud) {
+    parts.push(`CONCLUSIÓN MÉDICA: ${getResultadoText(aptitud)}.`);
+  }
+
+  // 2. Diagnóstico principal
+  if (dictamenData.diagnosticoPrincipal) {
+    parts.push(`DIAGNÓSTICO: ${dictamenData.diagnosticoPrincipal}.`);
+  }
+
+  // 3. Restricciones
+  if (dictamenData.restricciones) {
+    parts.push(`RESTRICCIONES: ${dictamenData.restricciones}.`);
+  }
+
+  // 4. Recomendaciones / Indicaciones
+  if (dictamenData.recomendaciones) {
+    parts.push(`INDICACIONES Y RECOMENDACIONES: ${dictamenData.recomendaciones}.`);
+  }
+
+  // 5. Pronóstico (tiempo de recuperación)
+  if (dictamenData.tiempoRecuperacion) {
+    parts.push(`PRONÓSTICO: ${dictamenData.tiempoRecuperacion}.`);
+  }
+
+  return parts.join(' ');
 }
 
 export default router;

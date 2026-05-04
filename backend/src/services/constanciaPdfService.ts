@@ -21,9 +21,23 @@ interface ConstanciaData {
 }
 
 export function generateConstanciaHTML(data: ConstanciaData): string {
+  // Helper to clean specialty names
+  const cleanEspecialidad = (esp: string): string => {
+    if (!esp) return '';
+    const upper = esp.toUpperCase().trim();
+    // If contains "psiquiatra", just show MEDICO PSIQUIATRA
+    if (upper.includes('PSIQUIATRA')) return 'MEDICO PSIQUIATRA';
+    // If already starts with MEDICO, return as-is uppercase
+    if (upper.startsWith('MEDICO')) return upper;
+    return 'MEDICO ' + upper;
+  };
+
   // Build médicos list
   const medicosListHTML = data.medicosEvaluadores && data.medicosEvaluadores.length > 0
-    ? data.medicosEvaluadores.map(m => `<div>${m.nombre || ''}${m.especialidad ? ' - ' + m.especialidad : ''}</div>`).join('')
+    ? data.medicosEvaluadores.map(m => {
+        const esp = cleanEspecialidad(m.especialidad);
+        return `<div>${(m.nombre || '').toUpperCase()}${esp ? ' - ' + esp : ''}</div>`;
+      }).join('')
     : '<div>&nbsp;</div>';
 
   // Build signature blocks for up to 2 médicos
