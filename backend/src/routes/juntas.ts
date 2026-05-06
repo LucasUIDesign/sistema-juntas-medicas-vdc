@@ -340,7 +340,7 @@ router.get(
           : '',
         hora: junta.hora || '',
         medicosEvaluadores: dictamenData.medicosEvaluadores || [],
-        lugarAtencion: '',
+        lugarAtencion: 'RESISTENCIA-CHACO',
         motivoConsulta: motivoConsulta,
         medicoTratante: '',
         medicoTratanteMatricula: '',
@@ -1013,10 +1013,10 @@ function getResultadoText(aptitud: string | undefined): string {
 function buildFundamentacion(dictamenData: any, aptitudJunta: string | undefined): string {
   const parts: string[] = [];
 
-  // 1. Conclusión médica (aptitud laboral)
+  // 1. Conclusión médica (aptitud laboral) — resultado en mayúsculas y negrita
   const aptitud = dictamenData.aptitudLaboral || aptitudJunta;
   if (aptitud) {
-    parts.push(`CONCLUSIÓN MÉDICA: ${getResultadoText(aptitud)}.`);
+    parts.push(`CONCLUSIÓN MÉDICA: <strong>${getResultadoText(aptitud).toUpperCase()}</strong>.`);
   }
 
   // 2. Diagnóstico principal
@@ -1039,7 +1039,7 @@ function buildFundamentacion(dictamenData: any, aptitudJunta: string | undefined
     parts.push(`PRONÓSTICO: ${dictamenData.tiempoRecuperacion}.`);
   }
 
-  return parts.join(' ');
+  return parts.join('<br><br>');
 }
 
 export default router;
