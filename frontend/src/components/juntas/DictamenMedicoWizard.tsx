@@ -102,7 +102,6 @@ export interface DictamenMedicoData {
   medicoTratanteNombre: string;
   medicoTratanteMatricula: string;
   // Paso 3: campos adicionales
-  tareasPassivas: string;
   tareasPassivasDetalle: string;
   tipoConsulta: string;
 }
@@ -196,7 +195,7 @@ const initialValues: DictamenMedicoData = {
   medicosEvaluadores: [{ nombre: '', matricula: '', especialidad: '' }],
   fechaDictamen: new Date().toISOString().split('T')[0],
   medicoTratanteNombre: '', medicoTratanteMatricula: '',
-  tareasPassivas: '', tareasPassivasDetalle: '', tipoConsulta: '',
+  tareasPassivasDetalle: '', tipoConsulta: '',
 };
 
 const PASOS = [
@@ -222,7 +221,7 @@ const MOTIVOS_JUNTA = [
   'Accidente de trabajo',
   'Enfermedad profesional',
   'Evaluación periódica',
-  'Otro',
+  'TAREAS PASIVAS',
 ];
 
 // Campos por paso para verificar completitud
@@ -678,33 +677,14 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                   );
                 })}
               </div>
-            </div>
-            {/* TAREAS PASIVAS */}
-            <div>
-              <label className={labelClass}>Tareas Pasivas</label>
-              <div
-                onClick={() => setFieldValue('tareasPassivas', values.tareasPassivas === 'SI' ? '' : 'SI')}
-                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all select-none w-fit ${
-                  values.tareasPassivas === 'SI'
-                    ? 'bg-vdc-primary/10 border-vdc-primary'
-                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-                  values.tareasPassivas === 'SI' ? 'bg-vdc-primary border-vdc-primary' : 'bg-white border-gray-300'
-                }`}>
-                  {values.tareasPassivas === 'SI' && <CheckIcon className="w-3.5 h-3.5 text-white" />}
-                </div>
-                <span className={`text-sm font-medium ${values.tareasPassivas === 'SI' ? 'text-vdc-primary' : 'text-gray-700'}`}>
-                  TAREAS PASIVAS
-                </span>
-              </div>
-              {values.tareasPassivas === 'SI' && (
-                <div className="mt-2">
+              {/* Campo de texto para TAREAS PASIVAS cuando está seleccionado */}
+              {Array.isArray(values.motivoJunta) && values.motivoJunta.includes('TAREAS PASIVAS') && (
+                <div className="mt-3">
+                  <label className={labelClass}>Especificar Tareas Pasivas</label>
                   <Field
                     name="tareasPassivasDetalle"
                     className={inputClass}
-                    placeholder="Especificar tareas pasivas..."
+                    placeholder="Especificar las tareas pasivas asignadas..."
                   />
                 </div>
               )}

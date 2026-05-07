@@ -324,9 +324,8 @@ router.get(
       if (dictamenData.motivoJunta && Array.isArray(dictamenData.motivoJunta) && dictamenData.motivoJunta.length > 0) {
         motivoConsulta = dictamenData.motivoJunta.join(', ');
       }
-      if (dictamenData.tareasPassivas === 'SI') {
-        const tp = 'TAREAS PASIVAS' + (dictamenData.tareasPassivasDetalle ? `: ${dictamenData.tareasPassivasDetalle}` : '');
-        motivoConsulta = motivoConsulta ? motivoConsulta + ', ' + tp : tp;
+      if (Array.isArray(dictamenData.motivoJunta) && dictamenData.motivoJunta.includes('TAREAS PASIVAS') && dictamenData.tareasPassivasDetalle) {
+        motivoConsulta = motivoConsulta.replace('TAREAS PASIVAS', `TAREAS PASIVAS: ${dictamenData.tareasPassivasDetalle}`);
       }
 
       // Prepare constancia data with all new fields
