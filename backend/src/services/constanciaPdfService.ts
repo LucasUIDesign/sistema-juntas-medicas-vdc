@@ -14,9 +14,10 @@ interface ConstanciaData {
   motivoConsulta: string;
   medicoTratante: string;
   medicoTratanteMatricula: string;
-  justifica: string; // 'SI' | 'NO' | ''
+  justifica: string;
   justificaDesde: string;
   justificaHasta: string;
+  tipoConsulta: string;
   fundamentacion: string;
 }
 
@@ -291,8 +292,8 @@ export function generateConstanciaHTML(data: ConstanciaData): string {
     <span class="field-value-wide">${data.lugarAtencion}</span>
   </div>
   <div class="field-row">
-    <span class="field-label">Tipo de Consulta: JUNTA MEDICA</span>
-    <span class="field-value-dots">&nbsp;</span>
+    <span class="field-label">Tipo de Consulta:</span>
+    <span class="field-value-wide">${data.tipoConsulta || 'JUNTA MEDICA'}</span>
   </div>
 
   <!-- Motivo de Consulta -->

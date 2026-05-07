@@ -93,9 +93,18 @@ export interface DictamenMedicoData {
   restricciones: string;
   recomendaciones: string;
   tiempoRecuperacion: string;
+  justifica: string;
+  fechaDictamenDesde: string;
+  fechaDictamenHasta: string;
   // Paso 12: Profesionales
   medicosEvaluadores: MedicoEvaluador[];
   fechaDictamen: string;
+  medicoTratanteNombre: string;
+  medicoTratanteMatricula: string;
+  // Paso 3: campos adicionales
+  tareasPassivas: string;
+  tareasPassivasDetalle: string;
+  tipoConsulta: string;
 }
 
 // Función para verificar si el dictamen está completo
@@ -183,8 +192,11 @@ const initialValues: DictamenMedicoData = {
   diagnosticoPrincipal: '', codigoCIE10: '', naturalezaEnfermedad: '',
   capacidadFuncional: '', factoresLimitantes: '',
   aptitudLaboral: '', restricciones: '', recomendaciones: '', tiempoRecuperacion: '',
+  justifica: '', fechaDictamenDesde: '', fechaDictamenHasta: '',
   medicosEvaluadores: [{ nombre: '', matricula: '', especialidad: '' }],
-  fechaDictamen: new Date().toISOString().split('T')[0], // Auto-completar con fecha actual
+  fechaDictamen: new Date().toISOString().split('T')[0],
+  medicoTratanteNombre: '', medicoTratanteMatricula: '',
+  tareasPassivas: '', tareasPassivasDetalle: '', tipoConsulta: '',
 };
 
 const PASOS = [
@@ -217,7 +229,7 @@ const MOTIVOS_JUNTA = [
 const CAMPOS_POR_PASO: Record<number, (keyof DictamenMedicoData)[]> = {
   1: ['nombreCompleto', 'dni', 'fechaNacimiento', 'sexo', 'estadoCivil', 'domicilio', 'telefono', 'email', 'obraSocial'],
   2: ['establecimiento', 'cargo', 'nivelEducativo', 'modalidad', 'situacionRevista', 'antiguedad', 'cargaHoraria', 'legajo'],
-  3: ['motivoJunta', 'fechaInicioLicencia', 'diagnosticosPrevios'],
+  3: ['motivoJunta', 'fechaInicioLicencia', 'diagnosticosPrevios', 'tipoConsulta'],
   4: ['patologiasPrevias', 'antecedentesQuirurgicos', 'alergias', 'habitos', 'antecedentesFamiliares'],
   5: ['licenciasAnteriores', 'accidentesLaborales', 'factoresRiesgo'],
   6: ['sintomasPrincipales', 'evolucion', 'tratamientosActuales', 'interconsultas'],
@@ -667,6 +679,47 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
                 })}
               </div>
             </div>
+            {/* TAREAS PASIVAS */}
+            <div>
+              <label className={labelClass}>Tareas Pasivas</label>
+              <div
+                onClick={() => setFieldValue('tareasPassivas', values.tareasPassivas === 'SI' ? '' : 'SI')}
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all select-none w-fit ${
+                  values.tareasPassivas === 'SI'
+                    ? 'bg-vdc-primary/10 border-vdc-primary'
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+                  values.tareasPassivas === 'SI' ? 'bg-vdc-primary border-vdc-primary' : 'bg-white border-gray-300'
+                }`}>
+                  {values.tareasPassivas === 'SI' && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <span className={`text-sm font-medium ${values.tareasPassivas === 'SI' ? 'text-vdc-primary' : 'text-gray-700'}`}>
+                  TAREAS PASIVAS
+                </span>
+              </div>
+              {values.tareasPassivas === 'SI' && (
+                <div className="mt-2">
+                  <Field
+                    name="tareasPassivasDetalle"
+                    className={inputClass}
+                    placeholder="Especificar tareas pasivas..."
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Tipo de Consulta */}
+            <div>
+              <label className={labelClass}>Tipo de Consulta</label>
+              <Field
+                name="tipoConsulta"
+                className={inputClass}
+                placeholder="Ej: Psiquiatría, Reumatología, Medicina Laboral..."
+              />
+            </div>
+
             <div>
               <label className={labelClass}>Fecha de Inicio de Licencia</label>
               <Field name="fechaInicioLicencia" type="date" className={inputClass} />
@@ -888,11 +941,84 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
               <label className={labelClass}>Tiempo Estimado de Recuperación</label>
               <Field name="tiempoRecuperacion" className={inputClass} placeholder="Ej: 30 días, 3 meses, etc." />
             </div>
+
+            {/* Justifica */}
+            <div>
+              <label className={labelClass}>Justifica</label>
+              <div className="flex items-center gap-4 mt-1">
+                <div
+                  onClick={() => setFieldValue('justifica', values.justifica === 'SI' ? '' : 'SI')}
+                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg border cursor-pointer transition-all select-none ${
+                    values.justifica === 'SI'
+                      ? 'bg-vdc-primary/10 border-vdc-primary'
+                      : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
+                    values.justifica === 'SI' ? 'bg-vdc-primary border-vdc-primary' : 'bg-white border-gray-300'
+                  }`}>
+                    {values.justifica === 'SI' && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium">SÍ</span>
+                </div>
+                <div
+                  onClick={() => setFieldValue('justifica', values.justifica === 'NO' ? '' : 'NO')}
+                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg border cursor-pointer transition-all select-none ${
+                    values.justifica === 'NO'
+                      ? 'bg-red-50 border-red-400'
+                      : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
+                    values.justifica === 'NO' ? 'bg-red-500 border-red-500' : 'bg-white border-gray-300'
+                  }`}>
+                    {values.justifica === 'NO' && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium">NO</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Fecha de licencia / tratamiento */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Desde (licencia / tratamiento)</label>
+                <Field name="fechaDictamenDesde" type="date" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Hasta (licencia / tratamiento)</label>
+                <Field name="fechaDictamenHasta" type="date" className={inputClass} />
+              </div>
+            </div>
           </div>
         );
 
       case 12:
         return (
+          <div className="space-y-6">
+            {/* Médico Tratante */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <p className="text-sm font-semibold text-gray-700 mb-3">Médico Tratante</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Nombre y Apellido</label>
+                  <Field
+                    name="medicoTratanteNombre"
+                    className={inputClass}
+                    placeholder="Dr./Dra. Nombre Apellido"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Matrícula</label>
+                  <Field
+                    name="medicoTratanteMatricula"
+                    className={inputClass}
+                    placeholder="MP 12345"
+                  />
+                </div>
+              </div>
+            </div>
+
           <FieldArray name="medicosEvaluadores">
             {({ push, remove }) => (
               <div className="space-y-6">
@@ -953,6 +1079,7 @@ const DictamenMedicoWizard = ({ onComplete, onCancel, initialData, hideProfesion
               </div>
             )}
           </FieldArray>
+          </div>
         );
 
       default:

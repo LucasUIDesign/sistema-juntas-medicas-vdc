@@ -324,6 +324,10 @@ router.get(
       if (dictamenData.motivoJunta && Array.isArray(dictamenData.motivoJunta) && dictamenData.motivoJunta.length > 0) {
         motivoConsulta = dictamenData.motivoJunta.join(', ');
       }
+      if (dictamenData.tareasPassivas === 'SI') {
+        const tp = 'TAREAS PASIVAS' + (dictamenData.tareasPassivasDetalle ? `: ${dictamenData.tareasPassivasDetalle}` : '');
+        motivoConsulta = motivoConsulta ? motivoConsulta + ', ' + tp : tp;
+      }
 
       // Prepare constancia data with all new fields
       const constanciaData = {
@@ -342,13 +346,18 @@ router.get(
         medicosEvaluadores: dictamenData.medicosEvaluadores || [],
         lugarAtencion: 'RESISTENCIA-CHACO',
         motivoConsulta: motivoConsulta,
-        medicoTratante: '',
-        medicoTratanteMatricula: '',
-        justifica: '',
-        justificaDesde: dictamenData.fechaInicioLicencia
-          ? new Date(dictamenData.fechaInicioLicencia).toLocaleDateString('es-AR')
+        medicoTratante: dictamenData.medicoTratanteNombre || '',
+        medicoTratanteMatricula: dictamenData.medicoTratanteMatricula || '',
+        justifica: dictamenData.justifica || '',
+        justificaDesde: dictamenData.fechaDictamenDesde
+          ? new Date(dictamenData.fechaDictamenDesde).toLocaleDateString('es-AR')
+          : dictamenData.fechaInicioLicencia
+            ? new Date(dictamenData.fechaInicioLicencia).toLocaleDateString('es-AR')
+            : '',
+        justificaHasta: dictamenData.fechaDictamenHasta
+          ? new Date(dictamenData.fechaDictamenHasta).toLocaleDateString('es-AR')
           : '',
-        justificaHasta: '',
+        tipoConsulta: dictamenData.tipoConsulta || '',
         fundamentacion: buildFundamentacion(dictamenData, junta.aptitudLaboral),
       };
 
