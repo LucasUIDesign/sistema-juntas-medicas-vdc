@@ -1007,7 +1007,7 @@ function getResultadoText(aptitud: string | undefined): string {
   if (!aptitud) return 'PENDIENTE';
   
   const map: Record<string, string> = {
-    'APTO': 'APTO',
+    'APTO': 'ALTA LABORAL',
     'NO_APTO': 'NO APTO',
     'APTO_CON_RESTRICCIONES': 'APTO CON RESTRICCIONES',
     'NO_APTO_TEMPORARIO': 'NO APTO TEMPORARIO',
